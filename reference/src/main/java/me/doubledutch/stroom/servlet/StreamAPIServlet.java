@@ -41,7 +41,9 @@ public class StreamAPIServlet extends HttpServlet{
 				// List streams
 				JSONArray result=new JSONArray();
 				for(Stream stream:streamHandler.getStreams()){
-					result.put(stream.toJSON());
+					if(stream.getTopic().indexOf(".")==-1){
+						result.put(stream.toJSON());
+					}
 				}
 				out.write(result.toString());
 				return;
