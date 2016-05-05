@@ -54,17 +54,17 @@ public class StreamAPIServlet extends HttpServlet{
 			}else if(splitPath.length==2){
 				String topic=splitPath[0];
 				String range=splitPath[1];
-				if(range.indexOf("-")==-1){
-					// Get a single event
-					long location=Long.parseLong(splitPath[1]);
-					Document doc=streamHandler.getDocument(topic,location);
-					out.append(doc.getStringData());
-				}else if(range.equals("_")){
+				if(range.equals("_")){
 					long location=streamHandler.getOrCreateStream(topic).getCount()-1;
 					if(location>-1){
 						Document doc=streamHandler.getDocument(topic,location);
 						out.append(doc.getStringData());
 					}
+				}else if(range.indexOf("-")==-1){
+					// Get a single event
+					long location=Long.parseLong(splitPath[1]);
+					Document doc=streamHandler.getDocument(topic,location);
+					out.append(doc.getStringData());
 				}else if(range.endsWith("-")){
 					// Get everything from an index
 					long location=Long.parseLong(range.substring(0,range.length()-1));
