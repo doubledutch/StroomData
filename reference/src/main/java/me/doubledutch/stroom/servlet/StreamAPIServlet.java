@@ -1,7 +1,6 @@
 package me.doubledutch.stroom.servlet;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -21,7 +20,7 @@ import org.json.*;
 public class StreamAPIServlet extends HttpServlet{
 	final static int MAX_EVENTS=1000;
 	final static int MAX_SIZE=512*1024;
-	private final Logger log = LogManager.getLogger("StreamAPI");
+	private final Logger log = Logger.getLogger("StreamAPI");
 
 	private static StreamHandler streamHandler;
 

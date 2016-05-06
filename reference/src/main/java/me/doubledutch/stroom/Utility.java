@@ -1,6 +1,7 @@
 package me.doubledutch.stroom;
 
 import java.io.*;
+import java.net.*;
 
 public class Utility{
 	/**
@@ -16,5 +17,31 @@ public class Utility{
 			num=reader.read(data);
 		}
 		return buf.toString();
+	}
+
+	public static String postURL(String strurl,String body){
+		try{
+			URL url=new URL(strurl);
+			HttpURLConnection con = (HttpURLConnection)url.openConnection();
+			con.setRequestMethod("POST");
+			con.addRequestProperty("Content-Type", "application/json");
+			byte[] outdata=body.getBytes("UTF-8");
+			con.setRequestProperty("Content-Length",""+outdata.length);
+			con.getOutputStream().write(outdata);
+
+			try(Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))){
+				StringBuilder buf = new StringBuilder();
+			    char[] indata = new char[32768];
+			    int num = reader.read(indata);
+			    while (num > -1) {
+			      	buf.append(indata, 0, num);
+			      	num = reader.read(indata);
+			    }
+			    return buf.toString();
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

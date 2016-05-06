@@ -6,7 +6,7 @@ import java.net.*;
 import java.util.*;
 import me.doubledutch.stroom.streams.*;
 
-public class Service{
+public abstract class Service{
 	private Map<String,MockStreamConnection> mockMap=new HashMap<String,MockStreamConnection>();
 	private StreamHandler streamHandler=null;
 
@@ -16,9 +16,13 @@ public class Service{
 
 	private String getStreamName(URI stream){
 		String path=stream.getPath();
-		if(!path.startsWith("/streams/"))return null;
-		return path.substring(9); // TODO: // possibly make smarter and less breakable
+		if(!path.startsWith("/stream/"))return null;
+		return path.substring(path.lastIndexOf("/")+1); // TODO: possibly make smarter and less breakable
 	}
+
+	public abstract void start();
+	public abstract void stop();
+	public abstract JSONObject toJSON() throws JSONException;
 
 	public StreamConnection openStream(URI stream) throws IOException{
 		String scheme=stream.getScheme();

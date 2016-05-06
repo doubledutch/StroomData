@@ -1,7 +1,6 @@
 package me.doubledutch.stroom;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -14,19 +13,20 @@ import java.util.*;
 
 import me.doubledutch.stroom.streams.StreamHandler;
 import me.doubledutch.stroom.servlet.*;
+import me.doubledutch.stroom.filters.*;
 
 public class MultiHostServer implements Runnable{
-	private final Logger log = LogManager.getLogger("MultiHost");
+	private final Logger log = Logger.getLogger("MultiHost");
 	private JSONObject config=null;
 
 	private Server server=null;
 
 	private StreamHandler streamHandler=null;
-	private Service service=null;
+	private List<Service> serviceList=new ArrayList<Service>();
 
 	public MultiHostServer(String configLocation){
 		try{
-			log.info("Starting");
+			log.info("Starting Stroom MultiHost");
 			// Load configuration
 			if(configLocation!=null){
 				config=new JSONObject(Utility.readFile(configLocation));
@@ -34,12 +34,30 @@ public class MultiHostServer implements Runnable{
 				config=new JSONObject();
 			}
 			patchConfiguration(config);
-			// Start the services
+			// Create the services
+			log.info("Creating services");
 			streamHandler=new StreamHandler(config.getJSONObject("streams"));
-			service=new Service(streamHandler);
+
+			if(config.has("filters")){
+				JSONArray services=config.getJSONArray("filters");
+				for(int i=0;i<services.length();i++){
+					JSONObject obj=services.getJSONObject(i);
+					Service filter=new FilterService(streamHandler,obj);
+					serviceList.add(filter);
+				}
+			}
+			// service=new Service(streamHandler);
 			
+			// Start servlets
+			log.info("Starting servlets");
 			StreamAPIServlet.setStreamHandler(streamHandler);
 			startServlets(config.getJSONObject("api"));
+
+			// Start services
+			log.info("Starting services");
+			for(Service service:serviceList){
+				service.start();
+			}
 
 			// Setup shutdown hook
 			Runtime.getRuntime().addShutdownHook(new Thread(this));
@@ -53,6 +71,12 @@ public class MultiHostServer implements Runnable{
 	 * This method is added as a shutdown hook to the runtime.
 	 */
 	public void run(){
+		// Stop services
+		for(Service service:serviceList){
+			try{
+				service.stop();
+			}catch(Exception e){}
+		}
 		// Stop servlets
 		try{
 			server.stop();
@@ -67,6 +91,7 @@ public class MultiHostServer implements Runnable{
 
 	private void patchConfiguration(JSONObject config) throws JSONException{
 		// 1. Patch config with defauls
+		/*
 		config.putOnce("streams",new JSONObject());
 		JSONObject obj=config.getJSONObject("streams");
 		obj.putOnce("path","./streamdata/");
@@ -75,8 +100,27 @@ public class MultiHostServer implements Runnable{
 
 		config.putOnce("api",new JSONObject());
 		obj=config.getJSONObject("api");
-		obj.putOnce("port",8080);
-
+		obj.putOnce("port",8080);*/
+		if(!config.has("streams")){
+			config.put("streams",new JSONObject());
+		}
+		JSONObject obj=config.getJSONObject("streams");
+		if(!obj.has("path")){
+			obj.put("path","./streamdata/");
+		}
+		if(!obj.has("commit_batch_size")){
+			obj.put("commit_batch_size",32);
+		}
+		if(!obj.has("commit_batch_timeout")){
+			obj.put("commit_batch_timeout",50);
+		}
+		if(!config.has("api")){
+			config.put("api",new JSONObject());
+		}
+		obj=config.getJSONObject("api");
+		if(!obj.has("port")){
+			obj.put("port",8080);
+		}
 		// 2. Overlay environment variables
 		Map<String,String>env=System.getenv();
 		
