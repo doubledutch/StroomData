@@ -6,9 +6,13 @@ import java.net.*;
 import java.util.*;
 import me.doubledutch.stroom.streams.*;
 
-public abstract class Service{
+public abstract class Service implements Runnable{
 	private Map<String,MockStreamConnection> mockMap=new HashMap<String,MockStreamConnection>();
 	private StreamHandler streamHandler=null;
+
+	private boolean isRunning=false;
+	private boolean shouldBeRunning=false;
+	private Thread thread=null;
 
 	public Service(StreamHandler streamHandler){
 		this.streamHandler=streamHandler;
@@ -20,8 +24,36 @@ public abstract class Service{
 		return path.substring(path.lastIndexOf("/")+1); // TODO: possibly make smarter and less breakable
 	}
 
-	public abstract void start();
-	public abstract void stop();
+	
+	public boolean isRunning(){
+		return isRunning;
+	}
+
+	public void isRunning(boolean value){
+		isRunning=value;
+	}	
+
+	public boolean shouldBeRunning(){
+		return shouldBeRunning;
+	}
+
+	public void start(){
+		shouldBeRunning=true;
+		thread=new Thread(this);
+		thread.start();
+	}
+
+	public void stop(){
+		shouldBeRunning=false;
+		while(isRunning){
+			try{
+				Thread.sleep(50);
+			}catch(Exception e){}
+		}
+	}
+
+	public abstract void run();
+
 	public abstract JSONObject toJSON() throws JSONException;
 
 	public StreamConnection openStream(URI stream) throws IOException{

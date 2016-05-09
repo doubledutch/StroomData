@@ -25,7 +25,7 @@ import javax.script.*;
 	how do we handle errors?
 */
 
-public class FilterService extends Service implements Runnable{
+public class FilterService extends Service{
 	private final Logger log = Logger.getLogger("Filter");
 
 	private int WAIT_TIME=1000;
@@ -44,10 +44,6 @@ public class FilterService extends Service implements Runnable{
 	private StreamConnection input=null;
 	private StreamConnection output=null;
 	private StreamConnection state=null;
-
-	private boolean isRunning=false;
-	private boolean shouldBeRunning=false;
-	private Thread thread=null;
 
 	private long index=-1;
 
@@ -96,21 +92,6 @@ public class FilterService extends Service implements Runnable{
 
 	private void setBatchSize(int size){
 		BATCH_SIZE=size;
-	}
-
-	public void start(){
-		shouldBeRunning=true;
-		thread=new Thread(this);
-		thread.start();
-	}
-
-	public void stop(){
-		shouldBeRunning=false;
-		while(isRunning){
-			try{
-				Thread.sleep(50);
-			}catch(Exception e){}
-		}
 	}
 
 	private void loadState() throws Exception{
@@ -166,8 +147,8 @@ public class FilterService extends Service implements Runnable{
 				loadState();
 			}
 			log.info(id+" restarting at "+(index+1));
-			isRunning=true;
-			while(shouldBeRunning){
+			isRunning(true);
+			while(shouldBeRunning()){
 				// Load
 				List<String> batch=input.get(index+1,index+BATCH_SIZE+1);
 				// Process
@@ -194,7 +175,7 @@ public class FilterService extends Service implements Runnable{
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		isRunning=false;
+		isRunning(false);
 	}
 
 	public JSONObject toJSON() throws JSONException{
