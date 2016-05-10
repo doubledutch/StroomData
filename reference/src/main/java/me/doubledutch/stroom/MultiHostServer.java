@@ -14,6 +14,7 @@ import java.util.*;
 import me.doubledutch.stroom.streams.StreamHandler;
 import me.doubledutch.stroom.servlet.*;
 import me.doubledutch.stroom.filters.*;
+import me.doubledutch.stroom.aggregates.*;
 
 public class MultiHostServer implements Runnable{
 	private final Logger log = Logger.getLogger("MultiHost");
@@ -44,6 +45,17 @@ public class MultiHostServer implements Runnable{
 					JSONObject obj=services.getJSONObject(i);
 					Service filter=new FilterService(streamHandler,obj);
 					serviceList.add(filter);
+				}
+			}
+
+			if(config.has("aggregates")){
+				JSONArray services=config.getJSONArray("aggregates");
+				for(int i=0;i<services.length();i++){
+					JSONObject obj=services.getJSONObject(i);
+					Service aggregate=new AggregateService(streamHandler,obj);
+					// TODO: differentiate on partitioned aggregates
+					// TODO: add to api endpoints
+					serviceList.add(aggregate);
 				}
 			}
 			// service=new Service(streamHandler);
