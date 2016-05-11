@@ -2,6 +2,7 @@ package me.doubledutch.stroom;
 
 import java.io.*;
 import java.net.*;
+import org.json.*;
 
 public class Utility{
 	/**
@@ -17,6 +18,15 @@ public class Utility{
 			num=reader.read(data);
 		}
 		return buf.toString();
+	}
+
+	public static Object pickValue(JSONObject obj,String key) throws JSONException{
+		if(key.indexOf(".")>-1){
+			String child=key.substring(key.indexOf(".")+1);
+			key=key.substring(0,key.indexOf("."));
+			return pickValue(obj.getJSONObject(key),child);
+		}
+		return obj.get(key);
 	}
 
 	public static String postURL(String strurl,String body){
