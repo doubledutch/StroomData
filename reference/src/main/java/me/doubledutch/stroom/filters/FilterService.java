@@ -29,80 +29,31 @@ public class FilterService extends Service{
 	private final Logger log = Logger.getLogger("Filter");
 
 	private int WAIT_TIME=1000;
-	private int BATCH_SIZE=100;
 
-	public static int HTTP=0;
-	public static int QUERY=1;
-	public static int JAVASCRIPT=2;
-	public static int SAMPLE=3;
-
-	private int type=HTTP;
-
-	private String url=null;
 	private double sampleRate=1.0;
-
-	private StreamConnection input=null;
-	private StreamConnection output=null;
-	private StreamConnection state=null;
 
 	private long index=-1;
 
-	private String id;
-	private String script=null;
-
-	private ScriptEngine jsEngine;
-	private Invocable jsInvocable;
-
 	public FilterService(StreamHandler handler,JSONObject obj) throws Exception{
-		super(handler);
+		super(handler,obj);
 		
-		id=obj.getString("id");
-
-		if(obj.has("batch_size")){
-			setBatchSize(obj.getInt("batch_size"));
-		}
-		
-		input=openStream(new URI(obj.getString("input_stream")));
-		output=openStream(new URI(obj.getString("output_stream")));
-		if(obj.has("state_stream")){
-			state=openStream(new URI(obj.getString("state_stream")));
-		}else{
-			state=openStream(new URI(obj.getString("output_stream")+".state"));
-		}
 		String strType=obj.getString("type");
-		if(strType.equals("http")){
-			type=HTTP;
-			url=obj.getString("url");
-		}else if(strType.equals("sample")){
+		if(strType.equals("sample")){
 			type=SAMPLE;
 			sampleRate=obj.getDouble("sample_rate");
-		}else if(strType.equals("javascript")){
-			type=JAVASCRIPT;
-			script=obj.getString("script");
-			String scriptData=Utility.readFile(script);
-			ScriptEngineManager mgr = new ScriptEngineManager();
-	        jsEngine = mgr.getEngineByName("JavaScript");
-	        // jsEngine = mgr.getEngineByName("nashorn");
-	        jsInvocable = (Invocable) jsEngine;
-			jsEngine.eval(scriptData);
 		}
-
-		// JSONObject filter=obj.getJSONObject("filter");
 	}
 
-	private void setBatchSize(int size){
-		BATCH_SIZE=size;
-	}
 
 	private void loadState() throws Exception{
-		JSONObject obj=new JSONObject(state.getLast());
+		JSONObject obj=new JSONObject(getStream("state").getLast());
 		index=obj.getInt("i");
 	}
 
 	private void saveState() throws Exception{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
-		state.append(obj);
+		getStream("state").append(obj);
 	}
 
 	private void processDocument(String str) throws Exception{
@@ -137,20 +88,20 @@ public class FilterService extends Service{
 			// Assume output not intended
 		}else{
 			// Send output along
-			output.append(out);
+			getStream("output").append(out);
 		}
 	}
 
 	public void run(){
 		try{
-			if(state.getCount()>0){
+			if(getStream("state").getCount()>0){
 				loadState();
 			}
-			log.info(id+" restarting at "+(index+1));
+			log.info(getId()+" restarting at "+(index+1));
 			isRunning(true);
 			while(shouldBeRunning()){
 				// Load
-				List<String> batch=input.get(index+1,index+BATCH_SIZE+1);
+				List<String> batch=getStream("input").get(index+1,index+getBatchSize()+1);
 				// Process
 				if(batch.size()==0){
 					// No new data, wait before pulling again

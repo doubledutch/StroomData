@@ -43,7 +43,7 @@ public class PartitionedAggregateService extends Service{
 	private Invocable jsInvocable;
 
 	public PartitionedAggregateService(StreamHandler handler,JSONObject obj) throws Exception{
-		super(handler);
+		super(handler,obj);
 		
 		id=obj.getString("id");
 		partition=obj.getString("partition");

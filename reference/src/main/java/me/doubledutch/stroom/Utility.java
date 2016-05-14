@@ -37,6 +37,7 @@ public class Utility{
 			con.addRequestProperty("Content-Type", "application/json");
 			byte[] outdata=body.getBytes("UTF-8");
 			con.setRequestProperty("Content-Length",""+outdata.length);
+			con.setDoOutput(true);
 			con.getOutputStream().write(outdata);
 
 			try(Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))){
