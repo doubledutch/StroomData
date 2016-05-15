@@ -24,6 +24,7 @@ public class MultiHostServer implements Runnable{
 
 	private StreamHandler streamHandler=null;
 	private ServiceManager serviceManager=null;
+	private ScriptManager scriptManager=null;
 
 	// private List<Service> serviceList=new ArrayList<Service>();
 
@@ -42,6 +43,7 @@ public class MultiHostServer implements Runnable{
 			streamHandler=new StreamHandler(config.getJSONObject("streams"));
 
 			serviceManager=new ServiceManager(streamHandler);
+			scriptManager=new ScriptManager(streamHandler);
 
 			/*
 			if(config.has("filters")){
@@ -167,6 +169,10 @@ public class MultiHostServer implements Runnable{
 			ServletContextHandler handler = new ServletContextHandler(server,"/", true, false);
 			ServletHolder servletHolder = new ServletHolder(StreamAPIServlet.class);
 			handler.addServlet(servletHolder, "/stream/*");
+			servletHolder = new ServletHolder(ServiceAPIServlet.class);
+			handler.addServlet(servletHolder, "/service/*");
+			servletHolder = new ServletHolder(ScriptAPIServlet.class);
+			handler.addServlet(servletHolder, "/script/*");
 
 			server.addConnector(c);
 			server.start();

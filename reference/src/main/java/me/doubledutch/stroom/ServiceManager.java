@@ -33,7 +33,11 @@ public class ServiceManager implements Runnable{
 
 	public void start(){
 		for(Service service:serviceMap.values()){
-			service.start();
+			try{
+				service.start();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -47,10 +51,18 @@ public class ServiceManager implements Runnable{
 
 	}
 
+	public void addService(JSONObject obj) throws Exception{
+		Service service=createService(obj);
+		serviceStream.append(obj);
+		serviceMap.put(obj.getString("id"),service);
+		service.start();
+	}
+
 	public void updateService(String id,JSONObject obj) throws Exception{
 		Service service=getService(id);
 		service.stop();
 		service=createService(obj);
+		serviceStream.append(obj);
 		serviceMap.put(id,service);
 		service.start();
 
@@ -62,10 +74,33 @@ public class ServiceManager implements Runnable{
 		service.stop();
 		service.reset();
 		service=createService(obj);
+		serviceStream.append(obj);
 		serviceMap.put(id,service);
 		service.start();
 
 		// TODO: look into dependency tracking for a more complete reset
+	}
+
+	public void disableService(String id) throws Exception{
+		Service service=getService(id);
+		service.stop();
+		service.setDisabled(true);
+		JSONObject config=service.getConfiguration();
+		serviceStream.append(config);
+	}
+
+	public void enableService(String id) throws Exception{
+		Service service=getService(id);
+		service.setDisabled(false);
+		JSONObject config=service.getConfiguration();
+		serviceStream.append(config);
+		service.start();
+	}
+
+	public void restartService(String id) throws Exception{
+		Service service=getService(id);
+		service.stop();
+		service.start();
 	}
 
 	public void stopService(String id) throws Exception{
@@ -137,6 +172,11 @@ public class ServiceManager implements Runnable{
 			}
 			batch=serviceStream.get(index,index+100);
 		}
+	}
+
+	public JSONObject toJSON(String id) throws Exception{
+		Service service=getService(id);
+		return service.toJSON();
 	}
 
 	public JSONArray toJSON() throws JSONException{

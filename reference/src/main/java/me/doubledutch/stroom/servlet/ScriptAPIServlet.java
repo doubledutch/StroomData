@@ -18,13 +18,36 @@ import me.doubledutch.stroom.*;
 
 import org.json.*;
 
-public class ServiceAPIServlet extends HttpServlet{
-	private final Logger log = Logger.getLogger("ServiceAPI");
+public class ScriptAPIServlet extends HttpServlet{
+	private final Logger log = Logger.getLogger("ScriptAPI");
 
 	private static StreamHandler streamHandler;
 
 	public static void setStreamHandler(StreamHandler streamHandlerArg){
 		streamHandler=streamHandlerArg;
+	}
+
+	@Override
+	protected void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+		try{
+			Writer out=response.getWriter();
+			response.setContentType("application/json");
+			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
+			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
+			String[] splitPath=uriPath.split("/");
+			if(uriPath.length()==0){
+				response.sendError(HttpServletResponse.SC_NOT_FOUND,"You must specify a script name...");
+			}else{
+				// Delete a script
+				ScriptManager.get().deleteScript("/"+uriPath);
+				JSONObject result=new JSONObject();
+				result.put("status","ok");
+				out.append(result.toString());
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR ,"Internal server error");
+		}
 	}
 
 	@Override
@@ -35,37 +58,12 @@ public class ServiceAPIServlet extends HttpServlet{
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");
-			if(splitPath.length==0){
-				// Create new service
-				String config=readPostBody(request);
-				ServiceManager.get().addService(new JSONObject(config));
-				JSONObject result=new JSONObject();
-				result.put("status","ok");
-				out.append(result.toString());
-			}else if(splitPath.length==2){
-				// Send command to service
-				// /service/:id/:command - the available commands are stop, start, restart, reset, disable and enable.
-				String id=splitPath[0];
-				String command=splitPath[1].trim().toLowerCase();
-				if(command.equals("stop")){
-					ServiceManager.get().stopService(id);
-				}else if(command.equals("start")){
-					ServiceManager.get().startService(id);
-				}else if(command.equals("restart")){
-					ServiceManager.get().restartService(id);
-				}else if(command.equals("reset")){
-					ServiceManager.get().resetService(id);
-				}else if(command.equals("disable")){
-					ServiceManager.get().disableService(id);
-				}else if(command.equals("enable")){
-					ServiceManager.get().enableService(id);
-				}else{
-					JSONObject result=new JSONObject();
-					result.put("status","err");
-					result.put("error","Unknown command "+command);
-					out.append(result.toString());
-					return;
-				}
+			if(uriPath.length()==0){
+				response.sendError(HttpServletResponse.SC_NOT_FOUND,"You must specify a script name...");
+			}else{
+				// Create new script
+				String script=readPostBody(request);
+				ScriptManager.get().setScript("/"+uriPath,script);
 				JSONObject result=new JSONObject();
 				result.put("status","ok");
 				out.append(result.toString());
@@ -78,48 +76,34 @@ public class ServiceAPIServlet extends HttpServlet{
 
 	@Override
 	protected void doPut(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-		try{
-			Writer out=response.getWriter();
-			response.setContentType("application/json");
-			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
-			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
-			String[] splitPath=uriPath.split("/");
-			if(splitPath.length==1){
-				// Update a service
-			}else if(splitPath.length==2){
-				// Update and send command to service
-				// /service/:id/:command - the available commands are stop, start, restart, reset, disable and enable.
-			}
-		}catch(Exception e){
-			e.printStackTrace();
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR ,"Internal server error");
-			/*JSONObject obj=new JSONObject();
-			obj.put("status","err");
-			obj.put("error",e.toString());*/
-		}
+		doPost(request,response);
 	}
 
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		try{
 			Writer out=response.getWriter();
-			response.setContentType("application/json");
+			
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");
+			// System.out.println(splitPath.length+" "+splitPath[0]);
 			if(uriPath.length()==0){
-				// List services
-				JSONArray result=ServiceManager.get().toJSON();
+				// List scripts
+				response.setContentType("application/json");
+				JSONArray result=ScriptManager.get().toJSON();
 				out.write(result.toString());
 				return;
-			}else if(splitPath.length==1){
-				// Get specific service status
-				String id=splitPath[0];
-				JSONObject result=ServiceManager.get().toJSON(id);
-				// Stream stream=streamHandler.getOrCreateStream(topic);
-				// out.append(stream.toJSON().toString());
 			}else{
-				response.sendError(HttpServletResponse.SC_NOT_FOUND,"You must specify either a service id or nothing at all...");
+				// TODO: for now, we always get a specific script.. eventually, a sublist ability would be great
+				
+				String script=ScriptManager.get().getScript("/"+uriPath);
+				if(script==null){
+					response.sendError(HttpServletResponse.SC_NOT_FOUND,"Script '/"+uriPath+"' not found...");
+				}else{
+					response.setContentType("text/plain");
+					out.append(script);
+				}
 			}
 		}catch(Exception e){
 			e.printStackTrace();

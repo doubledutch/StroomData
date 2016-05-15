@@ -68,8 +68,32 @@ public abstract class Service implements Runnable{
 			url=obj.getString("url");
 		}else if(strType.equals("javascript")){
 			type=JAVASCRIPT;
+			/*
 			script=obj.getString("script");
 			String scriptData=Utility.readFile(script);
+			ScriptEngineManager mgr = new ScriptEngineManager();
+	        jsEngine = mgr.getEngineByName("JavaScript");
+	        // jsEngine = mgr.getEngineByName("nashorn");
+	        jsInvocable = (Invocable) jsEngine;
+	        Bindings bindings=jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
+	        bindings.put("stdout",System.out);
+	        for(String key:streamMap.keySet()){
+	        	bindings.put(key,streamMap.get(key));
+	        }
+			jsEngine.eval(scriptData);*/
+			// reloadScript();
+		}
+	}
+
+	private void reloadScript() throws Exception{
+		if(!config.has("type"))return;
+		if(config.getString("type").equals("javascript")){
+			if(jsEngine!=null){
+				// Figure out a better way to dispose or recycle
+				jsEngine=null;
+			}
+			script=config.getString("script");
+			String scriptData=ScriptManager.get().getScript(script);
 			ScriptEngineManager mgr = new ScriptEngineManager();
 	        jsEngine = mgr.getEngineByName("JavaScript");
 	        // jsEngine = mgr.getEngineByName("nashorn");
@@ -85,6 +109,15 @@ public abstract class Service implements Runnable{
 			*/
 			jsEngine.eval(scriptData);
 		}
+	}
+
+	public void setDisabled(boolean value) throws JSONException{
+		isDisabled=value;
+		config.put("disabled",value);
+	}
+
+	public JSONObject getConfiguration(){
+		return config;
 	}
 
 	public StreamConnection getStream(String name){
@@ -124,8 +157,9 @@ public abstract class Service implements Runnable{
 
 	public abstract void reset() throws Exception;
 
-	public void start(){
+	public void start() throws Exception{
 		if(isDisabled)return;
+		reloadScript();
 		shouldBeRunning=true;
 		thread=new Thread(this);
 		thread.start();
