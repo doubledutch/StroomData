@@ -44,7 +44,6 @@ public class FilterService extends Service{
 		}
 	}
 
-
 	private void loadState() throws Exception{
 		JSONObject obj=new JSONObject(getStream("state").getLast());
 		index=obj.getInt("i");
@@ -54,6 +53,11 @@ public class FilterService extends Service{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
 		getStream("state").append(obj);
+	}
+
+	public void reset() throws Exception{
+		getStream("state").truncate(0);
+		getStream("output").truncate(0);
 	}
 
 	private void processDocument(String str) throws Exception{
@@ -130,7 +134,7 @@ public class FilterService extends Service{
 	}
 
 	public JSONObject toJSON() throws JSONException{
-		JSONObject obj=new JSONObject();
+		JSONObject obj=super.toJSON();
 		return obj;
 	}
 }

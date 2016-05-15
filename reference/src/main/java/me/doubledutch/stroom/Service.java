@@ -25,6 +25,7 @@ public abstract class Service implements Runnable{
 	private boolean isRunning=false;
 	private boolean shouldBeRunning=false;
 	private Thread thread=null;
+	private boolean isDisabled=false;
 
 	private String id;
 
@@ -32,15 +33,19 @@ public abstract class Service implements Runnable{
 
 	public ScriptEngine jsEngine;
 	public Invocable jsInvocable;
+	private JSONObject config;
 
 	private Map<String,StreamConnection> streamMap=new HashMap<String,StreamConnection>();
 
 	public Service(StreamHandler streamHandler,JSONObject obj) throws Exception{
 		this.streamHandler=streamHandler;
-
+		this.config=obj;
 		id=obj.getString("id");
 		if(obj.has("batch_size")){
 			setBatchSize(obj.getInt("batch_size"));
+		}
+		if(obj.has("disabled")){
+			isDisabled=obj.getBoolean("disabled");
 		}
 
 		JSONObject streams=obj.getJSONObject("streams");
@@ -117,7 +122,10 @@ public abstract class Service implements Runnable{
 		return shouldBeRunning;
 	}
 
+	public abstract void reset() throws Exception;
+
 	public void start(){
+		if(isDisabled)return;
 		shouldBeRunning=true;
 		thread=new Thread(this);
 		thread.start();
@@ -134,7 +142,19 @@ public abstract class Service implements Runnable{
 
 	public abstract void run();
 
-	public abstract JSONObject toJSON() throws JSONException;
+	public JSONObject toJSON() throws JSONException{
+		JSONObject obj=new JSONObject();
+		obj.put("id",id);
+		if(isRunning){
+			obj.put("state","RUNNING");
+		}else{
+			obj.put("state","STOPPED");
+		}
+		config.put("disabled",isDisabled);
+		config.put("batch_size",BATCH_SIZE);
+		obj.put("config",config);
+		return obj;
+	}
 
 	public StreamConnection openStream(URI stream) throws IOException{
 		String scheme=stream.getScheme();

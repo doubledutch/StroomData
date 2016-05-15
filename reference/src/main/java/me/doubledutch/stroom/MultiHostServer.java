@@ -23,7 +23,9 @@ public class MultiHostServer implements Runnable{
 	private Server server=null;
 
 	private StreamHandler streamHandler=null;
-	private List<Service> serviceList=new ArrayList<Service>();
+	private ServiceManager serviceManager=null;
+
+	// private List<Service> serviceList=new ArrayList<Service>();
 
 	public MultiHostServer(String configLocation){
 		try{
@@ -39,6 +41,9 @@ public class MultiHostServer implements Runnable{
 			log.info("Creating services");
 			streamHandler=new StreamHandler(config.getJSONObject("streams"));
 
+			serviceManager=new ServiceManager(streamHandler);
+
+			/*
 			if(config.has("filters")){
 				JSONArray services=config.getJSONArray("filters");
 				for(int i=0;i<services.length();i++){
@@ -57,7 +62,7 @@ public class MultiHostServer implements Runnable{
 					// TODO: add to api endpoints
 					serviceList.add(aggregate);
 				}
-			}
+			}*/
 			// service=new Service(streamHandler);
 			
 			// Start servlets
@@ -67,9 +72,10 @@ public class MultiHostServer implements Runnable{
 
 			// Start services
 			log.info("Starting services");
-			for(Service service:serviceList){
-				service.start();
-			}
+			serviceManager.start();
+			// for(Service service:serviceList){
+			//	service.start();
+			// }
 
 			// Setup shutdown hook
 			Runtime.getRuntime().addShutdownHook(new Thread(this));
@@ -84,18 +90,21 @@ public class MultiHostServer implements Runnable{
 	 */
 	public void run(){
 		// Stop services
-		for(Service service:serviceList){
-			try{
-				service.stop();
-			}catch(Exception e){}
-		}
+		// for(Service service:serviceList){
+		//	try{
+		//		service.stop();
+		//	}catch(Exception e){}
+		//}
+		try{
+			serviceManager.stop();
+		}catch(Exception e){}
 		// Stop servlets
 		try{
 			server.stop();
 		}catch(Exception e){}
 		// Stop streamHandler
 		try{
-			// streamHandler.stop();
+			streamHandler.stop();
 		}catch(Exception e){}
 	}
 

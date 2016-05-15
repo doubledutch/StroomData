@@ -35,6 +35,11 @@ public class AggregateService extends Service{
 		getStream("state").append(obj);
 	}
 
+	public void reset() throws Exception{
+		getStream("state").truncate(0);
+		getStream("output").truncate(0);
+	}
+
 	private void processDocument(String str) throws Exception{
 		// System.out.println("Process document");
 		// TODO: add ability to batch output
@@ -110,7 +115,7 @@ public class AggregateService extends Service{
 	}
 
 	public JSONObject toJSON() throws JSONException{
-		JSONObject obj=new JSONObject();
+		JSONObject obj=super.toJSON();
 		return obj;
 	}
 }

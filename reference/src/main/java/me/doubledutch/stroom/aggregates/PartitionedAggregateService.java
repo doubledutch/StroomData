@@ -100,6 +100,11 @@ public class PartitionedAggregateService extends Service{
 
 	}
 
+	public void reset() throws Exception{
+		getStream("state").truncate(0);
+		getStream("output").truncate(0);
+	}
+
 	private void saveState() throws Exception{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
@@ -201,7 +206,7 @@ public class PartitionedAggregateService extends Service{
 	}
 
 	public JSONObject toJSON() throws JSONException{
-		JSONObject obj=new JSONObject();
+		JSONObject obj=super.toJSON();
 		return obj;
 	}
 }
