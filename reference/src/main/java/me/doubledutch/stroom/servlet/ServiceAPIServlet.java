@@ -35,7 +35,7 @@ public class ServiceAPIServlet extends HttpServlet{
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");
-			if(splitPath.length==0){
+			if(uriPath.length()==0){
 				// Create new service
 				String config=readPostBody(request);
 				ServiceManager.get().addService(new JSONObject(config));
