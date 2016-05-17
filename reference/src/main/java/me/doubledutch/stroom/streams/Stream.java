@@ -309,6 +309,7 @@ public class Stream implements Runnable{
 	}
 
 	public Document getDocument(long location) throws IOException{
+		if(location<0)return null;
 		if(location>currentLocation)return null;
 		waitForCommit(location);
 		Index index=getIndexForLocation(location);
@@ -362,6 +363,7 @@ public class Stream implements Runnable{
 	}
 
 	public List<Document> getDocuments(long startLocation,long endLocation) throws IOException{
+		if(startLocation<0)startLocation=0;
 		if(startLocation>currentLocation)return new LinkedList<Document>();
 		if(endLocation>currentLocation)endLocation=currentLocation;
 		waitForCommit(endLocation);

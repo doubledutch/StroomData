@@ -38,6 +38,9 @@ public class AggregateService extends Service{
 	public void reset() throws Exception{
 		getStream("state").truncate(0);
 		getStream("output").truncate(0);
+		index=-1;
+		outputIndex=-1;
+		aggregate=null;
 	}
 
 	private void processDocument(String str) throws Exception{

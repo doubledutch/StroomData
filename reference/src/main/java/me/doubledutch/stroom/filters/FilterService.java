@@ -58,6 +58,7 @@ public class FilterService extends Service{
 	public void reset() throws Exception{
 		getStream("state").truncate(0);
 		getStream("output").truncate(0);
+		index=-1;
 	}
 
 	private void processDocument(String str) throws Exception{
