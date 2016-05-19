@@ -40,7 +40,7 @@ public class StreamAPIServlet extends HttpServlet{
 				// List streams
 				JSONArray result=new JSONArray();
 				for(Stream stream:streamHandler.getStreams()){
-					if(stream.getTopic().indexOf(".")==-1){
+					if(stream.getTopic().indexOf(".")==-1 && !stream.getTopic().startsWith("_")){
 						result.put(stream.toJSON());
 					}
 				}
