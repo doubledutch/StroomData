@@ -86,6 +86,11 @@ public class ServiceAPIServlet extends HttpServlet{
 			String[] splitPath=uriPath.split("/");
 			if(splitPath.length==1){
 				// Update a service
+				String config=readPostBody(request);
+				ServiceManager.get().updateService(splitPath[0],new JSONObject(config));
+				JSONObject result=new JSONObject();
+				result.put("status","ok");
+				out.append(result.toString());
 			}else if(splitPath.length==2){
 				// Update and send command to service
 				// /service/:id/:command - the available commands are stop, start, restart, reset, disable and enable.
