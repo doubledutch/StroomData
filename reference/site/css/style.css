@@ -1,0 +1,67 @@
+body{
+	background:#EEEEEE;
+	margin:0px;
+	font-family: Roboto, Arial, sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.menu{
+	background:#888888;
+	padding-left:25px;
+}
+
+.menu_item{
+	background: #AAAAAA;
+	display:inline-block;
+	padding:10px;
+	margin-top:10px;
+	margin-right:5px;
+}
+
+.menu_item:hover{
+	cursor:pointer;
+}
+
+.selected{
+	background:#EEEEEE;
+}
+
+.page_content{
+	margin-left:25px;
+	margin-right:25px;
+	margin-top:10px;
+}
+
+label{
+	display:block;
+}
+
+select{
+	display: block;
+	width:400px;
+}
+
+input{
+	display:block;
+	width:400px;
+	font-size:12px;
+}
+
+textarea{
+	display:block;
+	width:400px;
+	height:100px;
+	font-size:12px;
+}
+
+.form_button{
+	width:125px;
+}
+
+.footer {
+	color:#AAAAAA;
+	font-size:10;
+	margin-top:25px;
+}
+

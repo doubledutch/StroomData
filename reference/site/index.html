@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>DD Reporting Service</title>
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="page"></div>
+    <script src="js/polyfill.js"></script>
+    <script src="js/redux.js"></script>
+    <script src="js/parse-tag.js"></script>
+    <script src="js/hyperscript.js"></script>
+    <script src="js/react-with-addons-15.0.0.js"></script>
+    <script src="js/react-dom-15.0.0.js"></script>
+    
+	<script src="react/menu.js"></script>
+    <script src="react/streams.js"></script>
+    <script src="react/services.js"></script>
+    <script src="react/explorer.js"></script>
+    <script src="react/system.js"></script>
+    <script>
+
+    var defaultState={
+    	'streams':[
+    	],
+    	'services':[
+    		
+    	],
+    	'system':{},
+    	'pages':[
+            {'title':'Services','id':'services'},
+            {'title':'Streams','id':'streams'},
+    		{'title':'Data Explorer','id':'explorer'}
+    	],
+    	'current_page':'services'
+    }
+    function setReducer(state,path,value){
+    	if(path.length>1){
+    		return Object.assign(state,setReducer(state[path[0]],path.slice(1),value))
+    	}else{
+    		var data={}
+    		data[path[0]]=value
+    		return Object.assign(state,data)
+    	}
+    }
+
+    function serverReducer(state,action){
+    	if(action.type=='SERVER_STREAMS'){
+    		state=Object.assign(state,{'streams':action.data});
+    	}else if(action.type=='SERVER_SERVICES'){
+            state=Object.assign(state,{'services':action.data});
+        }else if(action.type=='SERVER_SYSTEM'){
+            state=Object.assign(state,{'jobs':action.data});
+        }
+    	return state
+    }
+
+    function mainReducer(state,action){
+    	// console.log(action)
+    	if(state==null){
+    		state=defaultState
+    	}
+    	if(action.type=='MENU_SELECT'){
+    		state=Object.assign(state,{'current_page':action.id})
+    	}else if(action.type==("SET")){
+    		state=Object.assign(state,setReducer(state,action.path,action.value))
+    	}else if(action.type.startsWith('SERVER_')){
+    		state=Object.assign(state,serverReducer(state,action))
+    	}
+    	return state
+    }
+
+    var store = Redux.createStore(mainReducer)
+
+
+  	var Page = React.createClass({
+	  	render: function() {
+	  		var elements=[]
+	  		if(this.props.current_page=='services'){
+		    	elements.push(h(ServicePage,this.props))
+		    }else if(this.props.current_page=='streams'){
+		    	elements.push(h(StreamPage,this.props))
+		    }else if(this.props.current_page=='explorer'){
+		    	elements.push(h(ExplorerPage,this.props))
+		    }
+		    elements.push(h('div.footer','Stroom // (c) 2016 DoubleDutch'))
+		    return h('div',[
+		    	h(MenuBar,this.props),
+		    	h('div.page_content',elements)
+		   		])
+	  	}
+	})
+
+  	function renderPage(){
+		ReactDOM.render(
+		  	React.createElement(Page,store.getState()),
+		  	document.getElementById('page')
+		)
+	}
+
+	renderPage()
+
+	store.subscribe(function(){
+		renderPage()
+	})
+
+	function updateSources(){
+        var state=store.getState()
+		fetch('/stream/', {
+	  		method: 'GET',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			store.dispatch({type:'SERVER_STREAMS',data:json})
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+        fetch('/service/', {
+            method: 'GET',
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            return response.json()
+        }).then(function(json) {
+            store.dispatch({type:'SERVER_SERVICES',data:json})
+        }).catch(function(ex) {
+            console.log('parsing failed', ex)
+        })
+	}
+
+	updateSources()
+	setInterval(updateSources, 5000)
+
+    </script>
+  </body>
+</html>

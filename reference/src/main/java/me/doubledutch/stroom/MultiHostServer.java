@@ -173,6 +173,8 @@ public class MultiHostServer implements Runnable{
 			handler.addServlet(servletHolder, "/service/*");
 			servletHolder = new ServletHolder(ScriptAPIServlet.class);
 			handler.addServlet(servletHolder, "/script/*");
+			servletHolder = new ServletHolder(FileServlet.class);
+			handler.addServlet(servletHolder, "/*");
 
 			server.addConnector(c);
 			server.start();
