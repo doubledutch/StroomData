@@ -18,7 +18,7 @@ import me.doubledutch.stroom.aggregates.*;
 
 public class MultiHostServer implements Runnable{
 	private final Logger log = Logger.getLogger("MultiHost");
-	private JSONObject config=null;
+	private static JSONObject config=null;
 
 	private Server server=null;
 
@@ -27,6 +27,10 @@ public class MultiHostServer implements Runnable{
 	private ScriptManager scriptManager=null;
 
 	// private List<Service> serviceList=new ArrayList<Service>();
+
+	public static JSONObject getConfig(){
+		return config;
+	}
 
 	public MultiHostServer(String configLocation){
 		try{
@@ -173,6 +177,8 @@ public class MultiHostServer implements Runnable{
 			handler.addServlet(servletHolder, "/service/*");
 			servletHolder = new ServletHolder(ScriptAPIServlet.class);
 			handler.addServlet(servletHolder, "/script/*");
+			servletHolder = new ServletHolder(SystemAPIServlet.class);
+			handler.addServlet(servletHolder, "/system/*");
 			servletHolder = new ServletHolder(FileServlet.class);
 			handler.addServlet(servletHolder, "/*");
 

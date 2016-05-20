@@ -6,9 +6,72 @@ body{
 	font-weight: 500;
 }
 
+.title{
+	color:#FFFFFF;
+	float:left;
+	font-size:20px;
+	padding-top: 5px;
+}
+
+.version{
+	color:#AAAAAA;
+	float:left;
+	font-size:12px;
+	padding-left: 10px;
+	padding-top: 12px;
+}
+
+.meter{
+	background:#555555;
+	display:inline-block;
+	margin-right:4px;
+	margin-top:4px;
+}
+
+.meter_title{
+	color:#AAAAAA;
+	padding-left:5px;padding-right:10px;
+	display:inline-block;
+	vertical-align: middle;
+}
+
+.meter_container{
+	background: #888888;
+	width:150px;
+	display:inline-block;
+	vertical-align: middle;
+	padding:2px;
+	margin:2px;
+}
+
+.meter_value{
+	background: #FFFFFF;
+	height:15px;width:100px;
+}
+
+.meter_numeric{
+	display:inline-block;
+	background: #444444;
+	vertical-align: middle;
+	height:15px;width:40px;
+	padding:2px;
+	margin:2px;
+}
+
+.system{
+	background: #000000;
+	background-image:url('/img/logo_red_m.png');
+	background-size: 32px 32px;
+	background-repeat: no-repeat;
+	height:32px;
+	padding-left:40px;
+	color:#FFFFFF;
+	text-align:right;
+}
+
 .menu{
 	background:#888888;
-	padding-left:25px;
+	padding-left:32px;
 }
 
 .menu_item{
@@ -63,5 +126,47 @@ textarea{
 	color:#AAAAAA;
 	font-size:10;
 	margin-top:25px;
+}
+
+.data_header{
+	margin-top:10px;
+	font-weight:bold;
+	display:flex;
+	text-transform:capitalize;
+}
+.data_cell{
+	display:block;
+	padding:10px;
+}
+
+.data_cell.small{
+	width:100px;
+}
+
+.data_cell.medium{
+	width:200px;
+}
+
+.data_cell.large{
+	width:300px;
+}
+
+.data_cell.flex{
+	display:flex;
+	flex-basis: 0px;
+	flex-grow: 10;r
+	flex-shrink: 1;
+}
+
+.data_table{
+	background:#FFFFFF;
+	border-left:1px solid #AAAAAA;
+	border-right:1px solid #AAAAAA;
+	border-top:1px solid #AAAAAA;
+}
+
+.data_row{
+	border-bottom:1px solid #AAAAAA;
+	display:flex;
 }
 

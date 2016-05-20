@@ -3,12 +3,15 @@ var ServicePage = React.createClass({
 	render: function(){
 		var elements=[]
 		// Add header
-		elements.push(h('p','So many services...'))
-		// Add services
-		for(var i=0;i<this.props.services.length;i++){
-			var service=this.props.services[i]
-			elements.push(h('div',service.id))
-		}
+		// elements.push(h('p','So many streams...'))
+
+		elements.push(h(TableView,{data:this.props.services,columns:[
+			{key:'id',width:'flex'},
+			{key:'service',width:'small'},
+			{key:'type',width:'small'},
+			{key:'state',width:'medium'}
+		]}))
+
 		// Return enclosing div with elements
 		return h('div',elements)
 	}

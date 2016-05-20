@@ -161,7 +161,7 @@ public abstract class Service implements Runnable{
 		if(isDisabled)return;
 		reloadScript();
 		shouldBeRunning=true;
-		thread=new Thread(this);
+		thread=new Thread(this,"Service."+id);
 		thread.start();
 	}
 
@@ -177,16 +177,16 @@ public abstract class Service implements Runnable{
 	public abstract void run();
 
 	public JSONObject toJSON() throws JSONException{
-		JSONObject obj=new JSONObject();
-		obj.put("id",id);
+		JSONObject obj=new JSONObject(config.toString());
+		// obj.put("id",id);
 		if(isRunning){
 			obj.put("state","RUNNING");
 		}else{
 			obj.put("state","STOPPED");
 		}
-		config.put("disabled",isDisabled);
-		config.put("batch_size",BATCH_SIZE);
-		obj.put("config",config);
+		obj.put("disabled",isDisabled);
+		obj.put("batch_size",BATCH_SIZE);
+		// obj.put("config",config);
 		return obj;
 	}
 

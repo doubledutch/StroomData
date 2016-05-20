@@ -2,8 +2,11 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>DD Reporting Service</title>
+    <title>Stroom</title>
     <link href="css/style.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/img/logo_red_s.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/img/logo_red_m.png" sizes="196x196">
+
   </head>
   <body>
     <div id="page"></div>
@@ -14,6 +17,7 @@
     <script src="js/react-with-addons-15.0.0.js"></script>
     <script src="js/react-dom-15.0.0.js"></script>
     
+    <script src="react/table.js"></script>
 	<script src="react/menu.js"></script>
     <script src="react/streams.js"></script>
     <script src="react/services.js"></script>
@@ -28,7 +32,20 @@
     	'services':[
     		
     	],
-    	'system':{},
+    	'system':{
+            'build_number':'n/a',
+            'build_version':'n/a',
+            'build_date':'n/a',
+            'cpu_cores':1,
+            'memory_free':0,
+            'memory_max':1,
+            'memory_total':1,
+            'memory_used':1,
+            'service_threads':0,
+            'disk_free':0,
+            'disk_total':1,
+            'disk_used':1
+        },
     	'pages':[
             {'title':'Services','id':'services'},
             {'title':'Streams','id':'streams'},
@@ -52,7 +69,7 @@
     	}else if(action.type=='SERVER_SERVICES'){
             state=Object.assign(state,{'services':action.data});
         }else if(action.type=='SERVER_SYSTEM'){
-            state=Object.assign(state,{'jobs':action.data});
+            state=Object.assign(state,{'system':action.data});
         }
     	return state
     }
@@ -87,6 +104,7 @@
 		    }
 		    elements.push(h('div.footer','Stroom // (c) 2016 DoubleDutch'))
 		    return h('div',[
+                h(SystemBar,this.props),
 		    	h(MenuBar,this.props),
 		    	h('div.page_content',elements)
 		   		])
@@ -131,7 +149,22 @@
         }).then(function(response) {
             return response.json()
         }).then(function(json) {
+            // console.log(json)
             store.dispatch({type:'SERVER_SERVICES',data:json})
+        }).catch(function(ex) {
+            console.log('parsing failed', ex)
+        })
+        fetch('/system/', {
+            method: 'GET',
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            return response.json()
+        }).then(function(json) {
+           // console.log(json)
+            store.dispatch({type:'SERVER_SYSTEM',data:json})
         }).catch(function(ex) {
             console.log('parsing failed', ex)
         })

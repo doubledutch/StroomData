@@ -16,6 +16,8 @@ public class ServiceManager implements Runnable{
 	private Map<String,JSONObject> agg=new HashMap<String,JSONObject>();
 
 	private StreamConnection serviceStream;
+	private Thread thread=null;
+	private ThreadGroup threadGroup=null;
 
 	public ServiceManager(StreamHandler handler) throws Exception{
 		app=this;
@@ -25,6 +27,11 @@ public class ServiceManager implements Runnable{
 		serviceStream=new LocalStreamConnection(streamHandler.getOrCreateStream("_stroom_service"));
 		loadState();
 		createServices();
+		threadGroup=new ThreadGroup("ServiceManager");
+	}
+
+	public ThreadGroup getThreadGroup(){
+		return threadGroup;
 	}
 
 	public static ServiceManager get(){
@@ -32,13 +39,8 @@ public class ServiceManager implements Runnable{
 	}
 
 	public void start(){
-		for(Service service:serviceMap.values()){
-			try{
-				service.start();
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-		}
+		thread=new Thread(threadGroup,this,"ServiceManager.Initializer");
+		thread.start();
 	}
 
 	public void stop(){
@@ -48,7 +50,13 @@ public class ServiceManager implements Runnable{
 	}
 
 	public void run(){
-
+		for(Service service:serviceMap.values()){
+			try{
+				service.start();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void addService(JSONObject obj) throws Exception{

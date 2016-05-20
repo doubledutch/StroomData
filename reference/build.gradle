@@ -27,6 +27,18 @@ dependencies {
 }
 
 jar {
+        def versionPropsFile = file('./src/main/resources/version.properties')
+ 
+    if (versionPropsFile.canRead()) {
+        def Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionPropsFile))
+        def versionBuild = versionProps['BUILD_NUMBER'].toInteger() + 1
+        versionProps['BUILD_NUMBER'] = versionBuild.toString()
+        versionProps['BUILD_DATE']=new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("UTC")).toString()
+        versionProps['BUILD_VERSION']=version
+        versionProps.store(versionPropsFile.newWriter(), null)
+    }
+
      baseName="multihost"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
