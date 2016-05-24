@@ -140,10 +140,17 @@ public class StreamAPIServlet extends HttpServlet{
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");
-			if(splitPath.length==2){
+			if(splitPath.length==1){
+				String topic=splitPath[0];
+				streamHandler.deleteStream(topic);
+				response.setContentType("application/json");
+				response.getWriter().append("{\"result\":\"ok\"}");
+			}else if(splitPath.length==2){
 				String topic=splitPath[0];
 				String index=splitPath[1];
 				streamHandler.truncateStream(topic,Long.parseLong(index));
+				response.setContentType("application/json");
+				response.getWriter().append("{\"result\":\"ok\"}");
 			}else{
 				response.sendError(HttpServletResponse.SC_NOT_FOUND,"You must specify both topic and location.");
 			}

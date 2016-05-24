@@ -96,4 +96,10 @@ public class StreamHandler{
 		Stream stream=getOrCreateStream(topic);
 		stream.truncate(index);
 	}
+
+	public void deleteStream(String topic) throws IOException{
+		Stream stream=getOrCreateStream(topic);
+		stream.truncate(0);
+		streamMap.remove(topic);
+	}
 }
