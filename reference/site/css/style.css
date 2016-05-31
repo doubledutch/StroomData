@@ -26,6 +26,7 @@ body{
 	display:inline-block;
 	margin-right:4px;
 	margin-top:4px;
+	font-size:12px;
 }
 
 .meter_title{
@@ -36,6 +37,7 @@ body{
 }
 
 .meter_container{
+	position:relative;
 	background: #888888;
 	width:150px;
 	display:inline-block;
@@ -44,16 +46,32 @@ body{
 	margin:2px;
 }
 
+.meter_hover{
+	display:none;
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:150px;
+	height:13px;
+	text-align:center;
+	padding:2px;
+	background: #000000;
+}
+
+.meter:hover .meter_hover{
+	display : block;
+}
+
 .meter_value{
-	background: #FFFFFF;
-	height:15px;width:100px;
+	background: #CCCCCC;
+	height:13px;width:100px;
 }
 
 .meter_numeric{
 	display:inline-block;
 	background: #444444;
 	vertical-align: middle;
-	height:15px;width:40px;
+	height:13px;width:30px;
 	padding:2px;
 	margin:2px;
 }
@@ -70,7 +88,7 @@ body{
 }
 
 .menu{
-	background:#888888;
+	background:linear-gradient( 0deg, #444444, #000000 );
 	padding-left:32px;
 }
 
@@ -108,18 +126,47 @@ select{
 input{
 	display:block;
 	width:400px;
-	font-size:12px;
+	font-size:14px;
 }
 
 textarea{
 	display:block;
 	width:400px;
 	height:100px;
-	font-size:12px;
+	font-size:14px;
 }
 
 .form_button{
 	width:125px;
+	height:25px;
+	margin-right:5px;
+	background: #FFFFFF;
+	border:1px solid #AAAAAA;
+}
+
+.form_button:hover{
+	background: #DDDDDD;
+}
+
+.small_button{
+	width:50px;
+	height:25px;
+	margin-right:5px;
+	background: #FFFFFF;
+	border:1px solid #AAAAAA;
+}
+
+.small_button:hover{
+	background: #DDDDDD;
+}
+
+.form_spacer{
+	width:25px;
+	display:inline-block;
+}
+
+.form_separator{
+	height:15px;
 }
 
 .footer {
@@ -170,3 +217,94 @@ textarea{
 	display:flex;
 }
 
+.open_row{
+	border-bottom:1px dashed #DDDDDD;
+	background: #F5F5F5;
+}
+
+.inspector{
+	background: #F5F5F5;
+	border-bottom:1px solid #AAAAAA;
+	display:flex;
+	padding:10px;
+}
+
+.data_row:hover{
+	background: #EEEEEE;
+}
+
+.expanded_row{
+	background: #FF0000;
+}
+
+.browse_header{
+	background: #000000;
+	color:#FFFFFF;
+	padding:10px;
+	display:flex;
+}
+
+.browse_page{
+	background: #FFFFFF;
+	border-left:1px solid #AAAAAA;
+	border-right:1px solid #AAAAAA;
+	color:#000000;
+	padding:10px;
+	font-family:sans-serif,courier;
+	white-space: pre;
+}
+
+.json_key {
+	color:#0055AA;
+}
+.json_string {
+	color:#007722;
+}
+.json_number {
+	color:#AA5500;
+}
+.json_boolean {
+	color:#AA0088;
+}
+.json_symbol {
+	color:#999999;
+}
+.json_block {
+	color:#000000;
+}
+.json_null {
+	color:#FF5500;
+}
+
+.browse_footer{
+	display:flex;
+	background: #F5F5F5;
+	border:1px solid #AAAAAA;
+	color:#000000;
+	padding:10px;
+}
+
+.editor{
+	box-sizing: border-box;
+	width:100%;margin-top:10px;
+	height:500px;
+	padding:10px;
+	white-space: pre;
+	font-family: courier,sans-serif
+}
+
+.eval_success{
+	background: #BBFFBB;
+	padding:10px;
+	border-left:1px solid #AAAAAA;
+	border-right:1px solid #AAAAAA;
+	border-top:1px solid #AAAAAA;
+}
+
+.eval_error{
+	background: #FFBBBB;
+	padding:10px;
+	border-left:1px solid #AAAAAA;
+	border-right:1px solid #AAAAAA;
+	border-top:1px solid #AAAAAA;
+}

@@ -85,11 +85,12 @@ public class ScriptManager implements Runnable{
 	}
 
 	public JSONObject toJSON(String id) throws JSONException{
-		JSONObject script=new JSONObject();
-		script.put("name",id);
-		script.put("script",getScript(id));
+		JSONObject result=new JSONObject();
+		result.put("name",id);
+		String script=getScript(id);
+		result.put("size",script.length());
 		// TODO: add dependency tracking here!
-		return script;
+		return result;
 	}
 
 	public JSONArray toJSON() throws JSONException{

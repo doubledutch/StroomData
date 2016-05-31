@@ -21,7 +21,24 @@ var SystemMeter=React.createClass({
 		// console.log('v '+value+'  m '+max)
 		var ratio=value/max
 		var size=Math.floor(ratio*146)
-		return h('div.meter',[h('div.meter_title',this.props.title),h('div.meter_container',[h('div.meter_value',{'style':{'width':size+'px'}})])])
+
+		var unit='kb'
+		value=Math.floor(value/1024)
+		max=Math.floor(max/1024)
+		if(value>9*1024){
+			unit='mb'
+			value=Math.floor(value/1024)
+			max=Math.floor(max/1024)
+		}
+		if(value>9*1024){
+			unit='gb'
+			value=Math.floor(value/1024)
+			max=Math.floor(max/1024)
+		}
+		return h('div.meter',[h('div.meter_title',this.props.title),
+					h('div.meter_container',
+						[h('div.meter_value',{'style':{'width':size+'px'}}),
+						 h('div.meter_hover',value+' / '+max+' '+unit)])])
 	}
 })
 

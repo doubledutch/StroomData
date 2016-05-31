@@ -17,12 +17,14 @@
     <script src="js/react-with-addons-15.0.0.js"></script>
     <script src="js/react-dom-15.0.0.js"></script>
     
+    <script src="react/json.js"></script>
     <script src="react/table.js"></script>
 	<script src="react/menu.js"></script>
     <script src="react/streams.js"></script>
     <script src="react/services.js"></script>
     <script src="react/explorer.js"></script>
     <script src="react/system.js"></script>
+    <script src="react/scripts.js"></script>
     <script>
 
     var defaultState={
@@ -32,6 +34,8 @@
     	'services':[
     		
     	],
+        'scripts':[
+        ],
     	'system':{
             'build_number':'n/a',
             'build_version':'n/a',
@@ -49,9 +53,28 @@
     	'pages':[
             {'title':'Services','id':'services'},
             {'title':'Streams','id':'streams'},
-    		{'title':'Data Explorer','id':'explorer'}
+            {'title':'Scripts','id':'scripts'}
+    		// {'title':'Data Explorer','id':'explorer'}
     	],
-    	'current_page':'services'
+    	'current_page':'services',
+        'current_stream':null,
+        'stream_browser':{
+            'topic':null,
+            'show':false,
+            'index':null,
+            'browse':'_',
+            'count':-1,
+            'data':null
+        },
+        'current_script':null,
+        'script_editor':{
+            'show':false,
+            'eval_error':null,
+            'eval_success':null
+        },
+        'service_editor':{
+            'show':false
+        }
     }
     function setReducer(state,path,value){
     	if(path.length>1){
@@ -70,8 +93,126 @@
             state=Object.assign(state,{'services':action.data});
         }else if(action.type=='SERVER_SYSTEM'){
             state=Object.assign(state,{'system':action.data});
+        }else if(action.type=='SERVER_SCRIPTS'){
+            state=Object.assign(state,{'scripts':action.data});
         }
     	return state
+    }
+
+    function browseReducer(state,action){
+        if(action.type=='BROWSE_OPEN'){
+            state=Object.assign(state,{
+                show:true,
+                topic:action.value
+            })
+            // console.log(state)
+        }else if(action.type=='BROWSE_VIEW'){
+            state=Object.assign(state,{
+                browse:action.value,
+                index:action.value,
+                data:null
+            })
+            updateStreamBrowser()
+        }else if(action.type=='BROWSE_CLOSE'){
+            state=Object.assign(state,{
+                browse:'_',
+                index:-1,
+                data:null,
+                show:false
+            })
+        }
+        return state
+    }
+
+    function generateFileName(){
+        // TODO: auto generate unique names
+        return '/untitled.js'
+    }
+
+    function generateServiceName(){
+        // TODO: auto generate unique names
+        return 'untitled'
+    }
+
+    function scriptReducer(state,action){
+        if(action.type=='SCRIPT_CREATE'){
+            state=Object.assign(state,{
+                'show':true,
+                'name':generateFileName(),
+                'data': "/*\nfunction map(obj){\n\treturn obj\n}\n"+
+                        "function reduce(obj,acc){\n\tif(acc==null){\n\t\tacc={}\n\t}\n\treturn acc\n}\n*/\n\n"
+            })
+        }else if(action.type=='SCRIPT_EDIT'){
+            state=Object.assign(state,{
+                'show':true,
+                'name':action.name,
+                'data': action.data
+            })
+        }else if(action.type=='SCRIPT_EVAL'){
+            state-Object.assign(state,{
+                'eval_success':action.success,
+                'eval_error':action.error
+            })
+        }
+        return state
+    }
+
+    function serviceReducer(state,action){
+        var streams=store.getState().streams
+        var scripts=store.getState().scripts
+        if(action.type=='SERVICE_CREATE'){
+            // console.log(streams)
+            state=Object.assign(state,{
+                'show':true,
+                'id':generateServiceName(),
+                'service_type':'filter',
+                'in':streams[0].topic,
+                'out':'local://direct/stream/<output_stream_name>',
+                'function_type':'http',
+                'url':'http://',
+                'script':scripts[0].name
+            })
+        }else if(action.type=='SERVICE_EDIT'){
+            state=Object.assign(state,{
+                'show':true,
+                'name':action.name
+            })
+        }else if(action.type=='SERVICE_SAVE'){
+            var config={
+                id:state.id,
+                service:state.service_type,
+                type:state.function_type,
+                streams:{
+                    input:'local://direct/stream/'+state.in,
+                    output:'local://direct/stream/'+state.out
+                },
+                disabled:false
+            }
+            if(config.type=='javascript' || config.type=='sql'){
+                config.script=state.script
+            }else if(config.type=='http'){
+                config.url=state.url
+            }
+            state=Object.assign({show:false})
+            fetch('/service/', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+                },
+                body:JSON.stringify(config)
+            }).then(function(response) {
+                return response.json()
+            }).then(function(json) {
+                // console.log(json)
+                // store.dispatch({type:'SERVER_STREAMS',data:json})
+                updateSources()
+
+            }).catch(function(ex) {
+                console.log('parsing failed', ex)
+            })
+        }
+        return state
     }
 
     function mainReducer(state,action){
@@ -85,7 +226,13 @@
     		state=Object.assign(state,setReducer(state,action.path,action.value))
     	}else if(action.type.startsWith('SERVER_')){
     		state=Object.assign(state,serverReducer(state,action))
-    	}
+    	}else if(action.type.startsWith('BROWSE_')){
+            state=Object.assign(state,{stream_browser:browseReducer(state.stream_browser,action)})
+        }else if(action.type.startsWith('SCRIPT_')){
+            state=Object.assign(state,{script_editor:scriptReducer(state.script_editor,action)})
+        }else if(action.type.startsWith('SERVICE_')){
+            state=Object.assign(state,{service_editor:serviceReducer(state.service_editor,action)})
+        }
     	return state
     }
 
@@ -101,7 +248,9 @@
 		    	elements.push(h(StreamPage,this.props))
 		    }else if(this.props.current_page=='explorer'){
 		    	elements.push(h(ExplorerPage,this.props))
-		    }
+		    }else if(this.props.current_page=='scripts'){
+                elements.push(h(ScriptPage,this.props))
+            }
 		    elements.push(h('div.footer','Stroom // (c) 2016 DoubleDutch'))
 		    return h('div',[
                 h(SystemBar,this.props),
@@ -140,6 +289,20 @@
 		}).catch(function(ex) {
 		    console.log('parsing failed', ex)
 		})
+        fetch('/script/', {
+            method: 'GET',
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            return response.json()
+        }).then(function(json) {
+            // console.log(json)
+            store.dispatch({type:'SERVER_SCRIPTS',data:json})
+        }).catch(function(ex) {
+            console.log('parsing failed', ex)
+        })
         fetch('/service/', {
             method: 'GET',
             headers: {
@@ -168,6 +331,9 @@
         }).catch(function(ex) {
             console.log('parsing failed', ex)
         })
+        if(state.stream_browser.show){
+            updateStreamBrowser()
+        }
 	}
 
 	updateSources()
