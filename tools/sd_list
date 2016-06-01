@@ -1,0 +1,29 @@
+#!/usr/bin/python
+
+import urllib2
+import json
+import argparse
+
+# TODO: run through the data to find the right sizes
+formatter='{:25} {:>15} {:>15}'
+
+def printStream(stream):
+	print formatter.format(stream['topic'],stream['count'],stream['size'])
+
+def listStreams(args):
+	# TODO: make it possible to specific http or https in the hostname
+	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/')
+	data = json.loads(response.read())
+
+	print formatter.format('topic','count','size')	
+	for stream in data:
+		printStream(stream)
+
+parser = argparse.ArgumentParser(description='List all StroomData streams on a host')
+
+parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
+parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
+
+args = parser.parse_args()
+
+listStreams(args)

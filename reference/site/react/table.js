@@ -14,7 +14,14 @@ var TableView = React.createClass({
 			var column=this.props.columns[i]
 			var width=column.width
 			var title=column.key
-			fields.push(h('div.data_cell.'+width,title))
+			var format=column.format
+			var align=''
+			if(format!=null){
+				if(format=='data' || format=='integer'){
+					align='.right'
+				}
+			}
+			fields.push(h('div.data_cell.'+width+align,title))
 		}
 		return h('div.data_header',fields)
 	},
@@ -34,7 +41,34 @@ var TableView = React.createClass({
 					var column=this.props.columns[i]
 					var width=column.width
 					var key=column.key
-					fields.push(h('div.data_cell.'+width,data[key]))
+					var value=data[key]
+					var format=column.format
+					var align=''
+					var unit=''
+					if(format!=null){
+						
+						if(format=='data'){
+							unit=' B '
+							if(value>10*1024){
+								unit=' KB'
+								value=value/1024
+							}
+							if(value>10*1024){
+								unit=' MB'
+								value=value/1024
+							}
+							if(value>10*1024){
+								unit=' GB'
+								value=value/1024
+							}
+							value=Math.floor(value)
+							align='.right'
+						}else if(format=='integer'){
+							align='.right'
+						}
+
+					}
+					fields.push(h('div.data_cell.'+width+align,value+unit))
 				}
 			}
 			var classname='div.data_row'

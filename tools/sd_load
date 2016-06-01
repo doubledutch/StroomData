@@ -1,0 +1,138 @@
+#!/usr/bin/python
+
+import os
+import urllib2
+try:
+    import ujson as json
+except ImportError:
+    import json
+import argparse
+import sys
+import time
+
+barSize=40
+pageSize=10
+documents=0
+
+dataBatch=[]
+startTime=time.time()
+
+
+parser = argparse.ArgumentParser(description='Load a file in to a StroomData stream on a host')
+
+parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
+parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
+parser.add_argument('--batch', dest='batch', help='Specify a specific batch size', default="500")
+parser.add_argument('file', help='Specify a file to load')
+parser.add_argument('stream', help='Specify which stream to write to')
+
+args = parser.parse_args()
+
+def writeObject(args,stringData):
+	request = urllib2.Request('http://'+args.host+':'+args.port+'/stream/'+args.stream)
+	request.add_header('Content-Type','application/json')
+	response = urllib2.urlopen(request,stringData)
+
+
+def printStatus():
+	global read_size
+	global file_size
+	global barSize
+	global documents
+	global startTime
+	perc=(read_size/float(file_size))*100.0
+	bar='|'
+	bar_ratio=int((read_size/float(file_size))*barSize)
+	for i in range(bar_ratio):
+		bar=bar+'X'
+	for i in range(barSize-bar_ratio):
+		bar=bar+'_'
+	
+	bar=bar+'|'
+
+	docunit=''
+	docnum=documents
+	if docnum>10000:
+		docnum=docnum/1000
+		docunit='K'
+
+	sizenum=read_size/1000
+	sizeunit='KB'
+	if sizenum>10000:
+		sizenum=sizenum/1000
+		sizeunit='MB'
+	if sizenum>10000:
+		sizenum=sizenum/1000
+		sizeunit='GB'
+
+	delta=time.time()-startTime
+	sys.stdout.write("\r{:3.1f}% {} {}{} docs, {}{} data [{} docs/s, {:.1f} MB/s]    ".format(perc,bar,docnum,docunit,sizenum,sizeunit,int(documents/(delta)),((read_size/(1024*1024.0))/delta)))
+	sys.stdout.flush()
+
+def processJSON(line):
+	global dataBatch
+	global documents
+	data= json.loads(line)
+	if isinstance(data, list):
+		for obj in data:
+			documents+=1
+			dataBatch.append(json.dumps(obj))
+	else:
+		documents+=1
+		dataBatch.append(line)
+		# TODO: this shouldn't happen... catch error or wrap in object
+
+
+def processBatch():
+	global dataBatch
+	global args
+	# sys.stdout.write("{0} {1}\n".format(args.batch,len(dataBatch)))
+	while len(dataBatch)>int(args.batch):
+		# sys.stdout.write("Inner loop\n")
+		# TODO: are these indexes correct for ranges?
+		batch=dataBatch[:int(args.batch)]
+		dataBatch=dataBatch[int(args.batch):]
+		output=createArray(batch)
+		
+		writeObject(args,output)
+		# dataBatch.clear()
+		# sys.stdout.write("{0} foo \n".format(len(dataBatch)))
+	# sys.stdout.write("{0}\n".format(len(dataBatch)))
+
+
+def createArray(batch):
+	output="["
+	first=True
+	for data in batch:
+		if first!=True:
+			output+=","
+		else:
+			first=False
+		output+=data
+	output+="]"
+	return output
+
+# sys.stdout.write("{0}\n".format(args.batch))
+# sys.exit(0)
+
+file_size=os.path.getsize(args.file)
+read_size=0
+file = open(args.file,'r')
+for line in file:
+	read_size=read_size+len(line)
+	if line.startswith("["):
+		processJSON(line)
+	else:
+		documents+=1
+		dataBatch.append(line)
+	processBatch()
+	printStatus()
+
+file.close()
+if len(dataBatch)>0:
+	writeObject(args,createArray(dataBatch))
+
+printStatus()
+sys.stdout.write("\n")
+sys.stdout.write("Completed in {} seconds\n".format(int(time.time()-startTime)))
+sys.stdout.flush()

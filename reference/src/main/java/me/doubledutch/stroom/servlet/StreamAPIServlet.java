@@ -18,8 +18,8 @@ import me.doubledutch.stroom.streams.*;
 import org.json.*;
 
 public class StreamAPIServlet extends HttpServlet{
-	final static int MAX_EVENTS=1000;
-	final static int MAX_SIZE=512*1024;
+	final static int MAX_EVENTS=5000;
+	final static int MAX_SIZE=5*1024*1024;
 	private final Logger log = Logger.getLogger("StreamAPI");
 
 	private static StreamHandler streamHandler;
@@ -31,6 +31,7 @@ public class StreamAPIServlet extends HttpServlet{
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		try{
+			response.setCharacterEncoding("UTF-8");
 			Writer out=response.getWriter();
 			response.setContentType("application/json");
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
@@ -164,9 +165,11 @@ public class StreamAPIServlet extends HttpServlet{
 	@Override
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		try{
+			request.setCharacterEncoding("UTF-8");
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1);
 			String[] splitPath=uriPath.split("/");
+
 			if(splitPath.length==1){
 				String topic=splitPath[0];
 				String postBody=readPostBody(request);
@@ -179,7 +182,10 @@ public class StreamAPIServlet extends HttpServlet{
 							Document doc=new Document(topic,obj.toString());
 							batch.add(doc);
 						}
-						streamHandler.addDocuments(batch);
+						// System.out.println(batch.size());
+						if(batch.size()>0){
+							streamHandler.addDocuments(batch);
+						}
 						response.setContentType("application/json");
 						JSONArray indexList=new JSONArray();
 						for(Document doc:batch){
@@ -198,6 +204,7 @@ public class StreamAPIServlet extends HttpServlet{
 					response.setContentType("application/json");
 					response.getWriter().append("{\"result\":\"err\",\"msg\":\"JSON syntax error\"}");
 					log.info("Document rejected due to JSON syntax error");
+					// System.out.println(postBody);
 				}	
 			}else{
 				response.sendError(HttpServletResponse.SC_NOT_FOUND,"Documents posted to the api must be posted to a topic.");

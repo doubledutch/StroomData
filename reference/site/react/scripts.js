@@ -50,8 +50,22 @@ var ScriptInspect = React.createClass({
 	}
 })
 
-// TODO: write server side "compile" endpoint
-//       what about unit tests?
+var SampleRunner = React.createClass({
+	render:function(){
+		var elements=[]
+		// elements.push(h('div.browse_header','Edit Script'))
+		elements.push(h('div.browse_page',[
+				h('div','Hello World')
+			]))
+		elements.push(h('div.browse_footer',[
+				h('input.form_button',{'type':'button','value':'Save','onClick':this.onSave}),
+				h('input.form_button',{'type':'button','value':'Eval','onClick':this.onEval}),
+				h('input.form_button',{'type':'button','value':'Test','onClick':this.onTest}),
+				h('input.form_button',{'type':'button','value':'Cancel','onClick':this.onCancel})
+			]))
+		return h('div',elements)
+	}
+})
 
 var ScriptEditor =React.createClass({
 	onSave:function(e){
@@ -85,6 +99,10 @@ var ScriptEditor =React.createClass({
 	},
 	saveScript:function(e){
 		store.dispatch({type:'SET',path:['script_editor','data'],value:e.target.value})
+		// console.log(e.target.value)
+	},
+	onTest:function(e){
+		store.dispatch({type:'SET',path:['script_editor','show_sample'],value:true})
 		// console.log(e.target.value)
 	},
 	onEval:function(e){
@@ -125,6 +143,7 @@ var ScriptEditor =React.createClass({
 		elements.push(h('div.browse_footer',[
 				h('input.form_button',{'type':'button','value':'Save','onClick':this.onSave}),
 				h('input.form_button',{'type':'button','value':'Eval','onClick':this.onEval}),
+				h('input.form_button',{'type':'button','value':'Test','onClick':this.onTest}),
 				h('input.form_button',{'type':'button','value':'Cancel','onClick':this.onCancel})
 			]))
 		return h('div',elements)
@@ -143,6 +162,9 @@ var ScriptPage = React.createClass({
 		// console.log('render '+this.props.currentStream)
 		if(this.props.script_editor.show){
 			elements.push(h(ScriptEditor,this.props))
+			if(this.props.show_sample){
+				elements.push(h(SampleRunner,this.props))
+			}
 		}else{
 			elements.push(h('div',[h('input.form_button',{'type':'button','value':'New script','onClick':this.onCreateScript})]))
 			elements.push(h(TableView,{id:'scripts',data:this.props.scripts,columns:[

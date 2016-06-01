@@ -167,8 +167,8 @@ var StreamPage = React.createClass({
 		}else{
 			elements.push(h(TableView,{id:'streams',data:this.props.streams,columns:[
 				{key:'topic',width:'flex'},
-				{key:'count',width:'medium'},
-				{key:'size',width:'medium'}
+				{key:'count',width:'medium',format:'integer'},
+				{key:'size',width:'medium',format:'data'}
 			],'selected':this.props.currentStream
 			,'inspectorClass':StreamInspect
 			,'selectRow':function(id){

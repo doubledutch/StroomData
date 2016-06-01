@@ -205,6 +205,10 @@ textarea{
 	flex-shrink: 1;
 }
 
+.data_cell.right{
+	text-align:right;
+}
+
 .data_table{
 	background:#FFFFFF;
 	border-left:1px solid #AAAAAA;
@@ -287,7 +291,7 @@ textarea{
 .editor{
 	box-sizing: border-box;
 	width:100%;margin-top:10px;
-	height:500px;
+	height:300px;
 	padding:10px;
 	white-space: pre;
 	font-family: courier,sans-serif

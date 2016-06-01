@@ -1,0 +1,38 @@
+#!/usr/bin/python
+
+import urllib2
+import json
+import argparse
+
+pageSize=500
+
+def printPage(data):
+	for obj in data:
+		print json.JSONEncoder().encode(obj)
+
+def readPage(args,index):
+	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/'+args.stream+'/'+str(index)+'-'+str(index+pageSize))
+	data = json.loads(response.read())
+	printPage(data)
+	return len(data)
+
+def getCount(args):
+	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/'+args.stream)
+	data = json.loads(response.read())
+	return data['count']
+
+def readStream(args):
+	streamCount=getCount(args)
+	streamRead=0
+	while streamRead<streamCount:
+		streamRead=streamRead+readPage(args,streamRead)
+
+parser = argparse.ArgumentParser(description='Read a StroomData stream from a host')
+
+parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
+parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
+parser.add_argument('stream', help='Specify which stream to read')
+
+args = parser.parse_args()
+
+readStream(args)
