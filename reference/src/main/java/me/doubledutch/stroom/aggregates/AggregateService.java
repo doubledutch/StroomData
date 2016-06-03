@@ -3,6 +3,7 @@ package me.doubledutch.stroom.aggregates;
 import org.apache.log4j.Logger;
 
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.*;
 import java.util.*;
 import org.json.*;
@@ -13,19 +14,36 @@ public class AggregateService extends Service{
 	private final Logger log = Logger.getLogger("Aggregate");
 
 	private int WAIT_TIME=1000;
-	
-	private long index=-1;
+
 	private long outputIndex=-1;
 	private String aggregate=null;
+	private BatchMetric metric=null;
 
 	public AggregateService(StreamHandler handler,JSONObject obj) throws Exception{
 		super(handler,obj);		
+	}
+
+	private void getAggregate() throws Exception{
+		if(type==JAVASCRIPT){
+			metric.startTimer("javascript.serialize");
+			jsEngine.eval("var result=null");
+			jsEngine.eval("if(aggregate!=null)result=JSON.stringify(aggregate);");
+			Object obj=jsEngine.eval("result");
+			metric.stopTimer("javascript.serialize");
+			if(obj!=null){
+				aggregate=(String)obj;
+			}
+		}
 	}
 
 	private void loadState() throws Exception{
 		JSONObject obj=new JSONObject(getStream("state").getLast());
 		index=obj.getInt("i");
 		outputIndex=obj.getInt("o");
+		aggregate=getStream("output").get(outputIndex);
+		if(type==JAVASCRIPT){
+			jsEngine.eval("var aggregate="+aggregate+";");
+		}
 	}
 
 	private void saveState() throws Exception{
@@ -47,6 +65,7 @@ public class AggregateService extends Service{
 		// System.out.println("Process document");
 		// TODO: add ability to batch output
 		String out=null;
+		boolean error=false;
 		if(type==HTTP){
 			JSONObject outputObj=new JSONObject();
 			outputObj.put("event",new JSONObject(str));
@@ -55,16 +74,31 @@ public class AggregateService extends Service{
 			}else{
 				outputObj.put("aggregate",JSONObject.NULL);
 			}
+			metric.startTimer("http.post");
 			out=Utility.postURL(url,outputObj.toString());		
+			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
-			jsEngine.eval("var obj="+str+";");
-			jsEngine.eval("var aggregate="+aggregate+";");
-			jsEngine.eval("var result=reduce(aggregate,obj);");
-			jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
+			metric.startTimer("javascript.derialize");
+			jsEngine.put("raw",str);
+			jsEngine.eval("var obj=JSON.parse(raw);");
+			// jsEngine.eval("var obj=JSON.parse('"+str+"');");
+			metric.stopTimer("javascript.derialize");
+			// jsEngine.eval("var aggregate="+aggregate+";");
+			// jsEngine.eval("var result=reduce(aggregate,obj);");
+			metric.startTimer("javascript.run");
+			jsEngine.eval("aggregate=reduce(aggregate,obj);");
+			metric.stopTimer("javascript.run");
+
+			/*
+			metric.startTimer("javascript.serialize");
+			jsEngine.eval("var result=null");
+			jsEngine.eval("if(aggregate!=null)result=JSON.stringify(aggregate);");
 			Object obj=jsEngine.eval("result");
+			metric.stopTimer("javascript.serialize");
 			if(obj!=null){
 				out=(String)obj;
 			}
+			*/
 			// TODO: handle javascript errors
 		}else if(type==QUERY){
 
@@ -81,16 +115,26 @@ public class AggregateService extends Service{
 
 	public void run(){
 		try{
+			if(type==JAVASCRIPT){
+				jsEngine.eval("var aggregate=null");
+			}
 			if(getStream("state").getCount()>0){
 				loadState();
 			}
 			log.info(getId()+" restarting at "+(index+1));
 			isRunning(true);
 			while(shouldBeRunning()){
+				metric=new BatchMetric();
+				metric.startTimer("batch.time");
 				// Load
+				metric.startTimer("input.get");
 				List<String> batch=getStream("input").get(index+1,index+getBatchSize()+1);
+				metric.stopTimer("input.get");
+				metric.setSamples(batch.size());
+
 				// Process
 				if(batch.size()==0){
+					metric.stopTimer("batch.time");
 					// No new data, wait before pulling again
 					try{
 						Thread.sleep(WAIT_TIME);
@@ -102,9 +146,16 @@ public class AggregateService extends Service{
 						index++;
 					}
 					// TODO: add selective state saving point
+					metric.startTimer("output.append");
+					getAggregate();
 					outputIndex=getStream("output").append(aggregate);
+					metric.stopTimer("output.append");
+					metric.startTimer("state.append");
 					saveState();
+					metric.startTimer("state.append");
+					metric.stopTimer("batch.time");
 				}
+				addBatchMetric(metric);
 			}
 		}catch(Exception e){
 			e.printStackTrace();

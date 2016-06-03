@@ -1,5 +1,5 @@
 package me.doubledutch.stroom.perf;
 
-public class Metrics{
-
+public abstract class Metrics{
+	public abstract void cycle();
 }

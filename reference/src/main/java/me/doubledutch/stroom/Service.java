@@ -7,6 +7,8 @@ import java.util.*;
 import me.doubledutch.stroom.streams.*;
 import javax.script.*;
 
+import me.doubledutch.stroom.perf.*;
+
 public abstract class Service implements Runnable{
 	public static int HTTP=0;
 	public static int QUERY=1;
@@ -17,7 +19,8 @@ public abstract class Service implements Runnable{
 
 	public String url=null;
 
-	private int BATCH_SIZE=100;
+	private int BATCH_SIZE=1000;
+	public long index=-1;
 
 	private Map<String,MockStreamConnection> mockMap=new HashMap<String,MockStreamConnection>();
 	private StreamHandler streamHandler=null;
@@ -34,6 +37,8 @@ public abstract class Service implements Runnable{
 	public ScriptEngine jsEngine;
 	public Invocable jsInvocable;
 	private JSONObject config;
+
+	private BatchMetric lastMetric=null;
 
 	private Map<String,StreamConnection> streamMap=new HashMap<String,StreamConnection>();
 
@@ -83,6 +88,10 @@ public abstract class Service implements Runnable{
 			jsEngine.eval(scriptData);*/
 			// reloadScript();
 		}
+	}
+
+	public void addBatchMetric(BatchMetric metric){
+		this.lastMetric=metric;
 	}
 
 	private void reloadScript() throws Exception{
@@ -186,6 +195,18 @@ public abstract class Service implements Runnable{
 		}
 		obj.put("disabled",isDisabled);
 		obj.put("batch_size",BATCH_SIZE);
+		obj.put("index",index);
+
+		if(lastMetric!=null){
+			obj.put("rate",lastMetric.getRate());
+			obj.put("metrics",lastMetric.toJSON());
+		}else{
+			obj.put("rate",0);
+			obj.put("metrics",new JSONObject());
+		}
+		if(!isRunning){
+			obj.put("rate",0);
+		}
 		// obj.put("config",config);
 		return obj;
 	}

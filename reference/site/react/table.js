@@ -17,7 +17,7 @@ var TableView = React.createClass({
 			var format=column.format
 			var align=''
 			if(format!=null){
-				if(format=='data' || format=='integer'){
+				if(format=='data' || format=='integer' || format.startsWith('float')){
 					align='.right'
 				}
 			}
@@ -26,6 +26,19 @@ var TableView = React.createClass({
 		return h('div.data_header',fields)
 	},
 	renderRows:function(){
+		function pickValue( propertyName, object ) {
+		  var parts = propertyName.split( "." ),
+		    length = parts.length,
+		    i,
+		    property = object || this;
+
+		  for ( i = 0; i < length; i++ ) {
+		    property = property[parts[i]];
+		  }
+
+		  return property;
+		}
+
 		var rows=[]
 		for(var n=0;n<this.props.data.length;n++){
 			var data=this.props.data[n]
@@ -41,7 +54,7 @@ var TableView = React.createClass({
 					var column=this.props.columns[i]
 					var width=column.width
 					var key=column.key
-					var value=data[key]
+					var value=pickValue(key,data) // data[key]
 					var format=column.format
 					var align=''
 					var unit=''
@@ -65,6 +78,21 @@ var TableView = React.createClass({
 							align='.right'
 						}else if(format=='integer'){
 							align='.right'
+							value=value.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",")
+						}else if(format.startsWith('float')){
+							align='.right'
+							if(format.indexOf(':')>-1){
+								var svalue=''+value
+								var decimals=parseInt(format.substring(format.indexOf(':')+1))
+								if(svalue.indexOf('.')>-1){
+									var pre=svalue.substring(0,svalue.indexOf('.'))
+									var post=svalue.substring(svalue.indexOf('.')+1)
+									if(post.length>decimals){
+										post=post.substring(0,decimals)
+									}
+									value=pre+'.'+post
+								}
+							}
 						}
 
 					}

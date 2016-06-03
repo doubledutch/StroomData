@@ -50,19 +50,120 @@ var ScriptInspect = React.createClass({
 	}
 })
 
+function updateScriptRunner(){
+	var state=store.getState()
+
+	var source=state.script_editor.sample_source
+	if(source!=null){
+		(function(){
+			try{
+			
+				eval(state.script_editor.data)
+				store.dispatch({type:'SET',path:['script_editor','eval_success'],value:null})
+				var count=getStream(state.streams,source).count
+				if(count>5){
+					var loc=Math.floor(Math.random()*(count-5))
+					// console.log(loc)
+					// Get count
+					fetch('/stream/'+source+'/'+loc+'-'+(loc+4),{
+				  		method: 'GET',
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/json'
+						}
+					}).then(function(response) {
+					    return response.json()
+					}).then(function(json) {
+						try{
+							var ftype=state.script_editor.sample_function
+							var data=[]
+							var result=null
+							for(var i=0;i<json.length;i++){
+								var doc=JSON.parse(JSON.stringify(json[i]))
+								if(ftype=='map'){
+									result=map(json[i])
+								}else if(ftype=='reduce'){
+									result=reduce(result,json[i])
+								}
+								data.push({
+									'doc':doc,'result':JSON.parse(JSON.stringify(result))
+								})
+							}
+							store.dispatch({type:'SET',path:['script_editor','sample_data'],value:data})
+						}catch(inner_ex){
+							// console.log(inner_ex)
+							store.dispatch({type:'SCRIPT_EVAL',success:false,error:inner_ex})
+						}
+					})
+				}else{
+					store.dispatch({type:'SCRIPT_EVAL',success:false,error:'The input stream needs to have at least 5 documents.'})
+				}
+			}catch(ex){
+				// console.log(ex)
+				store.dispatch({type:'SCRIPT_EVAL',success:false,error:ex})
+				return
+			}
+		})();
+	}
+}
+
+function getStream(streams,topic){
+	for(var i=0;i<streams.length;i++){
+		var stream=streams[i]
+		if(stream.topic==topic)return stream
+	}
+	return null
+}
+
+var SampleResults=React.createClass({
+	render:function(){
+		if(this.props.sample_data.length==0){
+			return h('div','')
+		}else{
+			var rendered=[]
+			rendered.push(h('div.split_view',[h('div.split_header','Input'),h('div.split_header','Output')]))
+			for(var i=0;i<this.props.sample_data.length;i++){
+				var data=this.props.sample_data[i]
+				rendered.push(h('div.split_view',[h('div.split',[h(JSONViewer,{'data':data.doc})]),h('div.split',[h(JSONViewer,{'data':data.result})])]))
+			}
+			rendered.push(h('div.split_view',[h('div'),h('div')]))
+			return h('div',rendered)
+		}
+	}
+})
+
 var SampleRunner = React.createClass({
+	runTest:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_run'],value:true})
+		updateScriptRunner()
+	},
+	setIn:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_source'],value:e.target.value})
+	},
 	render:function(){
 		var elements=[]
+
 		// elements.push(h('div.browse_header','Edit Script'))
-		elements.push(h('div.browse_page',[
-				h('div','Hello World')
-			]))
-		elements.push(h('div.browse_footer',[
-				h('input.form_button',{'type':'button','value':'Save','onClick':this.onSave}),
-				h('input.form_button',{'type':'button','value':'Eval','onClick':this.onEval}),
-				h('input.form_button',{'type':'button','value':'Test','onClick':this.onTest}),
-				h('input.form_button',{'type':'button','value':'Cancel','onClick':this.onCancel})
-			]))
+		
+
+		var options=[]
+		for(var i=0;i<this.props.streams.length;i++){
+			options.push(h('option',{value:this.props.streams[i].topic},this.props.streams[i].topic))
+		}
+
+		var footer=[]
+		footer.push(h('label.form_label','Input Stream'))
+		footer.push(h('select.form_select',{name:'in_stream_select',onChange:this.setIn},options))
+		footer.push(h('label.form_label','Function'))
+		options=[]
+		options.push(h('option',{value:'map'},'Map'))
+		options.push(h('option',{value:'reduce'},'Reduce'))
+		footer.push(h('select.form_select',{name:'function_select',onChange:this.setFunction},options))
+		footer.push(h('input.form_button',{'type':'button','value':'Run','onClick':this.runTest}))
+		
+		elements.push(h('div.browse_footer',footer))
+
+		elements.push(h(SampleResults,this.props.script_editor))
 		return h('div',elements)
 	}
 })
@@ -101,10 +202,6 @@ var ScriptEditor =React.createClass({
 		store.dispatch({type:'SET',path:['script_editor','data'],value:e.target.value})
 		// console.log(e.target.value)
 	},
-	onTest:function(e){
-		store.dispatch({type:'SET',path:['script_editor','show_sample'],value:true})
-		// console.log(e.target.value)
-	},
 	onEval:function(e){
 		try{
 			(eval(this.props.script_editor.data))
@@ -125,6 +222,16 @@ var ScriptEditor =React.createClass({
 	        e.preventDefault()
 	    }
 	},
+	runTest:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_run'],value:true})
+		updateScriptRunner()
+	},
+	setIn:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_source'],value:e.target.value})
+	},
+	setFType:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_function'],value:e.target.value})
+	},
 	render:function(){
 		var elements=[]
 		elements.push(h('div.browse_header','Edit Script'))
@@ -140,12 +247,29 @@ var ScriptEditor =React.createClass({
 				elements.push(h('div.eval_error',[h('div',this.props.script_editor.eval_error.toString())]))
 			}
 		}
-		elements.push(h('div.browse_footer',[
+		var footer=[
 				h('input.form_button',{'type':'button','value':'Save','onClick':this.onSave}),
-				h('input.form_button',{'type':'button','value':'Eval','onClick':this.onEval}),
-				h('input.form_button',{'type':'button','value':'Test','onClick':this.onTest}),
-				h('input.form_button',{'type':'button','value':'Cancel','onClick':this.onCancel})
-			]))
+				h('input.form_button',{'type':'button','value':'Cancel','onClick':this.onCancel}),
+				h('div.form_spacer',''),
+				h('input.form_button',{'type':'button','value':'Eval Script','onClick':this.onEval}),
+				h('div.form_spacer','')
+			]
+		footer.push(h('label.form_label','In'))
+		var options=[]
+		for(var i=0;i<this.props.streams.length;i++){
+			options.push(h('option',{value:this.props.streams[i].topic},this.props.streams[i].topic))
+		}
+		footer.push(h('select.form_select',{name:'in_stream_select',onChange:this.setIn},options))
+		footer.push(h('label.form_label','Function'))
+		options=[]
+		options.push(h('option',{value:'map'},'Map'))
+		options.push(h('option',{value:'reduce'},'Reduce'))
+		footer.push(h('select.form_select',{name:'function_select',onChange:this.setFType},options))
+		footer.push(h('input.form_button',{'type':'button','value':'Run Test','onClick':this.runTest}))
+		
+		elements.push(h('div.browse_footer',footer))
+		elements.push(h(SampleResults,this.props.script_editor))
+		// elements.push(h('div.browse_footer',))
 		return h('div',elements)
 	}
 })

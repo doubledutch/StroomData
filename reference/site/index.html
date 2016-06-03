@@ -73,8 +73,11 @@
             'eval_success':null,
             'show_sample':false,
             'sample_function':'map',
-            'sample_source':null
+            'sample_source':null,
+            'sample_data':[],
+            'sample_run':false
         },
+        'currentService':null,
         'service_editor':{
             'show':false
         }
@@ -143,7 +146,7 @@
                 'show':true,
                 'name':generateFileName(),
                 'data': "/*\nfunction map(obj){\n\treturn obj\n}\n"+
-                        "function reduce(obj,acc){\n\tif(acc==null){\n\t\tacc={}\n\t}\n\treturn acc\n}\n*/\n\n"
+                        "function reduce(acc,obj){\n\tif(acc==null){\n\t\tacc={}\n\t}\n\treturn acc\n}\n*/\n\n"
             })
         }else if(action.type=='SCRIPT_EDIT'){
             state=Object.assign(state,{
@@ -337,6 +340,9 @@
         if(state.stream_browser.show){
             updateStreamBrowser()
         }
+        /*if(state.script_editor.sample_run){
+            updateScriptRunner()
+        }*/
 	}
 
 	updateSources()

@@ -32,8 +32,6 @@ public class FilterService extends Service{
 
 	private double sampleRate=1.0;
 
-	private long index=-1;
-
 	public FilterService(StreamHandler handler,JSONObject obj) throws Exception{
 		super(handler,obj);
 		

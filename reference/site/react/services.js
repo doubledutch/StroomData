@@ -120,6 +120,142 @@ var ServiceEditor =React.createClass({
 	}
 })
 
+var ServiceInspect = React.createClass({
+	onReset:function(e){
+		if(confirm("Are you sure you wan't to reset this service? this will delete all of its output data! This can NOT be undone!!!")){
+			fetch('/service/'+this.props.id+'/reset', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+		}
+	},
+	onStop:function(e){
+		fetch('/service/'+this.props.id+'/stop', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+	},
+	onStart:function(e){
+		fetch('/service/'+this.props.id+'/start', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+	},
+	onRestart:function(e){
+		fetch('/service/'+this.props.id+'/restart', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+	},
+	onDisable:function(e){
+		fetch('/service/'+this.props.id+'/disable', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+	},
+	onEnable:function(e){
+		fetch('/service/'+this.props.id+'/enable', {
+	  		method: 'POST',
+			headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+			}
+		}).then(function(response) {
+		    return response.json()
+		}).then(function(json) {
+			updateSources();
+		}).catch(function(ex) {
+		    console.log('parsing failed', ex)
+		})
+	},
+	render:function(){
+		// console.log(this.props.metrics)
+		var elements=[]
+
+		var metrics=[]
+		if(this.props.state=='RUNNING'){
+			var max=0
+			for(var key in this.props.metrics){
+				var val=this.props.metrics[key].avg
+				if(val>max){
+					max=val
+				}
+			}
+			for(var key in this.props.metrics){
+				if(key!='batch.time'){
+					metrics.push(h('div.metrics_entry',[
+						h('div.metrics_title',key),
+						h('div.metrics_bar_container',[h('div.metrics_bar',{style:{width:Math.floor((this.props.metrics[key].avg/max)*200)+'px'}})]),
+						h('div.metrics_value',Math.floor(this.props.metrics[key].avg/1000)/1000+' ms')
+					]))
+				}
+			}
+
+			elements.push(h('div.metrics_table',metrics))
+		}
+		var fields=[]
+		if(this.props.state=='RUNNING'){
+			fields.push(h('input.form_button',{'type':'button','value':'Stop','onClick':this.onStop}))
+			fields.push(h('input.form_button',{'type':'button','value':'Restart','onClick':this.onRestart}))
+		}else if(this.props.state=='STOPPED'){
+			fields.push(h('input.form_button',{'type':'button','value':'Start','onClick':this.onStart}))
+		}
+		fields.push(h('div.form_spacer'))
+		if(this.props.state!='DISABLED'){
+			fields.push(h('input.form_button',{'type':'button','value':'Disable','onClick':this.onDisable}))
+		}else{
+			fields.push(h('input.form_button',{'type':'button','value':'Re-enable','onClick':this.onEnable}))
+		}
+		fields.push(h('input.form_button',{'type':'button','value':'Reset','onClick':this.onReset}))
+		elements.push(h('div.inspector',fields))
+		return h('div',elements)
+	}
+})
 
 var ServicePage = React.createClass({
 	onCreateService:function(){
@@ -127,18 +263,31 @@ var ServicePage = React.createClass({
 	},
 	render: function(){
 		var elements=[]
+		var currentService=this.props.currentService
 		// Add header
 		// elements.push(h('p','So many streams...'))
 		if(this.props.service_editor.show){
 			elements.push(h(ServiceEditor,this.props))
 		}else{
 			elements.push(h('div',[h('input.form_button',{'type':'button','value':'New service','onClick':this.onCreateService})]))
-			elements.push(h(TableView,{data:this.props.services,columns:[
+			elements.push(h(TableView,{data:this.props.services,
+				columns:[
 				{key:'id',width:'flex'},
+				{key:'rate',width:'medium',format:'float:2'},
+				{key:'index',width:'small',format:'integer'},
 				{key:'service',width:'small'},
 				{key:'type',width:'small'},
-				{key:'state',width:'medium'}
-			]}))
+				{key:'state',width:'small'}
+			],'selected':this.props.currentService
+			,'inspectorClass':ServiceInspect,
+			'selectRow':function(id){
+				// console.log('click on '+id)
+				if(currentService==id){
+					store.dispatch({type:'SET',path:['currentService'],value:null})
+				}else{
+					store.dispatch({type:'SET',path:['currentService'],value:id})
+				}
+			}}))
 		}
 		// Return enclosing div with elements
 		return h('div',elements)
