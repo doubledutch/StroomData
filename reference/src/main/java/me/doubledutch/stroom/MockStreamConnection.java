@@ -33,8 +33,26 @@ public class MockStreamConnection implements StreamConnection{
 		return null;
 	}
 
+	public long append(JSONObject data,int hint) throws IOException,JSONException{
+		return append(data);
+	}
+	public long append(String data,int hint) throws IOException,JSONException{
+		return append(data);
+	}
+	public List<Long> append(List<String> data,int hint) throws IOException,JSONException{
+		return append(data);
+	}
+
 	public synchronized long append(JSONObject data) throws IOException,JSONException{
 		return append(data.toString());
+	}
+
+	public List<Long> append(List<String> data) throws IOException,JSONException{
+		List<Long> output=new ArrayList<Long>();
+		for(String str:data){
+			output.add(append(str));
+		}
+		return output;
 	}
 
 	public synchronized long append(String data) throws IOException,JSONException{

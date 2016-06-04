@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.*;
 
 import org.json.*;
 
@@ -36,7 +37,8 @@ public class AggregateAPIServlet extends HttpServlet{
 			String[] splitPath=uriPath.split("/");
 			if(uriPath.length()==0){
 				// List aggregates
-				JSONArray result=new JSONArray();
+				// JSONArray result=new JSONArray();
+				JSONArray result=AggregateManager.get().list();
 				/*
 				for(Stream stream:streamHandler.getStreams()){
 					if(stream.getTopic().indexOf(".")==-1){
@@ -48,13 +50,16 @@ public class AggregateAPIServlet extends HttpServlet{
 			}else if(splitPath.length==1){
 				// Get simple aggregate or keyset of partitioned aggregate
 				String id=splitPath[0];
+				String result=AggregateManager.get().getAggregate(id);
+				out.append(result);
 				// Stream stream=streamHandler.getOrCreateStream(topic);
 				// out.append(stream.toJSON().toString());
 			}else if(splitPath.length==2){
 				// Get partitioned aggregate by partition key
 				String id=splitPath[0];
 				String partition=splitPath[1];
-				
+				String result=AggregateManager.get().getAggregate(id,partition);
+				out.append(result);
 			}else{
 				// response.sendError(HttpServletResponse.SC_NOT_FOUND,"You must specify both topic and location.");
 			}

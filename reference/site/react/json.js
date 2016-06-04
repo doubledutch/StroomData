@@ -1,6 +1,9 @@
 var JSONViewer=React.createClass({
 	render:function(){
 		var obj=this.props.data
+		if(obj==null){
+			return h('div.browse_page','')
+		}
 		var rows=[]
 		rows.push(h('div',[h('span.json_block','{')]))
 		rows=rows.concat(renderJSONObject(obj,'    '))

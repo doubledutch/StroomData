@@ -19,6 +19,9 @@ var ServiceEditor =React.createClass({
 	setOut:function(e){
 		store.dispatch({type:'SET',path:['service_editor','out'],value:e.target.value})
 	},
+	setPartitionKey:function(e){
+		store.dispatch({type:'SET',path:['service_editor','partition_key'],value:e.target.value})
+	},
 	setFunctionType:function(e){
 		store.dispatch({type:'SET',path:['service_editor','function_type'],value:e.target.value})
 	},
@@ -40,9 +43,14 @@ var ServiceEditor =React.createClass({
 		var options=[]
 		options.push(h('option',{value:'filter'},'Filter'))
 		options.push(h('option',{value:'aggregate'},'Aggregate'))
-		options.push(h('option',{value:'paggegrate'},'Partitioned Aggregate'))
+		options.push(h('option',{value:'partitioned_aggegrate'},'Partitioned Aggregate'))
 
 		form.push(h('select',{name:'type',onChange:this.setServiceType},options))
+
+		if(this.props.service_editor.service_type=='partitioned_aggegrate'){
+			form.push(h('label','Partition Key'))
+			form.push(h('input',{name:'partition_key',onChange:this.setPartitionKey,defaultValue:''}))
+		}
 
 		form.push(h('div.form_separator',''))
 
@@ -275,7 +283,8 @@ var ServicePage = React.createClass({
 				{key:'id',width:'flex'},
 				{key:'rate',width:'medium',format:'float:2'},
 				{key:'index',width:'small',format:'integer'},
-				{key:'service',width:'small'},
+				// {key:'partitions',width:'small',format:'integer'},
+				{key:'service',width:'medium'},
 				{key:'type',width:'small'},
 				{key:'state',width:'small'}
 			],'selected':this.props.currentService

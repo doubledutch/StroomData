@@ -193,6 +193,7 @@ public abstract class Service implements Runnable{
 		}else{
 			obj.put("state","STOPPED");
 		}
+		obj.put("partitions",1);
 		obj.put("disabled",isDisabled);
 		obj.put("batch_size",BATCH_SIZE);
 		obj.put("index",index);

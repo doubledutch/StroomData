@@ -54,6 +54,12 @@ function updateScriptRunner(){
 	var state=store.getState()
 
 	var source=state.script_editor.sample_source
+	if(source==null){
+		// TODO: such a hack - set all of this up when "new script" is clicked
+		source=state.streams[0].topic
+	}
+	// console.log('source')
+	// console.log(source)
 	if(source!=null){
 		(function(){
 			try{
@@ -75,6 +81,7 @@ function updateScriptRunner(){
 					    return response.json()
 					}).then(function(json) {
 						try{
+							// console.log('should be running')
 							var ftype=state.script_editor.sample_function
 							var data=[]
 							var result=null
@@ -130,12 +137,13 @@ var SampleResults=React.createClass({
 			return h('div',rendered)
 		}
 	}
-})
+})/*
 
 var SampleRunner = React.createClass({
 	runTest:function(e){
-		store.dispatch({type:'SET',path:['script_editor','sample_run'],value:true})
-		updateScriptRunner()
+		console.log('click click')
+		// store.dispatch({type:'SET',path:['script_editor','sample_run'],value:true})
+		// updateScriptRunner()
 	},
 	setIn:function(e){
 		store.dispatch({type:'SET',path:['script_editor','sample_source'],value:e.target.value})
@@ -166,7 +174,7 @@ var SampleRunner = React.createClass({
 		elements.push(h(SampleResults,this.props.script_editor))
 		return h('div',elements)
 	}
-})
+})*/
 
 var ScriptEditor =React.createClass({
 	onSave:function(e){

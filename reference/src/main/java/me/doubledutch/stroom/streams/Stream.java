@@ -210,8 +210,6 @@ public class Stream implements Runnable{
 	}
 
 	public void addDocuments(List<Document> batch,int wmode) throws IOException{
-		// TODO: implement
-
 		long[] location=new long[batch.size()];
 		short blockNumber=currentBlockNumber;
 		Block block=blockMap.get(blockNumber);
@@ -243,7 +241,9 @@ public class Stream implements Runnable{
 			}
 			doc.setLocation(location[i]);
 		}
-		if(wmode<NONE){
+		if(wmode==FLUSH){
+			commitData();
+		}else if(wmode<NONE){
 			waitForCommit(location[batch.size()-1]);
 		}
 
@@ -284,7 +284,9 @@ public class Stream implements Runnable{
 			createNewIndex(currentIndexNumber);
 		}
 		doc.setLocation(location);
-		if(wmode<NONE){
+		if(wmode==FLUSH){
+			commitData();
+		}else if(wmode<NONE){
 			waitForCommit(location);
 		}
 		if(offset+data.length>MAX_BLOCK_SIZE){

@@ -144,6 +144,8 @@
         if(action.type=='SCRIPT_CREATE'){
             state=Object.assign(state,{
                 'show':true,
+                'sample_run':false,
+                'sample_data':[],
                 'name':generateFileName(),
                 'data': "/*\nfunction map(obj){\n\treturn obj\n}\n"+
                         "function reduce(acc,obj){\n\tif(acc==null){\n\t\tacc={}\n\t}\n\treturn acc\n}\n*/\n\n"
@@ -172,6 +174,7 @@
                 'show':true,
                 'id':generateServiceName(),
                 'service_type':'filter',
+                'partition_key':'',
                 'in':streams[0].topic,
                 'out':'local://direct/stream/<output_stream_name>',
                 'function_type':'http',
@@ -188,6 +191,7 @@
                 id:state.id,
                 service:state.service_type,
                 type:state.function_type,
+                partition_key:state.partition_key,
                 streams:{
                     input:'local://direct/stream/'+state.in,
                     output:'local://direct/stream/'+state.out

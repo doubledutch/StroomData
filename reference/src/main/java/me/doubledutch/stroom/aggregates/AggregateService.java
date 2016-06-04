@@ -23,23 +23,25 @@ public class AggregateService extends Service{
 		super(handler,obj);		
 	}
 
-	private void getAggregate() throws Exception{
+	public String getAggregate() throws Exception{
 		if(type==JAVASCRIPT){
 			metric.startTimer("javascript.serialize");
 			jsEngine.eval("var result=null");
 			jsEngine.eval("if(aggregate!=null)result=JSON.stringify(aggregate);");
-			Object obj=jsEngine.eval("result");
+			// Object obj=jsEngine.eval("result");
+			Object obj=jsEngine.get("result");
 			metric.stopTimer("javascript.serialize");
 			if(obj!=null){
 				aggregate=(String)obj;
 			}
 		}
+		return aggregate;
 	}
 
 	private void loadState() throws Exception{
 		JSONObject obj=new JSONObject(getStream("state").getLast());
-		index=obj.getInt("i");
-		outputIndex=obj.getInt("o");
+		index=obj.getLong("i");
+		outputIndex=obj.getLong("o");
 		aggregate=getStream("output").get(outputIndex);
 		if(type==JAVASCRIPT){
 			jsEngine.eval("var aggregate="+aggregate+";");
@@ -50,7 +52,7 @@ public class AggregateService extends Service{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
 		obj.put("o",outputIndex);
-		getStream("state").append(obj);
+		getStream("state").append(obj,StreamConnection.FLUSH);
 	}
 
 	public void reset() throws Exception{
@@ -78,11 +80,11 @@ public class AggregateService extends Service{
 			out=Utility.postURL(url,outputObj.toString());		
 			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
-			metric.startTimer("javascript.derialize");
+			metric.startTimer("javascript.deserialize");
 			jsEngine.put("raw",str);
 			jsEngine.eval("var obj=JSON.parse(raw);");
 			// jsEngine.eval("var obj=JSON.parse('"+str+"');");
-			metric.stopTimer("javascript.derialize");
+			metric.stopTimer("javascript.deserialize");
 			// jsEngine.eval("var aggregate="+aggregate+";");
 			// jsEngine.eval("var result=reduce(aggregate,obj);");
 			metric.startTimer("javascript.run");
@@ -148,13 +150,14 @@ public class AggregateService extends Service{
 					// TODO: add selective state saving point
 					metric.startTimer("output.append");
 					getAggregate();
-					outputIndex=getStream("output").append(aggregate);
+					outputIndex=getStream("output").append(aggregate,StreamConnection.FLUSH);
 					metric.stopTimer("output.append");
 					metric.startTimer("state.append");
 					saveState();
-					metric.startTimer("state.append");
-					metric.stopTimer("batch.time");
+					metric.stopTimer("state.append");
+					
 				}
+				metric.stopTimer("batch.time");
 				addBatchMetric(metric);
 			}
 		}catch(Exception e){

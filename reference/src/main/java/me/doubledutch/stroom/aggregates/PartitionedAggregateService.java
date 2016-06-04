@@ -3,84 +3,52 @@ package me.doubledutch.stroom.aggregates;
 import org.apache.log4j.Logger;
 
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.*;
 import java.util.*;
 import org.json.*;
-import java.io.IOException;
 import java.net.*;
 import javax.script.*;
 
 public class PartitionedAggregateService extends Service{
-	private final Logger log = Logger.getLogger("PartitionedAggregate");
+	private final Logger log = Logger.getLogger("Aggregate");
 
 	private int WAIT_TIME=1000;
-	private int BATCH_SIZE=100;
-	// private int SNAPSHOT_RATE=100;
 
-	public static int HTTP=0;
-	public static int QUERY=1;
-	public static int JAVASCRIPT=2;
-
-	private int type=HTTP;
-
-	private String url=null;
-	private double sampleRate=1.0;
-
-	private StreamConnection input=null;
-	private StreamConnection output=null;
-	private StreamConnection state=null;
-
-	private long index=-1;
 	private long outputIndex=-1;
+	private BatchMetric metric=null;
+	private String partition=null;
+
 	private Map<String,Long> aggregateMap=new HashMap<String,Long>();
-	JSONObject newState=new JSONObject();
+	// JSONObject newState=new JSONObject();
+	private Map<String,String> aggregateCache=new HashMap<String,String>();
+	private Set<String> partitionTouchSet=new HashSet<String>();
 
-	private String id;
-	private String partition;
-	private String script=null;
-
-	private ScriptEngine jsEngine;
-	private Invocable jsInvocable;
 
 	public PartitionedAggregateService(StreamHandler handler,JSONObject obj) throws Exception{
-		super(handler,obj);
-		
-		id=obj.getString("id");
-		partition=obj.getString("partition");
-		if(obj.has("batch_size")){
-			setBatchSize(obj.getInt("batch_size"));
-		}
-		
-		input=openStream(new URI(obj.getString("input_stream")));
-		output=openStream(new URI(obj.getString("output_stream")));
-		if(obj.has("state_stream")){
-			state=openStream(new URI(obj.getString("state_stream")));
-		}else{
-			state=openStream(new URI(obj.getString("output_stream")+".state"));
-		}
-		String strType=obj.getString("type");
-		if(strType.equals("http")){
-			type=HTTP;
-			url=obj.getString("url");
-		}else if(strType.equals("javascript")){
-			type=JAVASCRIPT;
-			script=obj.getString("script");
-			String scriptData=Utility.readFile(script);
-			ScriptEngineManager mgr = new ScriptEngineManager();
-	        jsEngine = mgr.getEngineByName("JavaScript");
-	        // jsEngine = mgr.getEngineByName("nashorn");
-	        jsInvocable = (Invocable) jsEngine;
-			jsEngine.eval(scriptData);
-		}
+		super(handler,obj);		
+		partition=obj.getString("partition_key");
 	}
 
-	private void setBatchSize(int size){
-		BATCH_SIZE=size;
+	public String getAggregate(String key) throws Exception{
+		//
+		if(aggregateCache.containsKey(key)){
+			return aggregateCache.get(key);
+		}
+		if(!aggregateMap.containsKey(key)){
+			return null;
+		}
+		
+
+		long loc=aggregateMap.get(key);
+		String doc=getStream("output").get(loc);
+		aggregateCache.put(key,doc);
+		return doc;
 	}
 
 	private void loadState() throws Exception{
 		long loc=0;
-		List<String> batch=state.get(loc,loc+BATCH_SIZE);
+		List<String> batch=getStream("state").get(loc,loc+500);
 		while(batch.size()>0){
 			for(String str:batch){
 				JSONObject obj=new JSONObject(str);
@@ -95,27 +63,56 @@ public class PartitionedAggregateService extends Service{
 			}
 
 			loc+=batch.size();
-			batch=state.get(loc,loc+BATCH_SIZE);
+			batch=getStream("state").get(loc,loc+500);
 		}
-
-	}
-
-	public void reset() throws Exception{
-		getStream("state").truncate(0);
-		getStream("output").truncate(0);
 	}
 
 	private void saveState() throws Exception{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
+
+		// Save snapshot and build state
+		List<String> batch=new ArrayList<String>();
+		List<String> pKeyList=new ArrayList<String>();
+		for(String key:partitionTouchSet){
+			pKeyList.add(key);
+			String data=aggregateCache.get(key);
+			batch.add(data);
+		}
+		
+		metric.startTimer("output.append");
+		List<Long> results=null;
+		if(batch.size()>0){
+			results=getStream("output").append(batch,StreamConnection.FLUSH);
+		}
+		metric.stopTimer("output.append");
+		JSONObject newState=new JSONObject();
+		if(results!=null){
+			for(int i=0;i<pKeyList.size();i++){
+				String key=pKeyList.get(i);
+				long loc=results.get(i);
+				newState.put(key,loc);
+			}
+		}
 		obj.put("o",newState);
-		state.append(obj);
+		getStream("state").append(obj,StreamConnection.FLUSH);
+		partitionTouchSet.clear();
+	}
+	
+
+	public void reset() throws Exception{
+		getStream("state").truncate(0);
+		getStream("output").truncate(0);
+		index=-1;
+		outputIndex=-1;
 	}
 
-	private String getLastAggregate(String partitionKey) throws IOException{
-		long loc=aggregateMap.get(partitionKey);
-		String doc=output.get(loc);
-		return doc;
+	public String getPartitionKey(){
+		return partition;
+	}
+
+	public int getPartitionCount(){
+		return aggregateMap.size();
 	}
 
 	private String getPartitionKey(String event) throws JSONException{
@@ -124,6 +121,7 @@ public class PartitionedAggregateService extends Service{
 		if(value instanceof String){
 			return (String)value;
 		}
+		// System.out.println(value.toString());
 		return value.toString();
 	}
 
@@ -131,6 +129,7 @@ public class PartitionedAggregateService extends Service{
 		// System.out.println("Process document");
 		// TODO: add ability to batch output
 		String out=null;
+		boolean error=false;
 		if(type==HTTP){
 			JSONObject outputObj=new JSONObject();
 			outputObj.put("event",new JSONObject(str));
@@ -139,16 +138,35 @@ public class PartitionedAggregateService extends Service{
 			}else{
 				outputObj.put("aggregate",JSONObject.NULL);
 			}
+			metric.startTimer("http.post");
 			out=Utility.postURL(url,outputObj.toString());		
+			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
-			jsEngine.eval("var obj="+str+";");
-			jsEngine.eval("var aggregate="+aggregate+";");
-			jsEngine.eval("var result=reduce(aggregate,obj);");
-			jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
-			Object obj=jsEngine.eval("result");
+			metric.startTimer("javascript.deserialize");
+			jsEngine.put("raw",str);
+			jsEngine.eval("var obj=JSON.parse(raw);");
+			// TODO: only when it's actually a new aggregate should it be put back in!
+			jsEngine.put("raw",aggregate);
+			jsEngine.eval("var aggregate=JSON.parse(raw);");
+			// jsEngine.eval("var obj=JSON.parse('"+str+"');");
+			metric.stopTimer("javascript.deserialize");
+			// jsEngine.eval("var aggregate="+aggregate+";");
+			// jsEngine.eval("var result=reduce(aggregate,obj);");
+			metric.startTimer("javascript.run");
+			jsEngine.eval("aggregate=reduce(aggregate,obj);");
+			metric.stopTimer("javascript.run");
+
+			
+			metric.startTimer("javascript.serialize");
+			jsEngine.eval("var result=null");
+			jsEngine.eval("if(aggregate!=null)result=JSON.stringify(aggregate);");
+			// Object obj=jsEngine.eval("result");
+			Object obj=jsEngine.get("result");
+			metric.stopTimer("javascript.serialize");
 			if(obj!=null){
 				out=(String)obj;
 			}
+			
 			// TODO: handle javascript errors
 		}else if(type==QUERY){
 
@@ -157,42 +175,70 @@ public class PartitionedAggregateService extends Service{
 			// Assume error
 		}else{
 			// Send output along
-			return out;
+			// aggregate=out;
 
 			// output.append(out);
 		}
-		return null;
+		return out;
 	}
 
 	public void run(){
 		try{
-			if(state.getCount()>0){
+			if(type==JAVASCRIPT){
+				jsEngine.eval("var aggregate=null");
+			}
+			if(getStream("state").getCount()>0){
 				loadState();
 			}
-			log.info(id+" restarting at "+(index+1));
+			log.info(getId()+" restarting at "+(index+1));
 			isRunning(true);
 			while(shouldBeRunning()){
+				metric=new BatchMetric();
+				metric.startTimer("batch.time");
 				// Load
-				List<String> batch=input.get(index+1,index+BATCH_SIZE+1);
+				metric.startTimer("input.get");
+				List<String> batch=getStream("input").get(index+1,index+getBatchSize()+1);
+				metric.stopTimer("input.get");
+				metric.setSamples(batch.size());
+
 				// Process
 				if(batch.size()==0){
+					metric.stopTimer("batch.time");
 					// No new data, wait before pulling again
 					try{
 						Thread.sleep(WAIT_TIME);
 					}catch(Exception se){}
 				}else{
-					newState=new JSONObject();
+					// TODO: huge performance improvement... sort events in the batch by partition key
+					//       this lets us keep the aggregate in the javascript engine for each partition key
+					//       in the batch
+					// newState=new JSONObject();
 					for(String str:batch){
 						// TODO: add selective error handling here!
 						String key=getPartitionKey(str);
-						String newAggregate=processDocument(str,getLastAggregate(key));
-						long loc=output.append(newAggregate);
-						aggregateMap.put(key,loc);
-						newState.put(key,loc);
+						String newAggregate=processDocument(str,getAggregate(key));
+						// metric.startTimer("output.append");
+						// long loc=getStream("output").append(newAggregate);
+						// long loc=0;
+						// metric.stopTimer("output.append");
+						// aggregateMap.put(key,loc);
+						// newState.put(key,loc);
+						// processDocument(str);
+						aggregateCache.put(key,newAggregate);
+						partitionTouchSet.add(key);
 						index++;
 					}
+					// TODO: add selective state saving point
+					
+					// getAggregate();
+					// outputIndex=getStream("output").append(aggregate);
+					
+					metric.startTimer("state.append");
 					saveState();
+					metric.stopTimer("state.append");
+					metric.stopTimer("batch.time");
 				}
+				addBatchMetric(metric);
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -207,6 +253,8 @@ public class PartitionedAggregateService extends Service{
 
 	public JSONObject toJSON() throws JSONException{
 		JSONObject obj=super.toJSON();
+		obj.put("partitions",aggregateMap.size());
 		return obj;
 	}
 }
+

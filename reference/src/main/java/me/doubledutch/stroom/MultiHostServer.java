@@ -23,8 +23,13 @@ public class MultiHostServer implements Runnable{
 	private Server server=null;
 
 	private StreamHandler streamHandler=null;
+	private AggregateManager aggregateManager=null;
 	private ServiceManager serviceManager=null;
 	private ScriptManager scriptManager=null;
+
+	private static String BUILD_DATE;
+	private static String BUILD_VERSION;
+	private static String BUILD_NUMBER;
 
 	// private List<Service> serviceList=new ArrayList<Service>();
 
@@ -35,6 +40,14 @@ public class MultiHostServer implements Runnable{
 	public MultiHostServer(String configLocation){
 		try{
 			log.info("Starting Stroom MultiHost");
+			Properties props = new Properties();
+			props.load(SystemAPIServlet.class.getResourceAsStream("/version.properties"));
+			BUILD_DATE=props.getProperty("BUILD_DATE");
+			BUILD_VERSION=props.getProperty("BUILD_VERSION");
+			BUILD_NUMBER=props.getProperty("BUILD_NUMBER");
+
+			log.info("v"+BUILD_VERSION+" b"+BUILD_NUMBER+" (built on "+BUILD_DATE+")");
+
 			// Load configuration
 			if(configLocation!=null){
 				config=new JSONObject(Utility.readFile(configLocation));
@@ -46,30 +59,9 @@ public class MultiHostServer implements Runnable{
 			log.info("Creating services");
 			streamHandler=new StreamHandler(config.getJSONObject("streams"));
 
-			serviceManager=new ServiceManager(streamHandler);
+			aggregateManager=new AggregateManager();
+			serviceManager=new ServiceManager(streamHandler,aggregateManager);
 			scriptManager=new ScriptManager(streamHandler);
-
-			/*
-			if(config.has("filters")){
-				JSONArray services=config.getJSONArray("filters");
-				for(int i=0;i<services.length();i++){
-					JSONObject obj=services.getJSONObject(i);
-					Service filter=new FilterService(streamHandler,obj);
-					serviceList.add(filter);
-				}
-			}
-
-			if(config.has("aggregates")){
-				JSONArray services=config.getJSONArray("aggregates");
-				for(int i=0;i<services.length();i++){
-					JSONObject obj=services.getJSONObject(i);
-					Service aggregate=new AggregateService(streamHandler,obj);
-					// TODO: differentiate on partitioned aggregates
-					// TODO: add to api endpoints
-					serviceList.add(aggregate);
-				}
-			}*/
-			// service=new Service(streamHandler);
 			
 			// Start servlets
 			log.info("Starting servlets");
@@ -85,6 +77,7 @@ public class MultiHostServer implements Runnable{
 
 			// Setup shutdown hook
 			Runtime.getRuntime().addShutdownHook(new Thread(this));
+			log.info("Access web interface at http://127.0.0.1:8080/");
 			log.info("Ready!");
 		}catch(Exception e){
 			e.printStackTrace();
@@ -177,6 +170,8 @@ public class MultiHostServer implements Runnable{
 			handler.addServlet(servletHolder, "/service/*");
 			servletHolder = new ServletHolder(ScriptAPIServlet.class);
 			handler.addServlet(servletHolder, "/script/*");
+			servletHolder = new ServletHolder(AggregateAPIServlet.class);
+			handler.addServlet(servletHolder, "/aggregate/*");
 			servletHolder = new ServletHolder(SystemAPIServlet.class);
 			handler.addServlet(servletHolder, "/system/*");
 			servletHolder = new ServletHolder(FileServlet.class);

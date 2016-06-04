@@ -38,6 +38,32 @@ public class LocalStreamConnection implements StreamConnection{
 		return get(stream.getCount()-1);
 	}
 
+	public long append(JSONObject data,int hint) throws IOException,JSONException{
+		return append(data.toString(),hint);
+	}
+
+	public long append(String data,int hint) throws IOException,JSONException{
+		JSONObject obj=new JSONObject(data);
+		Document doc=new Document(topic,obj.toString());
+		stream.addDocument(doc,hint);
+		return doc.getLocation();
+	}
+
+	public List<Long> append(List<String> data,int hint) throws IOException,JSONException{
+		List<Long> output=new ArrayList<Long>();
+		List<Document> docList=new ArrayList<Document>();
+		for(String str:data){
+			// output.add(append(str));
+			JSONObject obj=new JSONObject(str);
+			docList.add(new Document(topic,obj.toString()));
+		}
+		stream.addDocuments(docList,hint);
+		for(Document doc:docList){
+			output.add(doc.getLocation());
+		}
+		return output;
+	}
+
 	public long append(JSONObject data) throws IOException,JSONException{
 		return append(data.toString());
 	}
@@ -47,6 +73,21 @@ public class LocalStreamConnection implements StreamConnection{
 		Document doc=new Document(topic,obj.toString());
 		stream.addDocument(doc);
 		return doc.getLocation();
+	}
+
+	public List<Long> append(List<String> data) throws IOException,JSONException{
+		List<Long> output=new ArrayList<Long>();
+		List<Document> docList=new ArrayList<Document>();
+		for(String str:data){
+			// output.add(append(str));
+			JSONObject obj=new JSONObject(str);
+			docList.add(new Document(topic,obj.toString()));
+		}
+		stream.addDocuments(docList);
+		for(Document doc:docList){
+			output.add(doc.getLocation());
+		}
+		return output;
 	}
 
 	public void truncate(long index) throws IOException{

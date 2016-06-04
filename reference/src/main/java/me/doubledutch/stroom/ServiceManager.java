@@ -15,13 +15,16 @@ public class ServiceManager implements Runnable{
 	private Map<String,Service> serviceMap=new HashMap<String,Service>();
 	private Map<String,JSONObject> agg=new HashMap<String,JSONObject>();
 
+	private AggregateManager aggregateManager;
+
 	private StreamConnection serviceStream;
 	private Thread thread=null;
 	private ThreadGroup threadGroup=null;
 
-	public ServiceManager(StreamHandler handler) throws Exception{
+	public ServiceManager(StreamHandler handler,AggregateManager aggregates) throws Exception{
 		app=this;
 		streamHandler=handler;
+		this.aggregateManager=aggregates;
 		// TODO: creating a stream connection like this feels slightly dirty,
 		//       possibly refactor to make the service code generically usable
 		serviceStream=new LocalStreamConnection(streamHandler.getOrCreateStream("_stroom_service"));
@@ -139,7 +142,13 @@ public class ServiceManager implements Runnable{
 		if(service.equals("filter")){
 			return new FilterService(streamHandler,obj);
 		}else if(service.equals("aggregate")){
-			return new AggregateService(streamHandler,obj);
+			AggregateService as=new AggregateService(streamHandler,obj);
+			aggregateManager.addAggregate(as);
+			return as;
+		}else if(service.equals("partitioned_aggegrate")){
+			PartitionedAggregateService pas=new PartitionedAggregateService(streamHandler,obj);
+			aggregateManager.addPartitionedAggregate(pas);
+			return pas;
 		}else{
 			log.error("Unknown service type "+service);
 		}
