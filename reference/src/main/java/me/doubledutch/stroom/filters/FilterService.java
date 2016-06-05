@@ -9,27 +9,9 @@ import java.util.*;
 import org.json.*;
 import java.net.*;
 import javax.script.*;
-/*
-	One at a time, at least once, at most once
-	multi threaded, low guarantee
-	stochastic sampling
-
-	external url
-	internal javascript script
-	internal sql query
-
-	load data
-	execute filter
-	write response
-	write state
-
-	how do we handle errors?
-*/
 
 public class FilterService extends Service{
 	private final Logger log = Logger.getLogger("Filter");
-
-	private int WAIT_TIME=1000;
 
 	private long outputIndex=-1;
 	private double sampleRate=1.0;
@@ -131,7 +113,7 @@ public class FilterService extends Service{
 				if(batch.size()==0){
 					// No new data, wait before pulling again
 					try{
-						Thread.sleep(WAIT_TIME);
+						Thread.sleep(getWaitTime());
 					}catch(Exception se){}
 				}else{
 					List<String> output=new ArrayList<String>();

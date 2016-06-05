@@ -19,6 +19,7 @@ public abstract class Service implements Runnable{
 
 	public String url=null;
 
+	private int WAIT_TIME=1000;
 	private int BATCH_SIZE=1000;
 	public long index=-1;
 
@@ -143,6 +144,14 @@ public abstract class Service implements Runnable{
 
 	public int getBatchSize(){
 		return BATCH_SIZE;
+	}
+
+	private void setWaitTime(int time){
+		WAIT_TIME=time;
+	}
+
+	public int getWaitTime(){
+		return WAIT_TIME;
 	}
 
 	private String getStreamName(URI stream){
