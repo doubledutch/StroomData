@@ -121,7 +121,15 @@ public class FilterService extends Service{
 						// TODO: add selective error handling here!
 						String out=processDocument(str);
 						if(out!=null && out.length()>0){
-							output.add(out);
+							if(out.startsWith("[")){
+								JSONArray arr=new JSONArray(out);
+								for(int i=0;i<arr.length();i++){
+									JSONObject obj=arr.getJSONObject(i);
+									output.add(obj.toString());
+								}
+							}else{
+								output.add(out);
+							}
 						}
 						index++;
 					}
