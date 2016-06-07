@@ -16,14 +16,16 @@ public class ServiceManager implements Runnable{
 	private Map<String,JSONObject> agg=new HashMap<String,JSONObject>();
 
 	private AggregateManager aggregateManager;
+	private KeyValueManager keyValueManager;
 
 	private StreamConnection serviceStream;
 	private Thread thread=null;
 	private ThreadGroup threadGroup=null;
 
-	public ServiceManager(StreamHandler handler,AggregateManager aggregates) throws Exception{
+	public ServiceManager(StreamHandler handler,AggregateManager aggregates,KeyValueManager keyValueManager) throws Exception{
 		app=this;
 		streamHandler=handler;
+		this.keyValueManager=keyValueManager;
 		this.aggregateManager=aggregates;
 		// TODO: creating a stream connection like this feels slightly dirty,
 		//       possibly refactor to make the service code generically usable
@@ -149,6 +151,10 @@ public class ServiceManager implements Runnable{
 			PartitionedAggregateService pas=new PartitionedAggregateService(streamHandler,obj);
 			aggregateManager.addPartitionedAggregate(pas);
 			return pas;
+		}else if(service.equals("kvstore")){
+			KeyValueService kvstore=new KeyValueService(streamHandler,obj);
+			keyValueManager.addKeyValueService(kvstore);
+			return kvstore;
 		}else{
 			log.error("Unknown service type "+service);
 		}

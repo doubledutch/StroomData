@@ -24,6 +24,7 @@ public class MultiHostServer implements Runnable{
 
 	private StreamHandler streamHandler=null;
 	private AggregateManager aggregateManager=null;
+	private KeyValueManager kvManager=null;
 	private ServiceManager serviceManager=null;
 	private ScriptManager scriptManager=null;
 
@@ -60,7 +61,8 @@ public class MultiHostServer implements Runnable{
 			streamHandler=new StreamHandler(config.getJSONObject("streams"));
 
 			aggregateManager=new AggregateManager();
-			serviceManager=new ServiceManager(streamHandler,aggregateManager);
+			kvManager=new KeyValueManager();
+			serviceManager=new ServiceManager(streamHandler,aggregateManager,kvManager);
 			scriptManager=new ScriptManager(streamHandler);
 			
 			// Start servlets
@@ -172,6 +174,8 @@ public class MultiHostServer implements Runnable{
 			handler.addServlet(servletHolder, "/script/*");
 			servletHolder = new ServletHolder(AggregateAPIServlet.class);
 			handler.addServlet(servletHolder, "/aggregate/*");
+			servletHolder = new ServletHolder(KeyValueAPIServlet.class);
+			handler.addServlet(servletHolder, "/kvstore/*");
 			servletHolder = new ServletHolder(SystemAPIServlet.class);
 			handler.addServlet(servletHolder, "/system/*");
 			servletHolder = new ServletHolder(FileServlet.class);
