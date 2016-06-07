@@ -186,6 +186,7 @@ public class KeyValueService extends Service{
 					// TODO: add selective state saving point
 					metric.startTimer("state.append");
 					saveState();
+					stateMap=null;
 					metric.stopTimer("state.append");
 				}
 				metric.stopTimer("batch.time");
