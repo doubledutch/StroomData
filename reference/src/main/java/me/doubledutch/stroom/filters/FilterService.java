@@ -16,6 +16,8 @@ public class FilterService extends Service{
 	private long outputIndex=-1;
 	private double sampleRate=1.0;
 	private BatchMetric metric=null;
+	private List<String> buffer=null;
+	private long lastFlush=0;
 
 	public FilterService(StreamHandler handler,JSONObject obj) throws Exception{
 		super(handler,obj);
@@ -54,10 +56,10 @@ public class FilterService extends Service{
 		if(type==HTTP){
 			out=Utility.postURL(url,str);		
 		}else if(type==JAVASCRIPT){
-			metric.startTimer("javascript.derialize");
+			metric.startTimer("javascript.deserialize");
 			jsEngine.put("raw",str);
 			jsEngine.eval("var obj=JSON.parse(raw);");
-			metric.stopTimer("javascript.derialize");
+			metric.stopTimer("javascript.deserialize");
 
 			// jsEngine.eval("var obj="+str+";");
 			metric.startTimer("javascript.run");
@@ -65,7 +67,7 @@ public class FilterService extends Service{
 			metric.stopTimer("javascript.run");
 			metric.startTimer("javascript.serialize");
 			jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
-			Object obj=jsEngine.eval("result");
+			Object obj=jsEngine.get("result");
 			metric.stopTimer("javascript.serialize");
 
 			if(obj!=null){
@@ -99,16 +101,22 @@ public class FilterService extends Service{
 			if(getStream("state").getCount()>0){
 				loadState();
 			}
+			lastFlush=System.currentTimeMillis();
+			buffer=new ArrayList<String>(getBatchSize()*2);
 			log.info(getId()+" restarting at "+(index+1));
 			isRunning(true);
+			int groupBatch=0;
 			while(shouldBeRunning()){
 				// Load
-				metric=new BatchMetric();
-				metric.startTimer("batch.time");
+				if(buffer.size()==0){
+					metric=new BatchMetric();
+					metric.startTimer("batch.time");
+					groupBatch=0;
+				}
 				metric.startTimer("input.get");
 				List<String> batch=getStream("input").get(index+1,index+getBatchSize()+1);
 				metric.stopTimer("input.get");
-				metric.setSamples(batch.size());
+				groupBatch+=batch.size();
 				// Process
 				if(batch.size()==0){
 					// No new data, wait before pulling again
@@ -116,7 +124,7 @@ public class FilterService extends Service{
 						Thread.sleep(getWaitTime());
 					}catch(Exception se){}
 				}else{
-					List<String> output=new ArrayList<String>();
+					// List<String> output=new ArrayList<String>();
 					for(String str:batch){
 						// TODO: add selective error handling here!
 						String out=processDocument(str);
@@ -125,27 +133,34 @@ public class FilterService extends Service{
 								JSONArray arr=new JSONArray(out);
 								for(int i=0;i<arr.length();i++){
 									JSONObject obj=arr.getJSONObject(i);
-									output.add(obj.toString());
+									buffer.add(obj.toString());
 								}
 							}else{
-								output.add(out);
+								buffer.add(out);
 							}
 						}
 						index++;
 					}
-					metric.startTimer("output.append");
-					if(output.size()>0){
-						List<Long> result=getStream("output").append(output);
-						outputIndex=result.get(result.size()-1);
+					if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout()){
+						metric.startTimer("output.append");
+						if(buffer.size()>0){
+							List<Long> result=getStream("output").append(buffer);
+							outputIndex=result.get(result.size()-1);
+						}
+						metric.stopTimer("output.append");
+						// TODO: add selective state saving point
+						metric.startTimer("state.append");
+						saveState();
+						metric.stopTimer("state.append");
+						buffer.clear();
+						lastFlush=System.currentTimeMillis();
 					}
-					metric.stopTimer("output.append");
-					// TODO: add selective state saving point
-					metric.startTimer("state.append");
-					saveState();
-					metric.stopTimer("state.append");
 				}
-				metric.stopTimer("batch.time");
-				addBatchMetric(metric);
+				if(buffer.size()==0){
+					metric.setSamples(groupBatch);
+					metric.stopTimer("batch.time");
+					addBatchMetric(metric);
+				}
 			}
 		}catch(Exception e){
 			e.printStackTrace();
