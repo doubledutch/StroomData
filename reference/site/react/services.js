@@ -44,6 +44,7 @@ var ServiceEditor =React.createClass({
 		options.push(h('option',{value:'filter'},'Filter'))
 		options.push(h('option',{value:'aggregate'},'Aggregate'))
 		options.push(h('option',{value:'partitioned_aggegrate'},'Partitioned Aggregate'))
+		options.push(h('option',{value:'kvstore'},'Key Value Store'))
 
 		form.push(h('select',{name:'type',onChange:this.setServiceType},options))
 

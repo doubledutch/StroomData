@@ -13,8 +13,6 @@ import javax.script.*;
 public class PartitionedAggregateService extends Service{
 	private final Logger log = Logger.getLogger("Aggregate");
 
-	private int WAIT_TIME=1000;
-
 	private long outputIndex=-1;
 	private BatchMetric metric=null;
 	private String partition=null;
@@ -206,7 +204,7 @@ public class PartitionedAggregateService extends Service{
 					metric.stopTimer("batch.time");
 					// No new data, wait before pulling again
 					try{
-						Thread.sleep(WAIT_TIME);
+						Thread.sleep(getWaitTime());
 					}catch(Exception se){}
 				}else{
 					// TODO: huge performance improvement... sort events in the batch by partition key

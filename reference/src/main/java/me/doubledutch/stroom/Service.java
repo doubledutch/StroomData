@@ -19,7 +19,9 @@ public abstract class Service implements Runnable{
 
 	public String url=null;
 
+	private int WAIT_TIME=1000;
 	private int BATCH_SIZE=1000;
+	private int BATCH_TIMEOUT=10*1000;
 	public long index=-1;
 
 	private Map<String,MockStreamConnection> mockMap=new HashMap<String,MockStreamConnection>();
@@ -143,6 +145,22 @@ public abstract class Service implements Runnable{
 
 	public int getBatchSize(){
 		return BATCH_SIZE;
+	}
+
+	public int getBatchTimeout(){
+		return BATCH_TIMEOUT;
+	}
+
+	private void setBatchTimeout(int time){
+		BATCH_TIMEOUT=time;
+	}
+
+	private void setWaitTime(int time){
+		WAIT_TIME=time;
+	}
+
+	public int getWaitTime(){
+		return WAIT_TIME;
 	}
 
 	private String getStreamName(URI stream){

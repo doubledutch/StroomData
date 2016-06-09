@@ -13,8 +13,6 @@ import javax.script.*;
 public class AggregateService extends Service{
 	private final Logger log = Logger.getLogger("Aggregate");
 
-	private int WAIT_TIME=1000;
-
 	private long outputIndex=-1;
 	private String aggregate=null;
 	private BatchMetric metric=null;
@@ -139,7 +137,7 @@ public class AggregateService extends Service{
 					metric.stopTimer("batch.time");
 					// No new data, wait before pulling again
 					try{
-						Thread.sleep(WAIT_TIME);
+						Thread.sleep(getWaitTime());
 					}catch(Exception se){}
 				}else{
 					for(String str:batch){

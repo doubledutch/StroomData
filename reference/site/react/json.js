@@ -50,14 +50,18 @@ function renderValue(value,indent){
 
 function renderJSONArray(arr,indent){
 	var result=[]
+	var len=arr.length
+	if(len>30){
+		len=30
+	}
 	if(isFlatArray(arr)){
 		result.push(h('span',indent))
-		for(var n=0;n<arr.length;n++){
+		for(var n=0;n<len;n++){
 			if(n>0)result.push(h('span.json_symbol',', '))
 			result=result.concat(renderValue(arr[n],''))
 		}
 	}else{
-		for(var n=0;n<arr.length;n++){
+		for(var n=0;n<len;n++){
 			var value=arr[n]
 			var cols=[]
 			if(typeof value === 'object'){
@@ -91,13 +95,20 @@ function renderJSONArray(arr,indent){
 			result.push(h('div',cols))
 		}
 	}
+	if(arr.length>len){
+		result.push(h('span.json_symbol','...('+(arr.length()-len)+' elements omitted)'))
+	}
 	return result
 }
 
 function renderJSONObject(obj,indent){
 	var result=[]
 	var keys=Object.keys(obj)
-	for(var i=0;i<keys.length;i++){
+	var len=keys.length
+	if(len>30){
+		len=30
+	}
+	for(var i=0;i<len;i++){
 		var key=keys[i]
 
 		var cols=[]
@@ -136,6 +147,9 @@ function renderJSONObject(obj,indent){
 		if(cols.length>0){
 			result.push(h('div',cols))
 		}
+	}
+	if(keys.length>len){
+		result.push(h('span.json_symbol','...('+(keys.length-len)+' elements omitted)'))
 	}
 	return result
 }

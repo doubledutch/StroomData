@@ -6,39 +6,63 @@ import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.*;
 import java.util.*;
+import java.util.concurrent.*;
 import org.json.*;
 import java.net.*;
 import javax.script.*;
+import java.io.*;
 
-public class FilterService extends Service{
+public class KeyValueService extends Service{
 	private final Logger log = Logger.getLogger("Filter");
 
 	private long outputIndex=-1;
 	private double sampleRate=1.0;
 	private BatchMetric metric=null;
-	private List<String> buffer=null;
-	private long lastFlush=0;
+	private JSONObject stateMap=null;
 
-	public FilterService(StreamHandler handler,JSONObject obj) throws Exception{
+	// TODO: is this truly a good fit? isn't concurrenthashmap copy on write
+	private Map<String,Long> keyMap=new ConcurrentHashMap<String,Long>();
+
+	public KeyValueService(StreamHandler handler,JSONObject obj) throws Exception{
 		super(handler,obj);
-		
 		String strType=obj.getString("type");
-		if(strType.equals("sample")){
-			type=SAMPLE;
-			sampleRate=obj.getDouble("sample_rate");
-		}
+	}
+
+	public int getKeyCount(){
+		return keyMap.size();
+	}
+
+	public String getValue(String key) throws IOException{
+		return getStream("output").get(keyMap.get(key));
 	}
 
 	private void loadState() throws Exception{
-		JSONObject obj=new JSONObject(getStream("state").getLast());
-		index=obj.getLong("i");
-		outputIndex=obj.getLong("o");
+		long loc=0;
+		List<String> batch=getStream("state").get(loc,loc+500);
+		while(batch.size()>0){
+			for(String str:batch){
+				JSONObject obj=new JSONObject(str);
+				index=obj.getLong("i");
+				JSONObject objSt=obj.getJSONObject("o");
+				Iterator<String> keyIt=objSt.keys();
+
+				while(keyIt.hasNext()){
+					String key=keyIt.next();
+					keyMap.put(key,objSt.getLong(key));
+				}
+			}
+
+			loc+=batch.size();
+			batch=getStream("state").get(loc,loc+500);
+		}
+
 	}
 
 	private void saveState() throws Exception{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
-		obj.put("o",outputIndex);
+		// obj.put("o",outputIndex);
+		obj.put("o",stateMap);
 		getStream("state").append(obj,StreamConnection.FLUSH);
 	}
 
@@ -50,16 +74,14 @@ public class FilterService extends Service{
 	}
 
 	private String processDocument(String str) throws Exception{
-		// System.out.println("Process document");
-		// TODO: add ability to batch output
 		String out=null;
 		if(type==HTTP){
 			out=Utility.postURL(url,str);		
 		}else if(type==JAVASCRIPT){
-			metric.startTimer("javascript.deserialize");
+			metric.startTimer("javascript.derialize");
 			jsEngine.put("raw",str);
 			jsEngine.eval("var obj=JSON.parse(raw);");
-			metric.stopTimer("javascript.deserialize");
+			metric.stopTimer("javascript.derialize");
 
 			// jsEngine.eval("var obj="+str+";");
 			metric.startTimer("javascript.run");
@@ -67,7 +89,7 @@ public class FilterService extends Service{
 			metric.stopTimer("javascript.run");
 			metric.startTimer("javascript.serialize");
 			jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
-			Object obj=jsEngine.get("result");
+			Object obj=jsEngine.eval("result");
 			metric.stopTimer("javascript.serialize");
 
 			if(obj!=null){
@@ -78,12 +100,6 @@ public class FilterService extends Service{
 			// TODO: handle javascript errors
 		}else if(type==QUERY){
 
-		}else if(type==SAMPLE){
-			if(Math.random()<sampleRate){
-				out=str;
-			}else{
-				out="";
-			}
 		}
 		if(out==null){
 			// Assume error
@@ -101,22 +117,16 @@ public class FilterService extends Service{
 			if(getStream("state").getCount()>0){
 				loadState();
 			}
-			lastFlush=System.currentTimeMillis();
-			buffer=new ArrayList<String>(getBatchSize()*2);
 			log.info(getId()+" restarting at "+(index+1));
 			isRunning(true);
-			int groupBatch=0;
 			while(shouldBeRunning()){
 				// Load
-				if(buffer.size()==0){
-					metric=new BatchMetric();
-					metric.startTimer("batch.time");
-					groupBatch=0;
-				}
+				metric=new BatchMetric();
+				metric.startTimer("batch.time");
 				metric.startTimer("input.get");
 				List<String> batch=getStream("input").get(index+1,index+getBatchSize()+1);
 				metric.stopTimer("input.get");
-				groupBatch+=batch.size();
+				metric.setSamples(batch.size());
 				// Process
 				if(batch.size()==0){
 					// No new data, wait before pulling again
@@ -124,7 +134,7 @@ public class FilterService extends Service{
 						Thread.sleep(getWaitTime());
 					}catch(Exception se){}
 				}else{
-					// List<String> output=new ArrayList<String>();
+					List<String> output=new ArrayList<String>();
 					for(String str:batch){
 						// TODO: add selective error handling here!
 						String out=processDocument(str);
@@ -133,34 +143,54 @@ public class FilterService extends Service{
 								JSONArray arr=new JSONArray(out);
 								for(int i=0;i<arr.length();i++){
 									JSONObject obj=arr.getJSONObject(i);
-									buffer.add(obj.toString());
+									output.add(obj.toString());
 								}
 							}else{
-								buffer.add(out);
+								output.add(out);
 							}
 						}
 						index++;
 					}
-					if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout()){
-						metric.startTimer("output.append");
-						if(buffer.size()>0){
-							List<Long> result=getStream("output").append(buffer);
-							outputIndex=result.get(result.size()-1);
+					metric.startTimer("output.append");
+					if(output.size()>0){
+						// Separate keys from values
+						List<String> keyList=new ArrayList<String>(output.size());
+						List<String> valueList=new ArrayList<String>(output.size());
+						for(String str:output){
+							JSONObject obj=new JSONObject(str);
+							if(obj.has("key") && obj.has("value")){
+								Object key=obj.get("key");
+								if(key instanceof String){
+									keyList.add((String)key);
+								}else{
+									keyList.add(key.toString());
+								}
+								JSONObject value=obj.getJSONObject("value");
+								valueList.add(value.toString());
+							}
 						}
-						metric.stopTimer("output.append");
-						// TODO: add selective state saving point
-						metric.startTimer("state.append");
-						saveState();
-						metric.stopTimer("state.append");
-						buffer.clear();
-						lastFlush=System.currentTimeMillis();
+						// store values
+						List<Long> result=getStream("output").append(valueList);
+						// match keys with locations and store in state
+						JSONObject map=new JSONObject();
+						for(int i=0;i<result.size();i++){
+							String key=keyList.get(i);
+							long loc=result.get(i);
+							map.put(key,loc);
+							keyMap.put(key,loc);
+						}
+						stateMap=map;
+						outputIndex=result.get(result.size()-1);
 					}
+					metric.stopTimer("output.append");
+					// TODO: add selective state saving point
+					metric.startTimer("state.append");
+					saveState();
+					stateMap=null;
+					metric.stopTimer("state.append");
 				}
-				if(buffer.size()==0){
-					metric.setSamples(groupBatch);
-					metric.stopTimer("batch.time");
-					addBatchMetric(metric);
-				}
+				metric.stopTimer("batch.time");
+				addBatchMetric(metric);
 			}
 		}catch(Exception e){
 			e.printStackTrace();
