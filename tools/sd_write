@@ -8,16 +8,56 @@ import sys
 
 pageSize=10
 
+dataBatch=[]
+
 def writeObject(args,stringData):
 	request = urllib2.Request('http://'+args.host+':'+args.port+'/stream/'+args.stream)
 	request.add_header('Content-Type','application/json')
 	response = urllib2.urlopen(request,stringData)
 
 
+def processJSON(line):
+	global dataBatch
+	data= json.loads(line)
+	if isinstance(data, list):
+		for obj in data:
+			dataBatch.append(json.dumps(obj))
+	else:
+		dataBatch.append(line)
+
+def createArray(batch):
+	output="["
+	first=True
+	for data in batch:
+		if first!=True:
+			output+=","
+		else:
+			first=False
+		output+=data
+	output+="]"
+	return output
+
+def processBatch():
+	global dataBatch
+	global args
+	# sys.stdout.write("{0} {1}\n".format(args.batch,len(dataBatch)))
+	while len(dataBatch)>int(args.batch):
+		# sys.stdout.write("Inner loop\n")
+		# TODO: are these indexes correct for ranges?
+		batch=dataBatch[:int(args.batch)]
+		dataBatch=dataBatch[int(args.batch):]
+		output=createArray(batch)
+		
+		writeObject(args,output)
+		# dataBatch.clear()
+		# sys.stdout.write("{0} foo \n".format(len(dataBatch)))
+	# sys.stdout.write("{0}\n".format(len(dataBatch)))
+
 parser = argparse.ArgumentParser(description='Write standard in to a StroomData stream on a host')
 
 parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
 parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
+parser.add_argument('--batch', dest='batch', help='Specify a specific batch size', default="500")
 parser.add_argument('stream', help='Specify which stream to write to')
 
 args = parser.parse_args()
@@ -26,4 +66,10 @@ args = parser.parse_args()
 
 for line in sys.stdin:
 	#TODO: skip blank lines
-    writeObject(args,line)
+	if len(line)>0:
+	    processJSON(line)
+	    processBatch()
+
+if len(dataBatch)>0:
+	output=createArray(dataBatch)
+	writeObject(args,output)
