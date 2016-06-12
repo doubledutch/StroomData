@@ -5,17 +5,30 @@ import json
 import argparse
 
 # TODO: run through the data to find the right sizes
-formatter='{:25} {:>15} {:>15}'
+formatter='{:>15} {:>10} {}'
 
 def printStream(stream):
-	print formatter.format(stream['topic'],stream['count'],stream['size'])
+	count=stream['count']
+	size=stream['size']
+	sizeunit='B '
+	if size>10000:
+		size=size/1024
+		sizeunit='KB'
+	if size>10000:
+		size=size/1024
+		sizeunit='MB'
+	if size>10000:
+		size=size/1024
+		sizeunit='GB'
+
+	print formatter.format(stream['count'],str(size)+' '+sizeunit,stream['topic'])
 
 def listStreams(args):
 	# TODO: make it possible to specific http or https in the hostname
 	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/')
 	data = json.loads(response.read())
 
-	print formatter.format('topic','count','size')	
+	# print formatter.format('topic','count','size   ')	
 	for stream in data:
 		printStream(stream)
 

@@ -1,0 +1,102 @@
+#!/usr/bin/python
+
+
+import os
+import urllib2
+#try:
+#    import ujson as json
+# except ImportError:
+import json
+import argparse
+import sys
+import time
+
+
+pageSize=500
+streamCount=0
+streamRead=0
+read_size=0
+barSize=40
+startTime=time.time()
+
+def printStatus():
+	global read_size
+	global streamCount
+	global barSize
+	global streamRead
+
+	global startTime
+	perc=(streamRead/float(streamCount))*100.0
+	bar='|'
+	bar_ratio=int((streamRead/float(streamCount))*barSize)
+	for i in range(bar_ratio):
+		bar=bar+'X'
+	for i in range(barSize-bar_ratio):
+		bar=bar+'_'
+	
+	bar=bar+'|'
+
+	docunit=''
+	docnum=streamRead
+	if docnum>10000:
+		docnum=docnum/1000
+		docunit='K'
+
+	sizenum=read_size/1000
+	sizeunit='KB'
+	if sizenum>10000:
+		sizenum=sizenum/1000
+		sizeunit='MB'
+	if sizenum>10000:
+		sizenum=sizenum/1000
+		sizeunit='GB'
+
+	delta=time.time()-startTime
+	sys.stdout.write("\r{:3.1f}% {} {}{} docs, {}{} data [{} docs/s, {:.1f} MB/s]    ".format(perc,bar,docnum,docunit,sizenum,sizeunit,int(streamRead/(delta)),((read_size/(1024*1024.0))/delta)))
+	sys.stdout.flush()
+
+def writePage(data):
+	global file
+	global read_size
+	for obj in data:
+		strData=json.JSONEncoder().encode(obj)
+		read_size+=len(strData)
+		file.write(strData+"\n")
+
+def readPage(args,index):
+	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/'+args.stream+'/'+str(index)+'-'+str(index+pageSize))
+	data = json.loads(response.read())
+	writePage(data)
+	return len(data)
+
+def getCount(args):
+	response = urllib2.urlopen('http://'+args.host+':'+args.port+'/stream/'+args.stream)
+	data = json.loads(response.read())
+	return data['count']
+
+
+
+def dumpStream(args):
+	global streamCount
+	global streamRead
+	streamCount=getCount(args)
+	while streamRead<streamCount:
+		streamRead=streamRead+readPage(args,streamRead)
+		printStatus()
+
+parser = argparse.ArgumentParser(description='Dump a Stroom Data stream to a file')
+
+parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
+parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
+parser.add_argument('stream', help='Specify which stream to dump')
+parser.add_argument('file', help='Specify a file to write to')
+
+args = parser.parse_args()
+
+file = open(args.file,'w')
+
+dumpStream(args)
+file.flush()
+file.close()
+sys.stdout.write("\n")
+sys.stdout.flush()
