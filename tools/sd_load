@@ -23,8 +23,9 @@ parser = argparse.ArgumentParser(description='Load a file in to a StroomData str
 parser.add_argument('--host', dest='host', help='Specify a specific host', default="127.0.0.1")
 parser.add_argument('--port', dest='port', help='Specify a specific port', default="8080")
 parser.add_argument('--batch', dest='batch', help='Specify a specific batch size', default="500")
-parser.add_argument('file', help='Specify a file to load')
 parser.add_argument('stream', help='Specify which stream to write to')
+parser.add_argument('file', help='Specify a file to load')
+
 
 args = parser.parse_args()
 
