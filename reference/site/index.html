@@ -53,10 +53,10 @@
     	'pages':[
             {'title':'Services','id':'services'},
             {'title':'Streams','id':'streams'},
-            {'title':'Scripts','id':'scripts'}
-    		// {'title':'Data Explorer','id':'explorer'}
+            {'title':'Scripts','id':'scripts'},
+    		{'title':'Data Explorer','id':'explorer'}
     	],
-    	'current_page':'services',
+    	'current_page':'explorer',
         'current_stream':null,
         'stream_browser':{
             'topic':null,
@@ -80,7 +80,12 @@
         'currentService':null,
         'service_editor':{
             'show':false
-        }
+        },
+        'query_editor':{
+            'data':'SELECT * FROM foo',
+            'id':null
+        },
+        'current_query':null
     }
     function setReducer(state,path,value){
     	if(path.length>1){
@@ -343,6 +348,22 @@
         })
         if(state.stream_browser.show){
             updateStreamBrowser()
+        }
+        if(state.query_editor.id!=null){
+            fetch('/query/'+state.query_editor.id, {
+                method: 'GET',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
+                return response.json()
+            }).then(function(json) {
+                // console.log(json)
+                store.dispatch({type:'SET',path:['current_query'],value:json})
+            }).catch(function(ex) {
+                console.log('parsing failed', ex)
+            })
         }
         /*if(state.script_editor.sample_run){
             updateScriptRunner()

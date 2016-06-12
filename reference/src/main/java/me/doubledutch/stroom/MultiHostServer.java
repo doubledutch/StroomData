@@ -27,6 +27,7 @@ public class MultiHostServer implements Runnable{
 	private KeyValueManager kvManager=null;
 	private ServiceManager serviceManager=null;
 	private ScriptManager scriptManager=null;
+	private QueryManager queryManager=null;
 
 	private static String BUILD_DATE;
 	private static String BUILD_VERSION;
@@ -64,6 +65,7 @@ public class MultiHostServer implements Runnable{
 			kvManager=new KeyValueManager();
 			serviceManager=new ServiceManager(streamHandler,aggregateManager,kvManager);
 			scriptManager=new ScriptManager(streamHandler);
+			queryManager=new QueryManager(streamHandler);
 			
 			// Start servlets
 			log.info("Starting servlets");
@@ -178,6 +180,8 @@ public class MultiHostServer implements Runnable{
 			handler.addServlet(servletHolder, "/kvstore/*");
 			servletHolder = new ServletHolder(SystemAPIServlet.class);
 			handler.addServlet(servletHolder, "/system/*");
+			servletHolder = new ServletHolder(QueryAPIServlet.class);
+			handler.addServlet(servletHolder, "/query/*");
 			servletHolder = new ServletHolder(FileServlet.class);
 			handler.addServlet(servletHolder, "/*");
 
