@@ -17,7 +17,7 @@ public class QueryRunner implements Runnable{
 	public QueryRunner(StreamHandler streams){
 		this.streams=streams;
 		threadPool=Executors.newCachedThreadPool();
-		dataThreadPool=Executors.newCachedThreadPool();
+		dataThreadPool=Executors.newFixedThreadPool(8);
 	}
 
 	public void run(){

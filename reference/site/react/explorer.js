@@ -94,7 +94,24 @@ var QueryEditor =React.createClass({
 
 var QueryStatus = React.createClass({
 	render:function(){
-		return h('div','state '+this.props.state)
+		var elements=[]
+		if(this.props.state=='WAITING'){
+			elements.push(h('div','Waiting for server side execution slot'))
+		}else if(this.props.state=='RUNNING'){
+
+			var text='Running '
+			if(this.props.scan_total>0){
+				text+='[ '+Math.floor(((this.props.scan_current)/(this.props.scan_total))*100)+'% ] '
+			}
+			text+=(this.props.time/1000)+' s'
+
+			elements.push(h('div',text))
+		}else if(this.props.state=='COMPLETED'){
+			var text='Query executed in '+(this.props.time/1000)+' s. '
+			text+='Scanning documents at a rate of '+Math.floor(this.props.scan_total/(this.props.time/1000))+' docs/s'
+			elements.push(h('div',text))
+		}
+		return h('div.query_state',elements)
 	}
 })
 

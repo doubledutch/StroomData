@@ -75,7 +75,8 @@
             'sample_function':'map',
             'sample_source':null,
             'sample_data':[],
-            'sample_run':false
+            'sample_run':false,
+            'sample_count':5
         },
         'currentService':null,
         'service_editor':{
@@ -349,7 +350,21 @@
         if(state.stream_browser.show){
             updateStreamBrowser()
         }
-        if(state.query_editor.id!=null){
+        
+        /*if(state.script_editor.sample_run){
+            updateScriptRunner()
+        }*/
+	}
+
+	updateSources()
+	setInterval(updateSources, 5000)
+
+    var inQuery=false
+
+    function updateDataExplorer(){
+        var state=store.getState()
+        if(state.query_editor.id!=null && inQuery==false && (state.current_query.state=='RUNNING' || state.current_query.state=='WAITING')){
+            inQuery=true
             fetch('/query/'+state.query_editor.id, {
                 method: 'GET',
                 headers: {
@@ -359,19 +374,16 @@
             }).then(function(response) {
                 return response.json()
             }).then(function(json) {
+                inQuery=false
                 // console.log(json)
                 store.dispatch({type:'SET',path:['current_query'],value:json})
             }).catch(function(ex) {
                 console.log('parsing failed', ex)
             })
         }
-        /*if(state.script_editor.sample_run){
-            updateScriptRunner()
-        }*/
-	}
+    }
 
-	updateSources()
-	setInterval(updateSources, 5000)
+    setInterval(updateDataExplorer,500)
 
     </script>
   </body>

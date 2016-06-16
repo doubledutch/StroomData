@@ -1,6 +1,7 @@
 package me.doubledutch.stroom.query.sql;
 
 import java.util.*;
+import me.doubledutch.stroom.query.*;
 
 /*
 	<QUERY>						::= 'SELECT' <SELECT-LIST> <TABLE-EXPRESSION>
@@ -78,6 +79,20 @@ public class SQLParser{
 		Token t=getToken();
 		if(t==null)throw new ParseException(err);
 		if(t.type==Token.SYMBOL && t.data.equals(str)){
+			return t;
+		}
+		throw new ParseException(err,t);
+	}
+
+	/**
+	 * Returns the next available token if it is a symbol.
+	 * If there are no more tokens, or the next token is not a symbol an exception will
+	 * be thrown with the given message.
+	*/
+	private Token requireSymbol(String err) throws ParseException{
+		Token t=getToken();
+		if(t==null)throw new ParseException(err);
+		if(t.type==Token.SYMBOL){
 			return t;
 		}
 		throw new ParseException(err,t);
@@ -204,9 +219,68 @@ public class SQLParser{
 	}
 	
 	// <BOOLEAN-VALUE-EXPRESSION> ::= <BOOLEAN-TERM> | ( <BOOLEAN-VALUE-EXPRESSION> 'OR' <BOOLEAN-TERM> )
-	private BooleanValueExpression requireBooleanValueExpression() throws ParseException{
-		return null;
+	private Expression requireBooleanValueExpression() throws ParseException{
+		// TODO: change this to get the boolean AST right
+		Expression e1= requireComparisonPredicate();
+		if(consumeReservedWord("OR")){
+			Expression e2=requireBooleanValueExpression();
+			return Expression.or(e1,e2);
+		}else if(consumeReservedWord("AND")){
+			Expression e2=requireBooleanValueExpression();
+			return Expression.and(e1,e2);
+		}
+		return e1;
 	}
+
+
+	// <COMPARISON-PREDICATE> 		::= <VALUE-EXPRESSION> <COMPARISON-OPERATOR> <VALUE-EXPRESSION>
+	// <COMPARISON-OPERATOR>		::= '=' | '!=' | '<' | '<=' | '>' | '>='
+	private Expression requireComparisonPredicate() throws ParseException{
+		// Token t=getToken();
+		// System.out.println(t.data);
+		// System.out.println("looking for v1");
+		Expression v1=requireValueExpression();
+		// System.out.println("looking for operator");
+		int operator=-1;
+		Token t1=requireSymbol("Comparison operator expected");
+		if(t1.data.equals("=")){
+			operator=Expression.EQ;
+		}else if(t1.data.equals("<")){
+			Token t2=requireToken("Right hand part of comparison expected");
+			if(t2.type==Token.SYMBOL && t2.data.equals("=")){
+				operator=Expression.LTE;
+			}else{
+				returnToken(t2);
+				operator=Expression.LT;
+			}
+		}else if(t1.data.equals(">")){
+			Token t2=requireToken("Right hand part of comparison expected");
+			if(t2.type==Token.SYMBOL && t2.data.equals("=")){
+				operator=Expression.GTE;
+			}else{
+				returnToken(t2);
+				operator=Expression.GT;
+			}
+		}else if(t1.data.equals("!")){
+			Token t2=requireToken("Right hand part of comparison expected");
+			if(t2.type==Token.SYMBOL && t2.data.equals("!")){
+				operator=Expression.NEQ;
+			}else{
+				throw new ParseException("! operator may only be used for != comparisons");
+			}
+		}
+		Expression v2=requireValueExpression();
+		return new Expression(operator,v1,v2);
+	}
+
+
+	// <BOOLEAN-VALUE-EXPRESSION> 	::= <BOOLEAN-TERM> | ( <BOOLEAN-VALUE-EXPRESSION> 'OR' <BOOLEAN-TERM> )
+	// <BOOLEAN-TERM>				::= <BOOLEAN-FACTOR> | ( <BOOLEAN-TERM> 'AND' <BOOLEAN-FACTOR> )
+	// <BOOLEAN-FACTOR>			::= ( 'NOT' )? <BOOLEAN-TEST>
+	// <BOOLEAN-TEST>				::= <PREDICATE> | ( '(' <PREDICATE> ')' )
+	// <PREDICATE>					::= <COMPARISON-PREDICATE> | <IN-PREDICATE> | <LIKE-PREDICATE> | <NULL-PREDICATE> |
+	//								<EXISTS-PREDICATE>
+
 
 	// <FROM-CLAUSE> ::= 'FROM' <TABLE-LIST>
 	private void requireFromClause(SQLQuery query) throws ParseException{
@@ -250,9 +324,12 @@ public class SQLParser{
 	}
 
 
-	// <DERIVED-COLUMN>	::= <VALUE-EXPRESSION> ( 'AS' <IDENTIFIER> )?
+	// <DERIVED-COLUMN>	::= <COLUMN-REFERENCE> ( 'AS' <IDENTIFIER> )?
 	private DerivedColumn requireDerivedColumn() throws ParseException{
-		DerivedColumn col=requireValueExpression();
+		DerivedColumn col=parseColumnReference();
+		if(col==null){
+			throw new ParseException("Column reference expected");
+		}
 		if(consumeReservedWord("AS")){
 			Token t=requireIdentifier("A new identifier for a column must follow the keyword AS");
 			col.as=t.data;
@@ -261,15 +338,51 @@ public class SQLParser{
 	}
 
 	// 	<VALUE-EXPRESSION> ::= <NUMERIC-VALUE-EXPRESSION> | <STRING-VALUE-EXPRESSION> | <DATETIME-VALUE-EXPRESSION> | <BOOLEAN-VALUE-EXPRESSION> | <COLUMN-REFERENCE>
-	private DerivedColumn requireValueExpression() throws ParseException{
+	private Expression requireValueExpression() throws ParseException{
+		Expression val=parseNumericValueExpression();
+		if(val!=null)return val;
+
+		val=parseStringValueExpression();
+		if(val!=null)return val;
+
 		DerivedColumn col=parseColumnReference();
-		if(col!=null)return col;
+		if(col!=null){
+			return Expression.reference(col.toString());
+		}
+		// if(col!=null)return col;
 		throw new ParseException("Value expression expected",getToken());
+	}
+
+	private Expression parseStringValueExpression(){
+		Token t=getToken();
+		if(t!=null){
+			// System.out.println("what is "+t.data);
+			if(t.type==Token.STRING){
+				return Expression.value(t.data);
+			}
+		}
+		returnToken(t);
+		return null;
+	}
+
+	private Expression parseNumericValueExpression(){
+		Token t=getToken();
+		if(t!=null){
+			if(t.type==Token.INTEGER){
+				return Expression.value(Integer.parseInt(t.data));
+			}
+			if(t.type==Token.FLOAT){
+				return Expression.value(Double.parseDouble(t.data));
+			}
+		}
+		returnToken(t);
+		return null;
 	}
 
 	// <COLUMN-REFERENCE> ::= <IDENTIFIER> ( '.' <IDENTIFIER> )*
 	private DerivedColumn parseColumnReference() throws ParseException{
 		Token t=getToken();
+		// System.out.println("We should be finding 'type' "+t.data);
 		if(t.type==Token.IDENTIFIER){
 			List<String> ref=new ArrayList<String>();
 			ref.add(t.data);

@@ -1,5 +1,6 @@
 package me.doubledutch.stroom.query.sql;
 
+import me.doubledutch.stroom.query.*;
 import java.util.*;
 
 public class SQLQuery{
@@ -12,7 +13,7 @@ public class SQLQuery{
 	public boolean selectAll=false;
 	public List<DerivedColumn> selectList=null;
 	public List<TableReference> tableList=null;
-	public BooleanValueExpression where=null;
+	public Expression where=null;
 
 	public String toString(){
 		StringBuilder buf=new StringBuilder();

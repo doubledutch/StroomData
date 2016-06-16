@@ -389,3 +389,10 @@ textarea{
 	border-right:1px solid #AAAAAA;
 	border-top:1px solid #AAAAAA;
 }
+
+.query_state{
+	background: #000000;
+	color:#FFFFFF;
+	padding:10px;
+	display:flex;
+}

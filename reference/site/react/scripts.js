@@ -63,15 +63,45 @@ function updateScriptRunner(){
 	if(source!=null){
 		(function(){
 			try{
-			
+				var stroom={
+					getStream:function(name){
+						return {
+							get:function(index,endIndex){
+								return []
+							},
+							get:function(index){
+								return ""
+							},
+							getLast:function(){
+								return ""
+							},
+							getCount:function(){
+								return 0
+							},
+							append:function(data){
+								console.log(data)
+								return 0
+							},
+							append:function(data,hint){
+								console.log(data)
+								return 0
+							},
+							truncate:function(index){
+
+							}
+						}
+					}
+				}
 				eval(state.script_editor.data)
 				store.dispatch({type:'SET',path:['script_editor','eval_success'],value:null})
 				var count=getStream(state.streams,source).count
-				if(count>5){
-					var loc=Math.floor(Math.random()*(count-5))
+				if(count>state.script_editor.sample_count){
+					var loc=Math.floor(Math.random()*(count-parseInt(state.script_editor.sample_count)))
+
 					// console.log(loc)
 					// Get count
-					fetch('/stream/'+source+'/'+loc+'-'+(loc+4),{
+
+					fetch('/stream/'+source+'/'+loc+'-'+(loc+parseInt(state.script_editor.sample_count-1)),{
 				  		method: 'GET',
 						headers: {
 							'Accept': 'application/json',
@@ -85,6 +115,8 @@ function updateScriptRunner(){
 							var ftype=state.script_editor.sample_function
 							var data=[]
 							var result=null
+							console.log('count: '+json.length)
+							console.log('selected:'+state.script_editor.sample_count)
 							for(var i=0;i<json.length;i++){
 								var doc=JSON.parse(JSON.stringify(json[i]))
 								if(ftype=='map'){
@@ -103,7 +135,7 @@ function updateScriptRunner(){
 						}
 					})
 				}else{
-					store.dispatch({type:'SCRIPT_EVAL',success:false,error:'The input stream needs to have at least 5 documents.'})
+					store.dispatch({type:'SCRIPT_EVAL',success:false,error:'The input stream needs to have at least '+state.script_editor.sample_count+' documents.'})
 				}
 			}catch(ex){
 				// console.log(ex)
@@ -240,6 +272,9 @@ var ScriptEditor =React.createClass({
 	setFType:function(e){
 		store.dispatch({type:'SET',path:['script_editor','sample_function'],value:e.target.value})
 	},
+	setSampleCount:function(e){
+		store.dispatch({type:'SET',path:['script_editor','sample_count'],value:e.target.value})
+	},
 	render:function(){
 		var elements=[]
 		elements.push(h('div.browse_header','Edit Script'))
@@ -268,6 +303,12 @@ var ScriptEditor =React.createClass({
 			options.push(h('option',{value:this.props.streams[i].topic},this.props.streams[i].topic))
 		}
 		footer.push(h('select.form_select',{name:'in_stream_select',onChange:this.setIn},options))
+		footer.push(h('label.form_label','Samples'))
+		options=[]
+		options.push(h('option',{value:'5'},'5'))
+		options.push(h('option',{value:'20'},'20'))
+		options.push(h('option',{value:'100'},'100'))
+		footer.push(h('select.form_select',{name:'sample_select',onChange:this.setSampleCount},options))
 		footer.push(h('label.form_label','Function'))
 		options=[]
 		options.push(h('option',{value:'map'},'Map'))

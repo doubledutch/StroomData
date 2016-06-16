@@ -17,11 +17,34 @@ public class Query{
 	private String text;
 	private String error;
 	private String id;
+	private JSONObject executionPlan;
+
+	private long tStart=-1;
+	private long tEnd=-1;
+	private long scanTotal=0;
+	private long scanCurrent=0;
 
 	public Query(String text,int type){
 		this.text=text;
 		this.type=type;
 		this.id=UUID.randomUUID().toString();
+	}
+
+	public void startTimer(){
+		tStart=System.currentTimeMillis();
+	}
+
+	public void stopTimer(){
+		tEnd=System.currentTimeMillis();
+	}
+
+
+	public void setScanTotal(long s){
+		scanTotal=s;
+	}
+
+	public void setScanCurrent(long s){
+		scanCurrent=s;
 	}
 
 	public void setState(int state){
@@ -30,6 +53,10 @@ public class Query{
 
 	public void setError(String msg){
 		this.error=msg;
+	}
+
+	public void setExecutionPlan(JSONObject obj){
+		this.executionPlan=obj;
 	}
 
 	public String getId(){
@@ -62,6 +89,20 @@ public class Query{
 		if(error!=null){
 			obj.put("error",error);
 		}
+		if(executionPlan!=null){
+			obj.put("execution_plan",executionPlan);
+		}
+
+		if(tStart>-1){
+			if(tEnd>-1){
+				obj.put("time",(tEnd-tStart));
+			}else{
+				obj.put("time",(System.currentTimeMillis()-tStart));
+			}
+		}
+
+		obj.put("scan_total",scanTotal);
+		obj.put("scan_current",scanCurrent);
 
 		return obj;
 	}
