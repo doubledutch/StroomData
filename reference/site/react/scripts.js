@@ -64,7 +64,7 @@ function updateScriptRunner(){
 		(function(){
 			try{
 				var stroom={
-					getStream:function(name){
+					openStream:function(name){
 						return {
 							get:function(index,endIndex){
 								return []
@@ -115,8 +115,8 @@ function updateScriptRunner(){
 							var ftype=state.script_editor.sample_function
 							var data=[]
 							var result=null
-							console.log('count: '+json.length)
-							console.log('selected:'+state.script_editor.sample_count)
+							// console.log('count: '+json.length)
+							// console.log('selected:'+state.script_editor.sample_count)
 							for(var i=0;i<json.length;i++){
 								var doc=JSON.parse(JSON.stringify(json[i]))
 								if(ftype=='map'){

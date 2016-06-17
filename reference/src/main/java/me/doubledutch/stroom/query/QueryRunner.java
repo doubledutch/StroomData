@@ -3,6 +3,7 @@ package me.doubledutch.stroom.query;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.query.sql.*;
 import me.doubledutch.stroom.*;
+import me.doubledutch.stroom.client.StreamConnection;
 
 import java.io.*;
 import java.net.*;

@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.client.StreamConnection;
 
 public class ScriptAPI{
 	private StreamHandler streamHandler;

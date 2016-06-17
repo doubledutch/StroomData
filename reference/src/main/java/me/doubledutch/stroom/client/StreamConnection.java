@@ -1,4 +1,4 @@
-package me.doubledutch.stroom;
+package me.doubledutch.stroom.client;
 
 import java.util.*;
 import java.io.*;

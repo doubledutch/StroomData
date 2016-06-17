@@ -5,6 +5,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.client.StreamConnection;
 import javax.script.*;
 
 import me.doubledutch.stroom.perf.*;

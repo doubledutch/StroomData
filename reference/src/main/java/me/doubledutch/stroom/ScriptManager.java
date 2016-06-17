@@ -7,6 +7,7 @@ import org.json.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.filters.*;
 import me.doubledutch.stroom.aggregates.*;
+import me.doubledutch.stroom.client.StreamConnection;
 
 public class ScriptManager implements Runnable{
 	private final Logger log = Logger.getLogger("ScriptManager");

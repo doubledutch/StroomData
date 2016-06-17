@@ -1,6 +1,7 @@
 package me.doubledutch.stroom.query;
 
 import me.doubledutch.stroom.*;
+import me.doubledutch.stroom.client.StreamConnection;
 import org.json.*;
 import java.util.*;
 

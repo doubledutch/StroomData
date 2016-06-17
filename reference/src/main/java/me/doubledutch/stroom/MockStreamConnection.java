@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import org.json.*;
 import java.util.*;
+import me.doubledutch.stroom.client.StreamConnection;
 
 public class MockStreamConnection implements StreamConnection{
 	private List<String> list=new ArrayList<String>();

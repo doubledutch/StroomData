@@ -3,7 +3,7 @@ package me.doubledutch.stroom.query.sql;
 import me.doubledutch.stroom.query.*;
 import java.net.*;
 import java.util.*;
-import me.doubledutch.stroom.StreamConnection;
+import me.doubledutch.stroom.client.StreamConnection;
 import java.util.concurrent.atomic.*;
 
 public class SQLRunner implements Runnable{
