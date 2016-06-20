@@ -5,6 +5,8 @@ import java.net.*;
 import org.json.*;
 import java.util.*;
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.stroom.client.StreamConnection;
+
 
 public class LocalStreamConnection implements StreamConnection{
 	private Stream stream=null;

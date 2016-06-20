@@ -6,6 +6,7 @@ import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.*;
 import java.util.*;
+import me.doubledutch.stroom.client.StreamConnection;
 import org.json.*;
 import java.net.*;
 import javax.script.*;
@@ -113,14 +114,36 @@ public class PartitionedAggregateService extends Service{
 		return aggregateMap.size();
 	}
 
-	private String getPartitionKey(String event) throws JSONException{
-		JSONObject obj=new JSONObject(event);
-		Object value=Utility.pickValue(obj,partition);
-		if(value instanceof String){
-			return (String)value;
+	private String getPartitionKey(String event) throws JSONException,ScriptException{
+		Object value=null;
+		if(partition==null||partition.trim().length()==0){
+			// Assume javascript based function
+			metric.startTimer("javascript.deserialize");
+			jsEngine.put("raw",event);
+			jsEngine.eval("var obj=JSON.parse(raw);");
+			metric.stopTimer("javascript.deserialize");
+			metric.startTimer("javascript.run");
+			jsEngine.eval("var key=getPartitionKey(obj);");
+			metric.stopTimer("javascript.run");
+			metric.stopTimer("javascript.serialize");
+			value=jsEngine.get("key");
+			metric.stopTimer("javascript.serialize");
+			
+		
+		}else if(partition.startsWith("http://")||partition.startsWith("https://")){
+			// TODO: implement http based partition key
+		}else{
+			JSONObject obj=new JSONObject(event);
+			value=Utility.pickValue(obj,partition);	
 		}
-		// System.out.println(value.toString());
-		return value.toString();
+		if(value!=null){
+			if(value instanceof String){
+				return (String)value;
+			}
+			// System.out.println(value.toString());
+			return value.toString();
+		}
+		return null;
 	}
 
 	private String processDocument(String str,String aggregate) throws Exception{
@@ -141,8 +164,11 @@ public class PartitionedAggregateService extends Service{
 			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.deserialize");
-			jsEngine.put("raw",str);
-			jsEngine.eval("var obj=JSON.parse(raw);");
+			if(!(partition==null||partition.trim().length()==0)){
+				// Only do this if we haven't already done it for the partition key
+				jsEngine.put("raw",str);
+				jsEngine.eval("var obj=JSON.parse(raw);");
+			}
 			// TODO: only when it's actually a new aggregate should it be put back in!
 			jsEngine.put("raw",aggregate);
 			jsEngine.eval("var aggregate=JSON.parse(raw);");

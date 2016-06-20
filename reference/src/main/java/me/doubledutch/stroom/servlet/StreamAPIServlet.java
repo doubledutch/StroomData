@@ -169,7 +169,20 @@ public class StreamAPIServlet extends HttpServlet{
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1);
 			String[] splitPath=uriPath.split("/");
-
+			String hintHeader=request.getHeader("X-stroom-hint");
+			int hint=-1;
+			if(hintHeader!=null){
+				hintHeader=hintHeader.toUpperCase().trim();
+				if(hintHeader.equals("NONE")){
+					hint=Stream.NONE;
+				}else if(hintHeader.equals("FLUSH")){
+					hint=Stream.FLUSH;
+				}else if(hintHeader.equals("SYNC")){
+					hint=Stream.SYNC;
+				}else if(hintHeader.equals("LINEAR")){
+					hint=Stream.LINEAR;
+				}
+			}
 			if(splitPath.length==1){
 				String topic=splitPath[0];
 				String postBody=readPostBody(request);
@@ -184,7 +197,11 @@ public class StreamAPIServlet extends HttpServlet{
 						}
 						// System.out.println(batch.size());
 						if(batch.size()>0){
-							streamHandler.addDocuments(batch);
+							if(hint>-1){
+								streamHandler.addDocuments(batch,hint);
+							}else{
+								streamHandler.addDocuments(batch);
+							}
 						}
 						response.setContentType("application/json");
 						JSONArray indexList=new JSONArray();
@@ -195,7 +212,12 @@ public class StreamAPIServlet extends HttpServlet{
 					}else{
 						JSONObject jsonObj=new JSONObject(postBody);
 						Document doc=new Document(topic,postBody);
-						streamHandler.addDocument(doc);
+						// streamHandler.addDocument(doc);
+						if(hint>-1){
+							streamHandler.addDocument(doc,hint);
+						}else{
+							streamHandler.addDocument(doc);
+						}
 						response.setContentType("application/json");
 						response.getWriter().append("{\"location\":"+doc.getLocation()+"}");
 						// log.info("Document of "+postBody.length()+" bytes added into "+topic+" at location "+doc.getLocation());

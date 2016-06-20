@@ -216,7 +216,7 @@ textarea{
 .data_cell.flex{
 	display:flex;
 	flex-basis: 0px;
-	flex-grow: 10;r
+	flex-grow: 10;
 	flex-shrink: 1;
 }
 
@@ -365,6 +365,15 @@ textarea{
 	font-family: courier,sans-serif
 }
 
+.sql_editor{
+	box-sizing: border-box;
+	width:100%;margin-top:10px;
+	height:150px;
+	padding:10px;
+	white-space: pre;
+	font-family: courier,sans-serif
+}
+
 .eval_success{
 	background: #BBFFBB;
 	padding:10px;
@@ -379,4 +388,11 @@ textarea{
 	border-left:1px solid #AAAAAA;
 	border-right:1px solid #AAAAAA;
 	border-top:1px solid #AAAAAA;
+}
+
+.query_state{
+	background: #000000;
+	color:#FFFFFF;
+	padding:10px;
+	display:flex;
 }

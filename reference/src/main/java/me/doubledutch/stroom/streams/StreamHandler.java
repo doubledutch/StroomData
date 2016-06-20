@@ -93,6 +93,10 @@ public class StreamHandler{
 	}
 
 	public void truncateStream(String topic,long index) throws IOException{
+		if(index==0){
+			deleteStream(topic);
+			return;
+		}
 		Stream stream=getOrCreateStream(topic);
 		stream.truncate(index);
 	}
@@ -101,5 +105,7 @@ public class StreamHandler{
 		Stream stream=getOrCreateStream(topic);
 		stream.truncate(0);
 		streamMap.remove(topic);
+		File ftest=new File(parentFolder+topic);
+		ftest.delete();
 	}
 }
