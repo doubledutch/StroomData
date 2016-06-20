@@ -5,10 +5,10 @@ import org.json.*;
 import java.io.*;
 
 public class HttpStreamConnection implements StreamConnection{
-	private Connection con;
+	private Stroom con;
 	private String baseURL;
 
-	protected HttpStreamConnection(Connection con,String baseURL){
+	protected HttpStreamConnection(Stroom con,String baseURL){
 		this.con=con;
 		this.baseURL=baseURL;
 	}
@@ -91,7 +91,7 @@ public class HttpStreamConnection implements StreamConnection{
 		try{
 			JSONArray postData=new JSONArray();
 			for(String str:data){
-				postData.put(str);
+				postData.put(new JSONObject(str));
 			}
 			String output=con.postURL(baseURL,postData.toString());
 			if(output!=null && output.trim().length()>0){

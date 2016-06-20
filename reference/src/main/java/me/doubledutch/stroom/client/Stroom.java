@@ -1,18 +1,63 @@
 package me.doubledutch.stroom.client;
 
+import me.doubledutch.stroom.client.function.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.function.*;
+import org.json.*;
 
-public class Connection{
+public class Stroom{
 	private String host=null;
 	
-	public Connection(){
+	public Stroom(){
 
 	}
 
-	public Connection(String host){
+	public Stroom(String host){
+		if(!host.endsWith("/"))host=host+"/";
 		this.host=host;
+	}
+
+	public Service filter(String inputStream,JSONObjectFunction func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service filter(String inputStream,JSONObjectArrayFunction func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service filter(String inputStream,StringListFunction func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service filter(String inputStream,StringFunction func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service filter(String inputStream,JSONObjectPredicate func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service filter(String inputStream,StringPredicate func,String outputstream){
+		return Service.filter(this,inputStream,func,outputstream);
+	}
+
+	public Service aggregate(String inputStream,JSONObjectBiFunction func,String outputstream){
+		return Service.aggregate(this,inputStream,func,outputstream);
+	}
+
+	public Service aggregate(String inputStream,StringBiFunction func,String outputstream){
+		return Service.aggregate(this,inputStream,func,outputstream);
+	}
+
+	public StreamConnection openStream(String name){
+		if(!name.endsWith("/"))name=name+"/";
+		if(name.startsWith("http://")||name.startsWith("https://")){
+			return new HttpStreamConnection(this,name);
+		}else{
+			return new HttpStreamConnection(this,host+"stream/"+name);
+		}
 	}
 
 	protected String deleteURL(String strurl){
