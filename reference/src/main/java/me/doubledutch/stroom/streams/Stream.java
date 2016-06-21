@@ -217,6 +217,58 @@ public class Stream implements Runnable{
 		Index index=null;
 		long maxLocation=-1;
 		long totalSize=0;
+
+		// Collect batch of data
+		int batchSize=0;
+		int[] batchOffsets=new int[batch.size()];
+		for(Document doc:batch){
+			byte[] data=doc.getData();
+			batchSize+=data.length;
+		}
+		// Collect actual data and offset
+		byte[] fullData=new byte[batchSize];
+		int currentBatchOffset=0;
+		for(int i=0;i<batch.size();i++){
+			Document doc=batch.get(i);
+			byte[] data=doc.getData();
+			batchOffsets[i]=currentBatchOffset;
+			System.arraycopy(data,0,fullData,currentBatchOffset,data.length);
+			currentBatchOffset+=data.length;
+		}
+		if(wmode==LINEAR){
+			synchronized(topic){
+				long outputOffset=block.write(fullData);
+				for(int i=0;i<batch.size();i++){
+					Document doc=batch.get(i);
+					byte[] data=doc.getData();
+					index=indexMap.get(currentIndexNumber);
+					location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+					currentLocation=location[i];
+					if(index.isFull()){
+						createNewIndex(currentIndexNumber);
+					}
+					doc.setLocation(location[i]);
+				}
+			}
+		}else{
+			long outputOffset=block.write(fullData);
+			for(int i=0;i<batch.size();i++){
+				Document doc=batch.get(i);
+				byte[] data=doc.getData();
+				synchronized(topic){
+					index=indexMap.get(currentIndexNumber);
+					location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+					currentLocation=location[i];
+				}
+				if(index.isFull()){
+					createNewIndex(currentIndexNumber);
+				}
+				doc.setLocation(location[i]);
+			}
+		}
+
+
+		/*
 		for(int i=0;i<batch.size();i++){
 			Document doc=batch.get(i);
 			byte[] data=doc.getData();
@@ -240,7 +292,7 @@ public class Stream implements Runnable{
 				createNewIndex(currentIndexNumber);
 			}
 			doc.setLocation(location[i]);
-		}
+		}*/
 		if(wmode==FLUSH){
 			commitData();
 		}else if(wmode<NONE){
