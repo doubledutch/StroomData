@@ -37,7 +37,7 @@ public class StreamAPIServlet extends HttpServlet{
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");
-			if(uriPath.length()==0){
+			if(uriPath.trim().length()==0){
 				// List streams
 				JSONArray result=new JSONArray();
 				for(Stream stream:streamHandler.getStreams()){
@@ -47,7 +47,7 @@ public class StreamAPIServlet extends HttpServlet{
 				}
 				out.write(result.toString());
 				return;
-			}else if(splitPath.length==1){
+			}else if(splitPath.length==1 || (splitPath.length==2 && splitPath[1].trim().length()==0)){
 				String topic=splitPath[0];
 				Stream stream=streamHandler.getOrCreateStream(topic);
 				out.append(stream.toJSON().toString());
@@ -93,6 +93,10 @@ public class StreamAPIServlet extends HttpServlet{
 					}
 					out.append("]");
 				}else{
+					if(range.equals("-1")){
+						response.sendError(HttpServletResponse.SC_NOT_FOUND,"You can't specify a negative location");
+						return;
+					}
 					// Get everything between two indexes
 					long startLocation=Long.parseLong(range.substring(0,range.indexOf("-")));
 					long endLocation=Long.parseLong(range.substring(range.indexOf("-")+1));

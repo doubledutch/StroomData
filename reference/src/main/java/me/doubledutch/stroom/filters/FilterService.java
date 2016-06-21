@@ -128,7 +128,11 @@ public class FilterService extends Service{
 					// List<String> output=new ArrayList<String>();
 					for(String str:batch){
 						// TODO: add selective error handling here!
+
 						String out=processDocument(str);
+						// if(getId().equals("alert_sender")){
+						// 	System.out.println("output: "+out);
+						// }
 						if(out!=null && out.length()>0){
 							if(out.startsWith("[")){
 								JSONArray arr=new JSONArray(out);
@@ -142,20 +146,21 @@ public class FilterService extends Service{
 						}
 						index++;
 					}
-					if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout()){
-						metric.startTimer("output.append");
-						if(buffer.size()>0){
-							List<Long> result=getStream("output").append(buffer);
-							outputIndex=result.get(result.size()-1);
-						}
-						metric.stopTimer("output.append");
-						// TODO: add selective state saving point
-						metric.startTimer("state.append");
-						saveState();
-						metric.stopTimer("state.append");
-						buffer.clear();
-						lastFlush=System.currentTimeMillis();
+					
+				}
+				if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout()){
+					metric.startTimer("output.append");
+					if(buffer.size()>0){
+						List<Long> result=getStream("output").append(buffer);
+						outputIndex=result.get(result.size()-1);
 					}
+					metric.stopTimer("output.append");
+					// TODO: add selective state saving point
+					metric.startTimer("state.append");
+					saveState();
+					metric.stopTimer("state.append");
+					buffer.clear();
+					lastFlush=System.currentTimeMillis();
 				}
 				if(buffer.size()==0){
 					metric.setSamples(groupBatch);
