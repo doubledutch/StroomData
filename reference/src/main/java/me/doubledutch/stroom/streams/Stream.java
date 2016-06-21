@@ -252,18 +252,20 @@ public class Stream implements Runnable{
 			}
 		}else{
 			long outputOffset=block.write(fullData);
-			for(int i=0;i<batch.size();i++){
-				Document doc=batch.get(i);
-				byte[] data=doc.getData();
-				synchronized(topic){
-					index=indexMap.get(currentIndexNumber);
-					location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
-					currentLocation=location[i];
+			synchronized(topic){
+				for(int i=0;i<batch.size();i++){
+					Document doc=batch.get(i);
+					byte[] data=doc.getData();
+					
+						index=indexMap.get(currentIndexNumber);
+						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+						currentLocation=location[i];
+					
+					if(index.isFull()){
+						createNewIndex(currentIndexNumber);
+					}
+					doc.setLocation(location[i]);
 				}
-				if(index.isFull()){
-					createNewIndex(currentIndexNumber);
-				}
-				doc.setLocation(location[i]);
 			}
 		}
 
