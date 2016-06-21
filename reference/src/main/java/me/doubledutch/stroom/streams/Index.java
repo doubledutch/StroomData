@@ -5,7 +5,7 @@ import java.io.*;
 import java.nio.channels.*;
 
 public class Index{
-	private final static int BUFFER_SIZE=128*IndexEntry.RECORD_SIZE;
+	private final static int BUFFER_SIZE=2048*IndexEntry.RECORD_SIZE;
 	private String filename;
 	private RandomAccessFile in;
 	private FileOutputStream fout;
