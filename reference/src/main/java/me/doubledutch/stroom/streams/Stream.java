@@ -210,6 +210,7 @@ public class Stream implements Runnable{
 	}
 
 	public void addDocuments(List<Document> batch,int wmode) throws IOException{
+		long pre=System.nanoTime();
 		long[] location=new long[batch.size()];
 		short blockNumber=currentBlockNumber;
 		Block block=blockMap.get(blockNumber);
@@ -225,6 +226,7 @@ public class Stream implements Runnable{
 			byte[] data=doc.getData();
 			batchSize+=data.length;
 		}
+		long split1=System.nanoTime();
 		// Collect actual data and offset
 		byte[] fullData=new byte[batchSize];
 		int currentBatchOffset=0;
@@ -235,6 +237,7 @@ public class Stream implements Runnable{
 			System.arraycopy(data,0,fullData,currentBatchOffset,data.length);
 			currentBatchOffset+=data.length;
 		}
+		long split2=System.nanoTime();
 		if(wmode==LINEAR){
 			synchronized(topic){
 				long outputOffset=block.write(fullData);
@@ -295,6 +298,7 @@ public class Stream implements Runnable{
 			}
 			doc.setLocation(location[i]);
 		}*/
+		long split3=System.nanoTime();
 		if(wmode==FLUSH){
 			commitData();
 		}else if(wmode<NONE){
@@ -303,6 +307,11 @@ public class Stream implements Runnable{
 
 		if(offset[batch.size()-1]+batch.get(batch.size()-1).getData().length>MAX_BLOCK_SIZE){
 			createNewBlock(blockNumber);
+		}
+		long post=System.nanoTime();
+
+		if(Math.random()<0.01){
+			System.out.println("Batch: "+((post-pre)/1000000.0)+" write: "+((split3-split2)/1000000.0)+" commit: "+((post-split3)/1000000.0));
 		}
 	}
 

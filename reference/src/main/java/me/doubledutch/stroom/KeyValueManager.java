@@ -35,6 +35,10 @@ public class KeyValueManager{
 		return result;
 	}
 
+	public KeyValueService get(String name){
+		return kvstores.get(name);
+	}
+
 	public String getValue(String id,String key) throws Exception{
 		if(kvstores.containsKey(id)){
 			return kvstores.get(id).getValue(key);

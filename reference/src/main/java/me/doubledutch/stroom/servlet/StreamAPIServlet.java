@@ -192,6 +192,34 @@ public class StreamAPIServlet extends HttpServlet{
 				String postBody=readPostBody(request);
 				try{
 					if(postBody.startsWith("[")){
+						// long pre=System.nanoTime();
+
+						// DD.JSONJIT version
+
+						me.doubledutch.stroom.jsonjit.JSONParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(postBody);
+						me.doubledutch.stroom.jsonjit.JSONArray array=parser.parseArray();
+						List<Document> batch=new ArrayList<Document>(array.length());
+						for(int n=0;n<array.length();n++){
+							me.doubledutch.stroom.jsonjit.JSONObject jobj=array.getJSONObject(n);
+							Document doc=new Document(topic,jobj.toString());
+							batch.add(doc);
+						}
+						/*
+						// JSON.simple version
+
+						org.json.simple.parser.JSONParser parser = new org.json.simple.parser.JSONParser();
+						Object obj = parser.parse(postBody);
+						org.json.simple.JSONArray jsonArr=(org.json.simple.JSONArray)obj;
+						List<Document> batch=new ArrayList<Document>(jsonArr.size());
+						for(int i=0;i<jsonArr.size();i++){
+							org.json.simple.JSONObject jobj=(org.json.simple.JSONObject)jsonArr.get(i);
+							Document doc=new Document(topic,jobj.toString());
+							batch.add(doc);
+						}*/
+						
+						/*
+						// Old version
+						
 						JSONArray jsonArr=new JSONArray(postBody);
 						List<Document> batch=new ArrayList<Document>(jsonArr.length());
 						for(int i=0;i<jsonArr.length();i++){
@@ -199,6 +227,10 @@ public class StreamAPIServlet extends HttpServlet{
 							Document doc=new Document(topic,obj.toString());
 							batch.add(doc);
 						}
+						
+						*/
+						// long post=System.nanoTime();
+						
 						// System.out.println(batch.size());
 						if(batch.size()>0){
 							if(hint>-1){
@@ -207,12 +239,18 @@ public class StreamAPIServlet extends HttpServlet{
 								streamHandler.addDocuments(batch);
 							}
 						}
+						// long split1=System.nanoTime();
 						response.setContentType("application/json");
 						JSONArray indexList=new JSONArray();
 						for(Document doc:batch){
 							indexList.put(doc.getLocation());
 						}
 						response.getWriter().append("{\"location_list\":"+indexList.toString()+"}");
+						// long split2=System.nanoTime();
+						// if(Math.random()<0.01){
+						//	System.out.println("Parse: "+((post-pre)/1000000.0)+" Write: "+((split1-post)/1000000.0)+" Result: "+((split2-split1)/1000000.0));
+						// }
+
 					}else{
 						JSONObject jsonObj=new JSONObject(postBody);
 						Document doc=new Document(topic,postBody);
