@@ -3,11 +3,11 @@ package me.doubledutch.stroom.jsonjit;
 import java.util.*;
 
 public class JSONParser{
-	private String source;
+	private final String source;
 	List<JSONToken> tokens=new ArrayList<JSONToken>();
-	protected JSONToken root=null;
+	protected JSONToken root;
 
-	public JSONParser(String source){
+	public JSONParser(final String source){
 		this.source=source;
 	}
 
@@ -70,13 +70,14 @@ public class JSONParser{
 
 	protected void tokenize() throws Exception{
 		int length=source.length();
-		char[] cbuf=new char[length];
-		source.getChars(0,length,cbuf,0);
+		// char[] cbuf=new char[length];
+		// source.getChars(0,length,cbuf,0);
 		int preIndex=0;
 		char c=source.charAt(preIndex);
 		while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
 			preIndex++;
-			c=cbuf[preIndex];
+			// c=cbuf[preIndex];
+			c=source.charAt(preIndex);
 		}
 		if(c=='{'){
 			stack[stackPointer++]=JSONToken.cObject(preIndex);
@@ -89,7 +90,8 @@ public class JSONParser{
 		stackTop=root;
 		preIndex++;
 		for(int n=preIndex;n<length;n++){
-			c=cbuf[n];
+			// c=cbuf[n];
+			c=source.charAt(n);
 			switch(state){
 				case NONE:
 					// buf=new StringBuilder();
@@ -118,13 +120,16 @@ public class JSONParser{
 							push(JSONToken.cValue(n));
 							// Experiment
 							n++;
-							c=cbuf[n];
+							// c=cbuf[n];
+							c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								c=cbuf[n];
+								// c=cbuf[n];
+								c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									c=cbuf[n];
+									// c=cbuf[n];
+									c=source.charAt(n);
 								}
 							}
 							state=NONE;
@@ -135,13 +140,16 @@ public class JSONParser{
 
 							// Experiment
 							n++;
-							c=cbuf[n];
+							//c=cbuf[n];
+							c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								c=cbuf[n];
+								// c=cbuf[n];
+								c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									c=cbuf[n];
+									// c=cbuf[n];
+									c=source.charAt(n);
 								}
 							}
 							state=NONE;
@@ -151,13 +159,16 @@ public class JSONParser{
 							push(JSONToken.cField(n));
 							// Experiment
 							n++;
-							c=cbuf[n];
+							// c=cbuf[n];
+							c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								c=cbuf[n];
+								// c=cbuf[n];
+								c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									c=cbuf[n];
+									// c=cbuf[n];
+									c=source.charAt(n);
 								}
 							}
 							state=VALUE_SEPARATOR;

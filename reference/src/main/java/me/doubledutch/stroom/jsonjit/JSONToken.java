@@ -10,7 +10,7 @@ public class JSONToken{
 
 	public int startIndex=-1;
 	public int endIndex=-1;
-	public int type;
+	public final int type;
 	public List<JSONToken> children=null;
 	public JSONToken child;
 
