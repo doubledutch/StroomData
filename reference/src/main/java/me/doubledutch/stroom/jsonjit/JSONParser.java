@@ -30,33 +30,23 @@ public class JSONParser{
 
 	private final int NONE=0;
 	private final int FIELD=1;
-	private final int VALUE_SEPARATOR=2;
-	private final int VALUE=3;
-	private final int STRING=4;
+	private final int FIELD_INESCAPE=2;
+	private final int VALUE_SEPARATOR=3;
+	private final int VALUE=4;
+	private final int STRING=5;
+	private final int STRING_INESCAPE=6;
 
 	private int state=NONE;
-	private boolean inEscape=false;
 
-	private JSONToken[] stack=new JSONToken[10];
+	private final JSONToken[] stack=new JSONToken[64];
 	private int stackPointer=0;
 
 
 	private void push(JSONToken token){
-		// System.out.println(token.toString(stackPointer*2)+" push");
-		if(size()>0){
-			JSONToken parent=peek();
-			parent.addChild(token);
-
-		}else{
-			root=token;
-		}
+		JSONToken parent=peek();
+		parent.addChild(token);
 		stack[stackPointer++]=token;
-		// tokens.add(token);
 	}
-
-	// private void add(JSONToken token){
-	// 	tokens.add(token);
-	// }
 
 	private JSONToken pop(){
 		return stack[--stackPointer];
@@ -70,31 +60,29 @@ public class JSONParser{
 		return stackPointer;
 	}
 
-
 	protected void tokenize() throws Exception{
 		int length=source.length();
-		for(int n=0;n<length;n++){
-			char c=source.charAt(n);
+		int preIndex=0;
+		char c=source.charAt(preIndex);
+		while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
+			preIndex++;
+			c=source.charAt(preIndex);
+		}
+		if(c=='{'){
+			stack[stackPointer++]=JSONToken.cObject(preIndex);
+		}else if(c=='['){
+			stack[stackPointer++]=JSONToken.cArray(preIndex);
+		}else{
+			// throw error
+		}
+		root=stack[0];
+		preIndex++;
+		for(int n=preIndex;n<length;n++){
+			c=source.charAt(n);
 			switch(state){
 				case NONE:
 					// buf=new StringBuilder();
-					if(c==' ' || c=='\t' || c=='\n' || c=='\r'){
-						// Do nothing
-					}else if(c=='['){
-						push(JSONToken.cArray(n));
-					}else if(c==']'){
-						JSONToken token=pop();
-						if(token.type!=JSONToken.ARRAY){
-							if(token.endIndex==-1){
-								token.endIndex=n;
-							}
-							token=pop();
-							if(token.type!=JSONToken.ARRAY){
-								// Throw error
-							}
-						}
-						token.endIndex=n+1;
-					}else if(c=='{'){
+					if(c=='{'){
 						push(JSONToken.cObject(n));
 					}else if(c=='}'){
 						JSONToken token=pop();
@@ -128,16 +116,35 @@ public class JSONParser{
 						}
 					}else if(c==','){
 						// This must be the end of a value and the start of another
+						JSONToken token=peek();
+						if(token.type==JSONToken.VALUE){
+							token=pop();
+							if(token.endIndex==-1){
+								token.endIndex=n;
+							}
+							if(peek().type==JSONToken.FIELD){
+								// This was the end of the value for a field, pop that too
+								pop();
+							}else{
+								// System.out.println("Not a field");
+							}
+						}
+					}else if(c=='['){
+						push(JSONToken.cArray(n));
+					}else if(c==']'){
 						JSONToken token=pop();
-						if(token.endIndex==-1){
-							token.endIndex=n;
+						if(token.type!=JSONToken.ARRAY){
+							if(token.endIndex==-1){
+								token.endIndex=n;
+							}
+							token=pop();
+							if(token.type!=JSONToken.ARRAY){
+								// Throw error
+							}
 						}
-						if(peek().type==JSONToken.FIELD){
-							// This was the end of the value for a field, pop that too
-							pop();
-						}else{
-							// System.out.println("Not a field");
-						}
+						token.endIndex=n+1;
+					}else if(c==' ' || c=='\t' || c=='\n' || c=='\r'){
+						// Do nothing
 					}else{
 						// This must be a new value
 						JSONToken token=peek();
@@ -150,17 +157,18 @@ public class JSONParser{
 					}
 					break;
 				case FIELD:
-					// buf.append(c);
-					if(inEscape){
-						inEscape=false;
-					}else if(c=='\\'){
-						inEscape=true;
-					}else if(c=='"'){
+					if(c=='"'){
 						state=VALUE_SEPARATOR;
 						JSONToken token=peek();
 						token.endIndex=n+1;
 						// Error check that its field
+					}else if(c=='\\'){
+						state=FIELD_INESCAPE;
 					}
+					break;
+				case FIELD_INESCAPE:
+					// possibly validate legal escapes
+					state=FIELD;
 					break;
 				case VALUE_SEPARATOR:
 					if(c==':'){
@@ -170,18 +178,20 @@ public class JSONParser{
 					}
 					break;
 				case STRING:
-					if(inEscape){
-						inEscape=false;
-					}else if(c=='\\'){
-						inEscape=true;
-					}else if(c=='"'){
+					if(c=='"'){
 						state=NONE;
 						JSONToken token=peek();
 						// if(token.type!=JSONToken.VALUE){
 							// error
 						// }
 						token.endIndex=n+1;
+					}else if(c=='\\'){
+						state=STRING_INESCAPE;
 					}
+					break;
+				case STRING_INESCAPE:
+					// possibly validate legal escapes
+					state=STRING;
 					break;
 			}
 		}

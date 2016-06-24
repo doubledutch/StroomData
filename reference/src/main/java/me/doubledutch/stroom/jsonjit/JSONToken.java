@@ -12,16 +12,24 @@ public class JSONToken{
 	public int endIndex=-1;
 	public int type;
 	public List<JSONToken> children=null;
+	public JSONToken child;
 
 	public JSONToken(int type,int startIndex){
 		this.startIndex=startIndex;
 		this.type=type;
+		if(type==OBJECT || type==ARRAY){
+			children=new ArrayList<JSONToken>();
+		}
 	}
 
 	public void addChild(JSONToken token){
 		if(children==null){
-			children=new ArrayList<JSONToken>();
+			child=token;
+			return;
 		}
+		/*if(children==null){
+			children=new ArrayList<JSONToken>();
+		}*/
 		children.add(token);
 	}
 
