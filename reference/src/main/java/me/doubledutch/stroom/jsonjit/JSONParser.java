@@ -70,14 +70,15 @@ public class JSONParser{
 
 	protected void tokenize() throws Exception{
 		int length=source.length();
-		// char[] cbuf=new char[length];
-		// source.getChars(0,length,cbuf,0);
+		char[] cbuf=new char[length];
+		source.getChars(0,length,cbuf,0);
 		int preIndex=0;
-		char c=source.charAt(preIndex);
+		// char c=source.charAt(preIndex);
+		char c=cbuf[preIndex];
 		while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
 			preIndex++;
-			// c=cbuf[preIndex];
-			c=source.charAt(preIndex);
+			c=cbuf[preIndex];
+			// c=source.charAt(preIndex);
 		}
 		if(c=='{'){
 			stack[stackPointer++]=JSONToken.cObject(preIndex);
@@ -90,8 +91,8 @@ public class JSONParser{
 		stackTop=root;
 		preIndex++;
 		for(int n=preIndex;n<length;n++){
-			// c=cbuf[n];
-			c=source.charAt(n);
+			c=cbuf[n];
+			// c=source.charAt(n);
 			switch(state){
 				case NONE:
 					// buf=new StringBuilder();
@@ -120,16 +121,16 @@ public class JSONParser{
 							push(JSONToken.cValue(n));
 							// Experiment
 							n++;
-							// c=cbuf[n];
-							c=source.charAt(n);
+							c=cbuf[n];
+							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								// c=cbuf[n];
-								c=source.charAt(n);
+								c=cbuf[n];
+								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									// c=cbuf[n];
-									c=source.charAt(n);
+									c=cbuf[n];
+									// c=source.charAt(n);
 								}
 							}
 							state=NONE;
@@ -140,16 +141,16 @@ public class JSONParser{
 
 							// Experiment
 							n++;
-							//c=cbuf[n];
-							c=source.charAt(n);
+							c=cbuf[n];
+							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								// c=cbuf[n];
-								c=source.charAt(n);
+								c=cbuf[n];
+								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									// c=cbuf[n];
-									c=source.charAt(n);
+									c=cbuf[n];
+									// c=source.charAt(n);
 								}
 							}
 							state=NONE;
@@ -159,16 +160,16 @@ public class JSONParser{
 							push(JSONToken.cField(n));
 							// Experiment
 							n++;
-							// c=cbuf[n];
-							c=source.charAt(n);
+							c=cbuf[n];
+							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
-								// c=cbuf[n];
-								c=source.charAt(n);
+								c=cbuf[n];
+								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
-									// c=cbuf[n];
-									c=source.charAt(n);
+									c=cbuf[n];
+									// c=source.charAt(n);
 								}
 							}
 							state=VALUE_SEPARATOR;
