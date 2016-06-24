@@ -76,6 +76,7 @@ public class JSONObject{
 			if(child.type==JSONToken.FIELD){
 				String value=getQuotedString(child);
 				if(value.equals(key)){
+					System.out.println("Found token for key "+key);
 					// JSONToken token=child.children.get(0);
 					JSONToken token=child.child;
 					return token;

@@ -219,7 +219,7 @@ public class JSONParser{
 						}
 					}
 					break;
-				case FIELD:
+		/*		case FIELD:
 					if(c=='"'){
 						state=VALUE_SEPARATOR;
 						// JSONToken token=peek();
@@ -228,7 +228,7 @@ public class JSONParser{
 					}else if(c=='\\'){
 						state=FIELD_INESCAPE;
 					}
-					break;
+					break;*/
 				case FIELD_INESCAPE:
 					// possibly validate legal escapes
 					state=FIELD;
@@ -240,7 +240,7 @@ public class JSONParser{
 						// Throw error
 					}
 					break;
-				case STRING:
+		/*		case STRING:
 					if(c=='"'){
 						state=NONE;
 						// JSONToken token=peek();
@@ -255,7 +255,7 @@ public class JSONParser{
 				case STRING_INESCAPE:
 					// possibly validate legal escapes
 					state=STRING;
-					break;
+					break;*/
 			}
 		}
 	}

@@ -23,6 +23,7 @@ public class JSONToken{
 	}
 
 	public void addChild(JSONToken token){
+		// if(type==FIELD){
 		if(children==null){
 			child=token;
 			return;
@@ -63,6 +64,10 @@ public class JSONToken{
 		if(children!=null){
 			for(JSONToken token:children){
 				out+=token.toString(pad+2);
+			}
+		}else{
+			if(child!=null){
+				out+=child.toString(pad+2);
 			}
 		}
 		return out;
