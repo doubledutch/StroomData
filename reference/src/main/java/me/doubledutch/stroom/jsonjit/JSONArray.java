@@ -43,11 +43,12 @@ public class JSONArray{
 	public String getString(int index){
 		JSONToken token=getValueToken(index);
 		if(token!=null){
-			String value=getRawString(token);
-			if(value.startsWith("\"") && value.endsWith("\"")){
+			String value=getString(token);
+			return value;
+			// if(value.startsWith("\"") && value.endsWith("\"")){
 				// TODO: unescape value
-				return value.substring(1,value.length()-1);
-			}
+			//	return value.substring(1,value.length()-1);
+			//}
 		}
 		return null;
 	}
@@ -56,7 +57,7 @@ public class JSONArray{
 		JSONToken token=getValueToken(index);
 		if(token!=null){
 			// TODO: this trim is a hack! fix the parser
-			String value=getRawString(token).trim();
+			String value=getString(token);
 			// System.out.println("'"+value+"'");
 			try{
 				int ivalue=Integer.parseInt(value);
@@ -76,12 +77,12 @@ public class JSONArray{
 		return null;
 	}
 
-	private String getRawString(JSONToken token){
+	private String getString(JSONToken token){
 		return source.substring(token.startIndex,token.endIndex);
 	}
 
-	private String getQuotedString(JSONToken token){
-		return source.substring(token.startIndex+1,token.endIndex-1);
-	}
+	// private String getQuotedString(JSONToken token){
+	// 	return source.substring(token.startIndex+1,token.endIndex-1);
+	// }
 
 }

@@ -100,6 +100,7 @@ public class JSONParser{
 						push(JSONToken.cObject(n));
 					}else if(c=='}'){
 						JSONToken token=pop();
+
 						if(token.type!=JSONToken.OBJECT){
 							if(token.endIndex==-1){
 								token.endIndex=n;
@@ -111,14 +112,19 @@ public class JSONParser{
 							if(token.type!=JSONToken.OBJECT){
 								// Throw error
 							}
+						}else{
+
 						}
 						token.endIndex=n+1;
+						if(stackTop!=null && stackTop.type==JSONToken.FIELD){
+							pop();
+						}
 						// Error check that its {
 					}else if(c=='"'){
 						// JSONToken token=peek();
 						if(stackTop.type==JSONToken.ARRAY){
 							state=STRING;
-							push(JSONToken.cValue(n));
+							push(JSONToken.cValue(n+1));
 							// Experiment
 							n++;
 							c=cbuf[n];
@@ -134,10 +140,11 @@ public class JSONParser{
 								}
 							}
 							state=NONE;
-							stackTop.endIndex=n+1;
+							stackTop.endIndex=n;
+							pop();
 						}else if(stackTop.type==JSONToken.FIELD){
 							state=STRING;
-							push(JSONToken.cValue(n));
+							push(JSONToken.cValue(n+1));
 
 							// Experiment
 							n++;
@@ -154,10 +161,14 @@ public class JSONParser{
 								}
 							}
 							state=NONE;
-							stackTop.endIndex=n+1;
+							stackTop.endIndex=n;
+							// Remove value again
+							pop();
+							// Remove field again
+							pop();
 						}else if(stackTop.type==JSONToken.OBJECT){
 							state=FIELD;
-							push(JSONToken.cField(n));
+							push(JSONToken.cField(n+1));
 							// Experiment
 							n++;
 							c=cbuf[n];
@@ -173,7 +184,7 @@ public class JSONParser{
 								}
 							}
 							state=VALUE_SEPARATOR;
-							stackTop.endIndex=n+1;
+							stackTop.endIndex=n;
 						}else{
 							// This shouldn't occur should it?
 						}
@@ -207,28 +218,32 @@ public class JSONParser{
 						}
 						token.endIndex=n+1;
 					}else if(c==' ' || c=='\t' || c=='\n' || c=='\r'){
+						if(stackTop!=null && stackTop.type==JSONToken.VALUE){
+							JSONToken token=pop();
+							if(token.endIndex==-1){
+								token.endIndex=n;
+							}
+							if(stackTop.type==JSONToken.FIELD){
+								// This was the end of the value for a field, pop that too
+								pop();
+							}else{
+								// System.out.println("Not a field");
+							}
+						}
 						// Do nothing
+
 					}else{
 						// This must be a new value
 						// JSONToken token=peek();
 						if(stackTop.type==JSONToken.VALUE){
 							// We are just collecting more data for the current value
+
 						}else{
 							// System.out.println("Starting value with "+c);
 							push(JSONToken.cValue(n));
 						}
 					}
 					break;
-		/*		case FIELD:
-					if(c=='"'){
-						state=VALUE_SEPARATOR;
-						// JSONToken token=peek();
-						stackTop.endIndex=n+1;
-						// Error check that its field
-					}else if(c=='\\'){
-						state=FIELD_INESCAPE;
-					}
-					break;*/
 				case FIELD_INESCAPE:
 					// possibly validate legal escapes
 					state=FIELD;
@@ -236,26 +251,15 @@ public class JSONParser{
 				case VALUE_SEPARATOR:
 					if(c==':'){
 						state=NONE;
+						c=cbuf[n+1];
+						while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
+							n++;
+							c=cbuf[n+1];
+						}
 					}else{
 						// Throw error
 					}
 					break;
-		/*		case STRING:
-					if(c=='"'){
-						state=NONE;
-						// JSONToken token=peek();
-						// if(token.type!=JSONToken.VALUE){
-							// error
-						// }
-						stackTop.endIndex=n+1;
-					}else if(c=='\\'){
-						state=STRING_INESCAPE;
-					}
-					break;
-				case STRING_INESCAPE:
-					// possibly validate legal escapes
-					state=STRING;
-					break;*/
 			}
 		}
 	}

@@ -22,11 +22,12 @@ public class JSONObject{
 	public String getString(String key){
 		JSONToken token=getFieldToken(key);
 		if(token!=null){
-			String value=getRawString(token);
-			if(value.startsWith("\"") && value.endsWith("\"")){
+			String value=getString(token);
+			return value;
+			// if(value.startsWith("\"") && value.endsWith("\"")){
 				// TODO: unescape value
-				return value.substring(1,value.length()-1);
-			}
+				//return value.substring(1,value.length()-1);
+			//}
 		}
 		return null;
 	}
@@ -35,7 +36,7 @@ public class JSONObject{
 		JSONToken token=getFieldToken(key);
 		if(token!=null){
 			// TODO: this trim is a hack! fix the parser
-			String value=getRawString(token).trim();
+			String value=getString(token);
 			// System.out.println("'"+value+"'");
 			try{
 				int ivalue=Integer.parseInt(value);
@@ -51,7 +52,7 @@ public class JSONObject{
 	public long getLong(String key){
 		JSONToken token=getFieldToken(key);
 		if(token!=null){
-			String value=getRawString(token).trim();
+			String value=getString(token);
 			try{
 				long lvalue=Long.parseLong(value);
 				return lvalue;
@@ -71,12 +72,26 @@ public class JSONObject{
 		return null;
 	}
 
+	private boolean keyMatch(String key,JSONToken token){
+		int length=key.length();
+		if(token.endIndex-token.startIndex!=length){
+			return false;
+		}
+		for(int i=0;i<length;i++){
+			char c=key.charAt(i);
+			if(c!=source.charAt(token.startIndex+i)){
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private JSONToken getFieldToken(String key){
 		for(JSONToken child:root.children){
 			if(child.type==JSONToken.FIELD){
-				String value=getQuotedString(child);
-				if(value.equals(key)){
-					System.out.println("Found token for key "+key);
+				if(keyMatch(key,child)){
+				//String value=getString(child);
+				// if(value.equals(key)){
 					// JSONToken token=child.children.get(0);
 					JSONToken token=child.child;
 					return token;
@@ -86,13 +101,13 @@ public class JSONObject{
 		return null;
 	}
 
-	private String getRawString(JSONToken token){
+	private String getString(JSONToken token){
 		return source.substring(token.startIndex,token.endIndex);
 	}
 
-	private String getQuotedString(JSONToken token){
-		return source.substring(token.startIndex+1,token.endIndex-1);
-	}
+	// private String getQuotedString(JSONToken token){
+	//	return source.substring(token.startIndex,token.endIndex);
+	// }
 
 	public String toString(int pad){
 		return root.toString(pad);

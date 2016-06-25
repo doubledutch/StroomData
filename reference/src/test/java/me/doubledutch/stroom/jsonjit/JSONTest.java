@@ -132,9 +132,9 @@ public class JSONTest{
         item.put("StartTime","2016-06-21 12:15:00");
         item.put("EndTime","2016-06-21 12:30:00");
         record.put("Item",item);
-        // record.put("Type","");
+        record.put("Type","");
         record.put("Rating",5);
-        // record.put("Review","");
+        record.put("Review","");
         record.put("Created","2016-06-23T23:17:48.009612Z");
         obj.put("Record",record);
         
