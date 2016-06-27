@@ -92,7 +92,7 @@ public class JSONTest{
         assertEquals("foo",array.getString(0));
         assertEquals(42,array.getInt(2));
     }
-/*
+
     @Test
     public void testComplexObject() throws Exception{
         String str=createComplexObject();
@@ -110,7 +110,7 @@ public class JSONTest{
         assertEquals("DoubleDutch",user.getString("Company"));
     }
 
-*/
+
     private String createComplexObject() throws Exception{
         org.json.JSONObject obj=new org.json.JSONObject();
         obj.put("Type","rating");

@@ -68,18 +68,28 @@ public class JSONParser{
 		return stackPointer-1;
 	}
 
+	private final int consumeWhiteSpace(final char[] cbuf, int index){
+		char c=cbuf[index];
+		while(c==' '|| c=='\n' || c=='\t' || c=='\r'){
+			index++;
+			c=cbuf[index];
+		}
+		return index;
+	}
+
 	protected void tokenize() throws Exception{
 		int length=source.length();
 		char[] cbuf=new char[length];
 		source.getChars(0,length,cbuf,0);
-		int preIndex=0;
+		int preIndex=consumeWhiteSpace(cbuf,0);
 		// char c=source.charAt(preIndex);
-		char c=cbuf[preIndex];
+		/*char c=cbuf[preIndex];
 		while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
 			preIndex++;
 			c=cbuf[preIndex];
 			// c=source.charAt(preIndex);
-		}
+		}*/
+		char c=cbuf[preIndex];
 		if(c=='{'){
 			stack[stackPointer++]=JSONToken.cObject(preIndex);
 		}else if(c=='['){
@@ -251,11 +261,13 @@ public class JSONParser{
 				case VALUE_SEPARATOR:
 					if(c==':'){
 						state=NONE;
-						c=cbuf[n+1];
+						n=consumeWhiteSpace(cbuf,n+1);
+						n--;
+						/*c=cbuf[n+1];
 						while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
 							n++;
 							c=cbuf[n+1];
-						}
+						}*/
 					}else{
 						// Throw error
 					}
