@@ -87,7 +87,9 @@ public class JSONObject{
 	}
 
 	private JSONToken getFieldToken(String key){
-		for(JSONToken child:root.children){
+		JSONToken child=root.child;
+		while(child!=null){
+		// for(JSONToken child:root.children){
 			if(child.type==JSONToken.FIELD){
 				if(keyMatch(key,child)){
 				//String value=getString(child);
@@ -97,6 +99,7 @@ public class JSONObject{
 					return token;
 				}
 			}
+			child=child.next;
 		}
 		return null;
 	}

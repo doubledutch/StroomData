@@ -85,8 +85,10 @@ public class JSONTest{
 
     @Test
     public void testArrayValues() throws Exception{
+       //  System.out.println('Running array test');
         String str="[\"foo\",\"bar\",42]";
         JSONArray array=new JSONArray(str);
+        //System.out.println(array.toString(0));
         assertEquals("foo",array.getString(0));
         assertEquals(42,array.getInt(2));
     }

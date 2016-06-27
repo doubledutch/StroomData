@@ -11,27 +11,32 @@ public class JSONToken{
 	public int startIndex=-1;
 	public int endIndex=-1;
 	public final int type;
-	public List<JSONToken> children=null;
+	// public List<JSONToken> children=null;
 	public JSONToken child;
+	public JSONToken lastChild;
+	public JSONToken next;
 
 	public JSONToken(int type,int startIndex){
 		this.startIndex=startIndex;
 		this.type=type;
-		if(type==OBJECT || type==ARRAY){
-			children=new ArrayList<JSONToken>();
-		}
+		// if(type==OBJECT || type==ARRAY){
+		//	children=new ArrayList<JSONToken>();
+		// }
 	}
 
 	public void addChild(JSONToken token){
 		// if(type==FIELD){
-		if(children==null){
+		if(lastChild==null){
 			child=token;
+			lastChild=token;
 			return;
 		}
 		/*if(children==null){
 			children=new ArrayList<JSONToken>();
 		}*/
-		children.add(token);
+		// children.add(token);
+		lastChild.next=token;
+		lastChild=token;
 	}
 
 	public static JSONToken cArray(int index){
@@ -61,9 +66,11 @@ public class JSONToken{
 		}
 		out+=":["+startIndex+","+endIndex+"]";
 		out+="\n";
-		if(children!=null){
-			for(JSONToken token:children){
+		if(child!=null){
+			JSONToken token=child;
+			while(token!=null){
 				out+=token.toString(pad+2);
+				token=token.next;
 			}
 		}else{
 			if(child!=null){

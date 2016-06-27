@@ -4,6 +4,10 @@ public class JSONArray{
 	private JSONToken root;
 	private String source;
 
+	private int length=-1;
+	private JSONToken selectToken=null;
+	private int selectInt=-1;
+
 	public JSONArray(String raw) throws Exception{
 		JSONParser parser=new JSONParser(raw);
 		parser.tokenize();	
@@ -20,30 +24,38 @@ public class JSONArray{
 	}
 
 	public int length(){
-		if(root.children==null){
+		if(root.child==null){
 			return 0;
 		}
-		return root.children.size();
+		if(length>-1){
+			return length;
+		}
+		int num=0;
+		JSONToken token=root.child;
+		while(token!=null){
+			num++;
+			token=token.next;
+		}
+		length=num;
+		return num;
 	}
 
 	public JSONObject getJSONObject(int index){
-		if(root.children==null){
-			return null;
+		JSONToken token=getValueToken(index);
+		if(token!=null){
+			if(token.type!=JSONToken.OBJECT){
+				// Throw error
+			}
+			return new JSONObject(token,source);
 		}
-		if(root.children.size()-1<index){
-			return null;
-		}
-		JSONToken obj=root.children.get(index);
-		if(obj.type!=JSONToken.OBJECT){
-			// Throw error
-		}
-		return new JSONObject(obj,source);
+		return null;
 	}
 
 	public String getString(int index){
 		JSONToken token=getValueToken(index);
 		if(token!=null){
 			String value=getString(token);
+			// System.out.println("'"+value+"'");
 			return value;
 			// if(value.startsWith("\"") && value.endsWith("\"")){
 				// TODO: unescape value
@@ -54,6 +66,7 @@ public class JSONArray{
 	}
 
 	public int getInt(int index){
+		// System.out,println("requesting token for "+index);
 		JSONToken token=getValueToken(index);
 		if(token!=null){
 			// TODO: this trim is a hack! fix the parser
@@ -71,14 +84,33 @@ public class JSONArray{
 	}
 
 	private JSONToken getValueToken(int index){
-		if(index<root.children.size()){
-			return root.children.get(index);
+		int num=0;
+		JSONToken child=root.child;
+		if(selectInt>-1 && index>=selectInt){
+			num=selectInt;
+			child=selectToken;
 		}
+		while(child!=null){
+			if(num==index){
+				selectInt=index;
+				selectToken=child;
+				return child;
+			}
+			num++;
+			child=child.next;
+		}
+		// if(index<root.children.size()){
+		//	return root.children.get(index);
+		// }
 		return null;
 	}
 
 	private String getString(JSONToken token){
 		return source.substring(token.startIndex,token.endIndex);
+	}
+
+	public String toString(int pad){
+		return root.toString(pad);
 	}
 
 	// private String getQuotedString(JSONToken token){
