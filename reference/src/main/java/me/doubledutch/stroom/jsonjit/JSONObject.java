@@ -72,6 +72,14 @@ public class JSONObject{
 		return null;
 	}
 
+	public JSONArray getJSONArray(String key){
+		JSONToken token=getFieldToken(key);
+		if(token!=null){
+			return new JSONArray(token,source);
+		}
+		return null;
+	}
+
 	private boolean keyMatch(String key,JSONToken token){
 		int length=key.length();
 		if(token.endIndex-token.startIndex!=length){

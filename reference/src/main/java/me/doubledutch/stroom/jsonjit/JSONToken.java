@@ -2,16 +2,19 @@ package me.doubledutch.stroom.jsonjit;
 
 import java.util.*;
 
-public class JSONToken{
+public final class JSONToken{
 	public static final int OBJECT=0;
 	public static final int ARRAY=1;
 	public static final int FIELD=2;
 	public static final int VALUE=3;
 
-	public int startIndex=-1;
+	public final int startIndex;
 	public int endIndex=-1;
+
+	public boolean escaped=false;
+
 	public final int type;
-	// public List<JSONToken> children=null;
+
 	public JSONToken child;
 	public JSONToken lastChild;
 	public JSONToken next;
@@ -19,22 +22,14 @@ public class JSONToken{
 	public JSONToken(int type,int startIndex){
 		this.startIndex=startIndex;
 		this.type=type;
-		// if(type==OBJECT || type==ARRAY){
-		//	children=new ArrayList<JSONToken>();
-		// }
 	}
 
 	public void addChild(JSONToken token){
-		// if(type==FIELD){
 		if(lastChild==null){
 			child=token;
 			lastChild=token;
 			return;
 		}
-		/*if(children==null){
-			children=new ArrayList<JSONToken>();
-		}*/
-		// children.add(token);
 		lastChild.next=token;
 		lastChild=token;
 	}

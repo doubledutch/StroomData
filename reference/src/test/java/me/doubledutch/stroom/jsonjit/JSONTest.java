@@ -93,19 +93,58 @@ public class JSONTest{
         assertEquals(42,array.getInt(2));
     }
 
+
+    @Test
+    public void testJSONOrgSample1() throws Exception{
+        String str="{\n    \"glossary\": {\n        \"title\": \"example glossary\",\n        \"GlossDiv\": {\n            \"title\": \"S\",\n            \"GlossList\": {\n                \"GlossEntry\": {\n                    \"ID\": \"SGML\",\n                    \"SortAs\": \"SGML\",\n                    \"GlossTerm\": \"Standard Generalized Markup Language\",\n                    \"Acronym\": \"SGML\",\n                    \"Abbrev\": \"ISO 8879:1986\",\n                    \"GlossDef\": {\n                        \"para\": \"A meta-markup language, used to create markup languages such as DocBook.\",\n                        \"GlossSeeAlso\": [\"GML\", \"XML\"]\n                    },\n                    \"GlossSee\": \"markup\"\n                }\n            }\n        }\n    }}";
+        JSONObject obj=new JSONObject(str);
+        JSONObject glo=obj.getJSONObject("glossary");
+        assertNotNull(glo);
+        assertEquals("example glossary",glo.getString("title"));
+    }
+
+    @Test
+    public void testJSONOrgSample2() throws Exception{
+        String str="{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}";
+        JSONObject obj=new JSONObject(str);
+        JSONObject m=obj.getJSONObject("menu");
+        assertNotNull(m);
+        assertEquals("file",m.getString("id"));
+        m=m.getJSONObject("popup");
+        assertNotNull(m);
+        JSONArray a=m.getJSONArray("menuitem");
+        assertNotNull(a);
+        JSONObject o=a.getJSONObject(1);
+        assertNotNull(o);
+        assertEquals("Open",o.getString("value"));
+    }
+    @Test
+    public void testNickSample() throws Exception{
+        String str="[{\"foo\":[{}],\"[]\":\"{}\"}]";
+        JSONArray input=new JSONArray(str);
+        JSONObject obj=input.getJSONObject(0);
+        assertNotNull(obj);
+        JSONArray arr=obj.getJSONArray("foo");
+        assertNotNull(arr);
+        JSONObject obj2=arr.getJSONObject(0);
+        assertNotNull(obj2);
+        assertEquals(obj.getString("[]"),"{}");
+    }
+    
+
     @Test
     public void testComplexObject() throws Exception{
         String str=createComplexObject();
         JSONObject obj=new JSONObject(str);
-        System.out.println(obj.toString(0));
+        // System.out.println(obj.toString(0));
         JSONObject record=obj.getJSONObject("Record");
         assertNotNull(record);
-        System.out.println(record.toString());
+        // System.out.println(record.toString());
         assertEquals("rating",obj.getString("Type"));
         JSONObject user=record.getJSONObject("User");
         assertNotNull(user);
 
-        System.out.println(user.toString());
+        // System.out.println(user.toString());
         assertEquals("Ben",user.getString("First"));
         assertEquals("DoubleDutch",user.getString("Company"));
     }
