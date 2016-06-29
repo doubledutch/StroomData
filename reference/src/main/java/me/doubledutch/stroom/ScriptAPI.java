@@ -5,6 +5,7 @@ import java.net.*;
 
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.client.StreamConnection;
+import me.doubledutch.stroom.client.KVStoreConnection;
 
 public class ScriptAPI{
 	private StreamHandler streamHandler;
@@ -31,6 +32,23 @@ public class ScriptAPI{
 			String host=stream.getHost();
 			if(host.equals("direct")){
 				return new LocalStreamConnection(streamHandler.getOrCreateStream(streamName));
+			}
+		}
+		return null;
+	}
+
+	public KVStoreConnection openKVStore(String name) throws Exception{
+		if(name.indexOf("://")==-1){
+			// TODO: make this way less hacky
+			name="local://direct/kvstore/"+name;
+		}
+		URI stream=new URI(name);
+		String scheme=stream.getScheme();
+		String storeName=getStreamName(stream);
+		if(scheme.equals("local")){
+			String host=stream.getHost();
+			if(host.equals("direct")){
+				return (KVStoreConnection)KeyValueManager.get().get(name);
 			}
 		}
 		return null;

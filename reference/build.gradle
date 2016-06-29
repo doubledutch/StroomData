@@ -1,4 +1,4 @@
-version = '0.1.3'
+version = '0.1.4'
 
 apply plugin: 'java'
 
@@ -21,6 +21,7 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0'
     compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.2.v20140723'
     compile 'org.json:json:20140107'
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
     testCompile 'junit:junit:4.+'
     testCompile 'com.mashape.unirest:unirest-java:1.4.7'
     // testCompile 'org.mockito:mockito-core:1.10.8'
@@ -31,6 +32,21 @@ task clientJar(type: Jar){
     from(sourceSets.main.output) {
         include "me/doubledutch/stroom/client/*"
         include "me/doubledutch/stroom/client/function/*"
+    }
+  //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Implementation-Title': 'Client Library', 'Implementation-Version': version
+    }
+    // into('site') {
+    //    from 'site'
+    // }
+}
+
+
+task jsonJar(type: Jar){
+    baseName="jsonjit"
+    from(sourceSets.main.output) {
+        include "me/doubledutch/stroom/jsonjit/*"
     }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {

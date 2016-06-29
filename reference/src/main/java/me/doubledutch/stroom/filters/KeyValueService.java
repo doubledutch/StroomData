@@ -6,6 +6,7 @@ import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.*;
 import me.doubledutch.stroom.client.StreamConnection;
+import me.doubledutch.stroom.client.KVStoreConnection;
 import java.util.*;
 import java.util.concurrent.*;
 import org.json.*;
@@ -13,7 +14,7 @@ import java.net.*;
 import javax.script.*;
 import java.io.*;
 
-public class KeyValueService extends Service{
+public class KeyValueService extends Service implements KVStoreConnection{
 	private final Logger log = Logger.getLogger("Filter");
 
 	private long outputIndex=-1;
@@ -23,6 +24,43 @@ public class KeyValueService extends Service{
 
 	// TODO: is this truly a good fit? isn't concurrenthashmap copy on write
 	private Map<String,Long> keyMap=new ConcurrentHashMap<String,Long>();
+
+
+	public String get(String key) throws IOException{
+		return getStream("output").get(keyMap.get(key));
+	}
+	public List<String> list() throws IOException{
+		List<String> result=new ArrayList<String>();
+		for(String key:keyMap.keySet()){
+			result.add(key);
+		}
+		return result;
+	}
+
+	private boolean keyMatches(String key,String pattern){
+		// TODO: Crude for now implement good pattern support soon
+		if(pattern.endsWith("*")){
+			if(key.startsWith(pattern.substring(0,pattern.length()-1))){
+				return true;
+			}
+		}else if(pattern.startsWith("*")){
+			if(key.endsWith(pattern.substring(1))){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public List<String> search(String pattern) throws IOException{
+		List<String> result=new ArrayList<String>();
+		for(String key:keyMap.keySet()){
+			if(keyMatches(key,pattern)){
+				result.add(key);
+			}
+		}
+		return result;
+	}
+
 
 	public KeyValueService(StreamHandler handler,JSONObject obj) throws Exception{
 		super(handler,obj);

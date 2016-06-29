@@ -210,6 +210,7 @@ public class Stream implements Runnable{
 	}
 
 	public void addDocuments(List<Document> batch,int wmode) throws IOException{
+		long pre=System.nanoTime();
 		long[] location=new long[batch.size()];
 		short blockNumber=currentBlockNumber;
 		Block block=blockMap.get(blockNumber);
@@ -217,6 +218,62 @@ public class Stream implements Runnable{
 		Index index=null;
 		long maxLocation=-1;
 		long totalSize=0;
+
+		// Collect batch of data
+		int batchSize=0;
+		int[] batchOffsets=new int[batch.size()];
+		for(Document doc:batch){
+			byte[] data=doc.getData();
+			batchSize+=data.length;
+		}
+		long split1=System.nanoTime();
+		// Collect actual data and offset
+		byte[] fullData=new byte[batchSize];
+		int currentBatchOffset=0;
+		for(int i=0;i<batch.size();i++){
+			Document doc=batch.get(i);
+			byte[] data=doc.getData();
+			batchOffsets[i]=currentBatchOffset;
+			System.arraycopy(data,0,fullData,currentBatchOffset,data.length);
+			currentBatchOffset+=data.length;
+		}
+		long split2=System.nanoTime();
+		if(wmode==LINEAR){
+			synchronized(topic){
+				long outputOffset=block.write(fullData);
+				for(int i=0;i<batch.size();i++){
+					Document doc=batch.get(i);
+					byte[] data=doc.getData();
+					index=indexMap.get(currentIndexNumber);
+					location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+					currentLocation=location[i];
+					if(index.isFull()){
+						createNewIndex(currentIndexNumber);
+					}
+					doc.setLocation(location[i]);
+				}
+			}
+		}else{
+			long outputOffset=block.write(fullData);
+			synchronized(topic){
+				for(int i=0;i<batch.size();i++){
+					Document doc=batch.get(i);
+					byte[] data=doc.getData();
+					
+						index=indexMap.get(currentIndexNumber);
+						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+						currentLocation=location[i];
+					
+					if(index.isFull()){
+						createNewIndex(currentIndexNumber);
+					}
+					doc.setLocation(location[i]);
+				}
+			}
+		}
+
+
+		/*
 		for(int i=0;i<batch.size();i++){
 			Document doc=batch.get(i);
 			byte[] data=doc.getData();
@@ -240,7 +297,8 @@ public class Stream implements Runnable{
 				createNewIndex(currentIndexNumber);
 			}
 			doc.setLocation(location[i]);
-		}
+		}*/
+		long split3=System.nanoTime();
 		if(wmode==FLUSH){
 			commitData();
 		}else if(wmode<NONE){
@@ -249,6 +307,11 @@ public class Stream implements Runnable{
 
 		if(offset[batch.size()-1]+batch.get(batch.size()-1).getData().length>MAX_BLOCK_SIZE){
 			createNewBlock(blockNumber);
+		}
+		long post=System.nanoTime();
+
+		if(Math.random()<0.01){
+			System.out.println("Batch: "+((post-pre)/1000000.0)+" write: "+((split3-split2)/1000000.0)+" commit: "+((post-split3)/1000000.0));
 		}
 	}
 

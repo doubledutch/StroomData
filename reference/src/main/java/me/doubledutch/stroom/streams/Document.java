@@ -9,6 +9,7 @@ public class Document{
 	private String topic;
 	private long location=-1;
 	private String data;
+	private byte[] raw=null;
 
 	public Document(String topic,String data){
 		this.topic=topic;
@@ -59,7 +60,10 @@ public class Document{
 
 	public byte[] getData(){
 		try{
-			byte[] raw=data.getBytes("UTF-8");
+			if(raw!=null){
+				return raw;
+			}
+			raw=data.getBytes("UTF-8");
 			return raw;
 		}catch(Exception e){
 			e.printStackTrace();
