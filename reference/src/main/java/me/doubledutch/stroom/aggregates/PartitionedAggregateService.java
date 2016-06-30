@@ -125,7 +125,7 @@ public class PartitionedAggregateService extends Service{
 			metric.startTimer("javascript.run");
 			jsEngine.eval("var key=getPartitionKey(obj);");
 			metric.stopTimer("javascript.run");
-			metric.stopTimer("javascript.serialize");
+			metric.startTimer("javascript.serialize");
 			value=jsEngine.get("key");
 			metric.stopTimer("javascript.serialize");
 			
