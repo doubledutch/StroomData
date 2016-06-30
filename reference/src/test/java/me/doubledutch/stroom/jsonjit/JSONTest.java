@@ -122,6 +122,7 @@ public class JSONTest{
     public void testNickSample() throws Exception{
         String str="[{\"foo\":[{}],\"[]\":\"{}\"}]";
         JSONArray input=new JSONArray(str);
+        System.out.println(input.toString(0));
         JSONObject obj=input.getJSONObject(0);
         assertNotNull(obj);
         JSONArray arr=obj.getJSONArray("foo");
@@ -130,7 +131,6 @@ public class JSONTest{
         assertNotNull(obj2);
         assertEquals(obj.getString("[]"),"{}");
     }
-    
 
     @Test
     public void testComplexObject() throws Exception{

@@ -82,13 +82,6 @@ public class JSONParser{
 		char[] cbuf=new char[length];
 		source.getChars(0,length,cbuf,0);
 		int preIndex=consumeWhiteSpace(cbuf,0);
-		// char c=source.charAt(preIndex);
-		/*char c=cbuf[preIndex];
-		while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
-			preIndex++;
-			c=cbuf[preIndex];
-			// c=source.charAt(preIndex);
-		}*/
 		char c=cbuf[preIndex];
 		if(c=='{'){
 			stack[stackPointer++]=JSONToken.cObject(preIndex);
@@ -103,10 +96,8 @@ public class JSONParser{
 		JSONToken token=null;
 		for(int n=preIndex;n<length;n++){
 			c=cbuf[n];
-			// c=source.charAt(n);
 			switch(state){
 				case NONE:
-					// buf=new StringBuilder();
 					switch(c){
 						case '{':
 							push(JSONToken.cObject(n));
@@ -205,7 +196,6 @@ public class JSONParser{
 						break;
 					case ',':
 						// This must be the end of a value and the start of another
-						// JSONToken token=peek();
 						if(stackTop.type==JSONToken.VALUE){
 							token=pop();
 							if(token.endIndex==-1){
@@ -234,6 +224,9 @@ public class JSONParser{
 							}
 						}
 						token.endIndex=n+1;
+						if(stackTop!=null && stackTop.type==JSONToken.FIELD){
+							pop();
+						}
 						break;
 					case ' ':
 					case '\t':
