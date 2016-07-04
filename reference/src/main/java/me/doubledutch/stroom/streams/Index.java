@@ -43,6 +43,11 @@ public class Index{
 		return lastLocation==endLocationRange;
 	}
 
+	public boolean hasCapacityFor(int num){
+		// TODO: verify this test and add unit test coverage for index roll over
+		return endLocationRange-lastLocation>=num;
+	}
+
 	public void truncate(long index) throws IOException{
 		if(lastLocation>=index){
 			synchronized(out){
@@ -166,17 +171,41 @@ public class Index{
 		return list;
 	}
 
+	public long[] addEntries(short block,long[] offsetList,int[] sizeList) throws IOException{
+		// Sync on out should not be needed since the add entry block in stream is already synced
+		// synchronized(out){
+			// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
+			long[] result=new long[offsetList.length];
+			// byte[] data=new byte[offsetList.length*IndexEntry.RECORD_SIZE];
+			ByteArrayOutputStream outb=new ByteArrayOutputStream(offsetList.length*IndexEntry.RECORD_SIZE);
+			DataOutputStream outs=new DataOutputStream(outb);
+			// synchronized(out){
+				for(int i=0;i<offsetList.length;i++){
+					long newLocation=lastLocation+1;
+					result[i]=newLocation;
+					IndexEntry entry=new IndexEntry(newLocation,block,offsetList[i],sizeList[i]);
+					// entry.write(out);
+					entry.write(outs);
+					lastLocation+=1;
+					// return newLocation;
+				}
+				out.write(outb.toByteArray());
+			// }
+			return result;
+		// }
+	}
+
 	public long addEntry(short block,long offset,int size) throws IOException{
 		// Sync on out should not be needed since the add entry block in stream is already synced
 		// synchronized(out){
 			// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
-			synchronized(out){
+			// synchronized(out){
 				long newLocation=lastLocation+1;
 				IndexEntry entry=new IndexEntry(newLocation,block,offset,size);
 				entry.write(out);
 				lastLocation+=1;
 				return newLocation;
-			}
+			// }
 			
 		// }
 	}
