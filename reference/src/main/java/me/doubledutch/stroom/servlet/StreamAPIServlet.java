@@ -192,7 +192,7 @@ public class StreamAPIServlet extends HttpServlet{
 				String postBody=readPostBody(request);
 				try{
 					if(postBody.startsWith("[")){
-						// long pre=System.nanoTime();
+						//  long pre=System.nanoTime();
 
 						// DD.JSONJIT version
 
@@ -241,11 +241,21 @@ public class StreamAPIServlet extends HttpServlet{
 						}
 						// long split1=System.nanoTime();
 						response.setContentType("application/json");
-						JSONArray indexList=new JSONArray();
+						// JSONArray indexList=new JSONArray();
+						StringBuilder buf=new StringBuilder();
+						// buf.append("[");
+						boolean first=true;
 						for(Document doc:batch){
-							indexList.put(doc.getLocation());
+							if(first){
+								first=false;
+							}else{
+								buf.append(",");
+							}
+							// indexList.put(doc.getLocation());
+							buf.append(doc.getLocation());
 						}
-						response.getWriter().append("{\"location_list\":"+indexList.toString()+"}");
+						// buf.append("]");
+						response.getWriter().append("{\"location_list\":["+buf.toString()+"]}");
 						// long split2=System.nanoTime();
 						// if(Math.random()<0.01){
 						//	System.out.println("Parse: "+((post-pre)/1000000.0)+" Write: "+((split1-post)/1000000.0)+" Result: "+((split2-split1)/1000000.0));

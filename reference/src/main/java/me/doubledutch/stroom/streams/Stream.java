@@ -211,44 +211,46 @@ public class Stream implements Runnable{
 
 	public void addDocuments(List<Document> batch,int wmode) throws IOException{
 		// long pre=System.nanoTime();
-		long[] location=new long[batch.size()];
+		// long[] location=new long[batch.size()];
+		final int batchCount=batch.size();
+		long[] location=null;
 		short blockNumber=currentBlockNumber;
 		Block block=blockMap.get(blockNumber);
-		long[] offset=new long[batch.size()];
+		long[] offset=new long[batchCount];
 		Index index=null;
 		long maxLocation=-1;
 		long totalSize=0;
 
 		// Collect batch of data
 		int batchSize=0;
-		int[] batchOffsets=new int[batch.size()];
+		int[] batchOffsets=new int[batchCount];
 		for(Document doc:batch){
-			byte[] data=doc.getData();
-			batchSize+=data.length;
+			batchSize+=doc.getDataSize();
 		}
 		// long split1=System.nanoTime();
 		// Collect actual data and offset
 		byte[] fullData=new byte[batchSize];
 		int currentBatchOffset=0;
-		for(int i=0;i<batch.size();i++){
+		int[] sizeList=new int[batchCount];
+		for(int i=0;i<batchCount;i++){
 			Document doc=batch.get(i);
 			byte[] data=doc.getData();
+			sizeList[i]=doc.getDataSize();
 			batchOffsets[i]=currentBatchOffset;
 			System.arraycopy(data,0,fullData,currentBatchOffset,data.length);
 			currentBatchOffset+=data.length;
 		}
+		long[] offsetList=new long[batchCount];
+		
 		// long split2=System.nanoTime();
 		if(wmode==LINEAR){
 			synchronized(topic){
 				long outputOffset=block.write(fullData);
 				index=indexMap.get(currentIndexNumber);
-				if(index.hasCapacityFor(batch.size())){
-					long[] offsetList=new long[batch.size()];
-					int[] sizeList=new int[batch.size()];
-					for(int i=0;i<batch.size();i++){
-						Document doc=batch.get(i);
+				if(index.hasCapacityFor(batchCount)){
+					for(int i=0;i<batchCount;i++){
+						// Document doc=batch.get(i);
 						offsetList[i]=outputOffset+batchOffsets[i];
-						sizeList[i]=doc.getData().length;
 					}
 					location=index.addEntries(blockNumber,offsetList,sizeList);
 					for(int i=0;i<location.length;i++){
@@ -259,11 +261,11 @@ public class Stream implements Runnable{
 						createNewIndex(currentIndexNumber);
 					}
 				}else{
-					for(int i=0;i<batch.size();i++){
+					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
-						byte[] data=doc.getData();
+						// byte[] data=doc.getData();
 						index=indexMap.get(currentIndexNumber);
-						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
 						currentLocation=location[i];
 						if(index.isFull()){
 							createNewIndex(currentIndexNumber);
@@ -276,13 +278,10 @@ public class Stream implements Runnable{
 			long outputOffset=block.write(fullData);
 			synchronized(topic){
 				index=indexMap.get(currentIndexNumber);
-				if(index.hasCapacityFor(batch.size())){
-					long[] offsetList=new long[batch.size()];
-					int[] sizeList=new int[batch.size()];
-					for(int i=0;i<batch.size();i++){
-						Document doc=batch.get(i);
+				if(index.hasCapacityFor(batchCount)){
+					for(int i=0;i<batchCount;i++){
+						// Document doc=batch.get(i);
 						offsetList[i]=outputOffset+batchOffsets[i];
-						sizeList[i]=doc.getData().length;
 					}
 					location=index.addEntries(blockNumber,offsetList,sizeList);
 					for(int i=0;i<location.length;i++){
@@ -293,12 +292,12 @@ public class Stream implements Runnable{
 						createNewIndex(currentIndexNumber);
 					}
 				}else{
-					for(int i=0;i<batch.size();i++){
+					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
-						byte[] data=doc.getData();
+						// byte[] data=doc.getData();
 						
 							index=indexMap.get(currentIndexNumber);
-							location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],data.length);
+							location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
 							currentLocation=location[i];
 						
 						if(index.isFull()){
@@ -343,7 +342,7 @@ public class Stream implements Runnable{
 			waitForCommit(location[batch.size()-1]);
 		}
 
-		if(offset[batch.size()-1]+batch.get(batch.size()-1).getData().length>MAX_BLOCK_SIZE){
+		if(offset[batchCount-1]+batch.get(batchCount-1).getDataSize()>MAX_BLOCK_SIZE){
 			createNewBlock(blockNumber);
 		}
 		// long post=System.nanoTime();

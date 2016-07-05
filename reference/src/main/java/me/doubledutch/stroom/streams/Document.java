@@ -10,6 +10,7 @@ public class Document{
 	private long location=-1;
 	private String data;
 	private byte[] raw=null;
+	private int size=-1;
 
 	public Document(String topic,String data){
 		this.topic=topic;
@@ -56,6 +57,12 @@ public class Document{
 
 	public String getStringData(){
 		return data;
+	}
+
+	public int getDataSize(){
+		if(size>-1)return size;
+		size=getData().length;
+		return size;
 	}
 
 	public byte[] getData(){
