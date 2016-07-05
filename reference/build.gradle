@@ -1,4 +1,4 @@
-version = '0.1.4'
+version = '0.1.5'
 
 apply plugin: 'java'
 
@@ -42,6 +42,23 @@ task clientJar(type: Jar){
     // }
 }
 
+
+task clientJavadoc(type: Javadoc) {
+    options.memberLevel = JavadocMemberLevel.PUBLIC
+    destinationDir = new File("${buildDir}/docs/clientapi")
+    source = sourceSets.main.allJava
+    classpath += configurations.compile
+    exclude("me/doubledutch/stroom/streams")
+    exclude("me/doubledutch/stroom/servlet")
+    exclude("me/doubledutch/stroom/query")
+    exclude("me/doubledutch/stroom/perf")
+    exclude("me/doubledutch/stroom/filters")
+    exclude("me/doubledutch/stroom/aggregates")
+    exclude("me/doubledutch/stroom/jsonjit")
+    exclude("me/doubledutch/stroom/*.java")
+    // exclude("me/doubledutch/stroom")
+    // include("me/doubledutch/stroom/client")
+}
 
 task jsonJar(type: Jar){
     baseName="jsonjit"
