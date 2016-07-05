@@ -113,7 +113,7 @@ public class StreamAPIServlet extends HttpServlet{
 						if(first){
 							first=false;
 						}else{
-							out.append(",\n");
+							out.append(",");
 						}
 						out.append(doc.getStringData());
 						count++;
