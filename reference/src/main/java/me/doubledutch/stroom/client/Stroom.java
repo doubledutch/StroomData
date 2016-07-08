@@ -94,9 +94,10 @@ public class Stroom{
 					con.addRequestProperty(key,headers.get(key));
 				}
 			}
-			con.addRequestProperty("Content-Type", "application/json");
+			con.addRequestProperty("Content-Type", "application/json;charset=UTF-8");
 			if(body!=null){
 				byte[] outdata=body.getBytes("UTF-8");
+				// con.setFixedLengthStreamingMode(outdata.length); 
 				con.setRequestProperty("Content-Length",""+outdata.length);
 				con.setDoOutput(true);
 				con.getOutputStream().write(outdata);

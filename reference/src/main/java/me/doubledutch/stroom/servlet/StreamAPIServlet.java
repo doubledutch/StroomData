@@ -199,6 +199,7 @@ public class StreamAPIServlet extends HttpServlet{
 						me.doubledutch.stroom.jsonjit.JSONParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(postBody);
 						me.doubledutch.stroom.jsonjit.JSONArray array=parser.parseArray();
 						List<Document> batch=new ArrayList<Document>(array.length());
+						
 						for(int n=0;n<array.length();n++){
 							me.doubledutch.stroom.jsonjit.JSONObject jobj=array.getJSONObject(n);
 							Document doc=new Document(topic,jobj.toString());
@@ -232,6 +233,7 @@ public class StreamAPIServlet extends HttpServlet{
 						// long post=System.nanoTime();
 						
 						// System.out.println(batch.size());
+						// if(true)return;
 						if(batch.size()>0){
 							if(hint>-1){
 								streamHandler.addDocuments(batch,hint);
@@ -293,7 +295,7 @@ public class StreamAPIServlet extends HttpServlet{
 	private String readPostBody(final HttpServletRequest request) throws IOException{
 		BufferedReader reader = request.getReader();
 		StringBuilder buf=new StringBuilder();
-		char[] data=new char[32768];
+		char[] data=new char[4096];//32768];
 		int num=reader.read(data);
 		while(num>-1){
 			buf.append(data,0,num);

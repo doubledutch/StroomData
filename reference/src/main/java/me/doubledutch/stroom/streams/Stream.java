@@ -32,6 +32,8 @@ public class Stream implements Runnable{
 	private boolean shouldBeRunning=true;
 	private boolean isRunning=true;
 
+	private long lastCommitTime=System.currentTimeMillis();
+
 	public Stream(String parentFolder,String topic,int batch,int lag) throws IOException{
 		this.topic=topic;
 		this.MAX_COMMIT_BATCH=batch;
@@ -144,9 +146,14 @@ public class Stream implements Runnable{
 
 	public void run(){
 		while(shouldBeRunning){
-			try{
-				Thread.sleep(MAX_COMMIT_LAG);
-			}catch(Exception e){}
+			while(System.currentTimeMillis()-lastCommitTime<MAX_COMMIT_LAG){
+				try{
+					long delta=System.currentTimeMillis()-lastCommitTime;
+					if(delta>0){
+						Thread.sleep(MAX_COMMIT_LAG-delta);
+					}
+				}catch(Exception e){}
+			}
 			commitData();
 		}
 		commitData();
@@ -191,7 +198,10 @@ public class Stream implements Runnable{
 
 	private void commitData(){
 		synchronized(this){
-			if(commitedLocation==currentLocation)return;
+			if(commitedLocation==currentLocation){
+				lastCommitTime=System.currentTimeMillis();
+				return;
+			}
 			try{
 				blockMap.get(currentBlockNumber).commit();
 				Index index=indexMap.get(currentIndexNumber);
@@ -202,6 +212,7 @@ public class Stream implements Runnable{
 				// TODO: this REALLY needs to be handled
 			}
 			this.notifyAll();
+			lastCommitTime=System.currentTimeMillis();
 		}
 	}
 
