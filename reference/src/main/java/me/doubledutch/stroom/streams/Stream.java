@@ -303,16 +303,16 @@ public class Stream implements Runnable{
 						createNewIndex(currentIndexNumber);
 					}
 				}else{
+					location=new long[batchCount];
 					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
 						// byte[] data=doc.getData();
-						
-							index=indexMap.get(currentIndexNumber);
-							location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
-							currentLocation=location[i];
-						
+						index=indexMap.get(currentIndexNumber);
+						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
+						currentLocation=location[i];
 						if(index.isFull()){
 							createNewIndex(currentIndexNumber);
+							index=indexMap.get(currentIndexNumber);
 						}
 						doc.setLocation(location[i]);
 					}

@@ -295,7 +295,7 @@ public class StreamAPIServlet extends HttpServlet{
 	private String readPostBody(final HttpServletRequest request) throws IOException{
 		BufferedReader reader = request.getReader();
 		StringBuilder buf=new StringBuilder();
-		char[] data=new char[4096];//32768];
+		char[] data=new char[32768];
 		int num=reader.read(data);
 		while(num>-1){
 			buf.append(data,0,num);

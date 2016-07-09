@@ -89,10 +89,24 @@ public class HttpStreamConnection implements StreamConnection{
 
 	public List<Long> append(List<String> data) throws IOException,JSONException{
 		try{
-			JSONArray postData=new JSONArray();
+			/*JSONArray postData=new JSONArray();
 			for(String str:data){
 				postData.put(new JSONObject(str));
+			}*/
+			
+			StringBuilder postData=new StringBuilder();
+			postData.append("[");
+			boolean first=true;
+			for(String str:data){
+				if(first){
+					first=false;
+				}else{
+					postData.append(",");
+				}
+				postData.append(str);
+				// postData.put(new JSONObject(str));
 			}
+			postData.append("]");
 			String output=con.postURL(baseURL,postData.toString());
 			if(output!=null && output.trim().length()>0){
 				JSONObject obj=new JSONObject(output);

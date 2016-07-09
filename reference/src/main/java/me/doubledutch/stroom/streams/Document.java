@@ -75,6 +75,8 @@ public class Document{
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+		System.out.println("We appear to have an empty document!!!");
+		System.exit(0);
 		return null;
 	}
 }
