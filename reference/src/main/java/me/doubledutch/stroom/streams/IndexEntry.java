@@ -1,6 +1,7 @@
 package me.doubledutch.stroom.streams;
 
 import java.io.*;
+import java.nio.*;
 
 public class IndexEntry{
 	public final static int RECORD_SIZE=2+8+4; // short + long + int
@@ -48,9 +49,15 @@ public class IndexEntry{
 		return new IndexEntry(location,block,offset,size);
 	}
 
-	public void write(DataOutput out) throws IOException{
+	/*public void write(DataOutput out) throws IOException{
 		out.writeShort(block);
 		out.writeLong(offset);
 		out.writeInt(size);
+	}*/
+
+	public void write(ByteBuffer out) throws IOException{
+		out.putShort(block);
+		out.putLong(offset);
+		out.putInt(size);
 	}
 }

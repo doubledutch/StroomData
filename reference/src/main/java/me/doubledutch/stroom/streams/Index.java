@@ -3,13 +3,15 @@ package me.doubledutch.stroom.streams;
 import java.util.*;
 import java.io.*;
 import java.nio.channels.*;
+import java.nio.*;
 
 public class Index{
 	private final static int BUFFER_SIZE=2048*IndexEntry.RECORD_SIZE;
 	private String filename;
 	private RandomAccessFile in;
 	private FileOutputStream fout;
-	private DataOutputStream out;
+	// private DataOutputStream out;
+	private OutputStream out;
 	private FileChannel fc;
 	private long lastLocation=-1;
 	private long startLocationRange;
@@ -107,7 +109,9 @@ public class Index{
 		File ftest=new File(filename);
 	    fout=new FileOutputStream(filename,true);
 	    fc=fout.getChannel();
-	    out=new DataOutputStream(new BufferedOutputStream(fout,BUFFER_SIZE));
+
+	    // out=new DataOutputStream(new BufferedOutputStream(fout,BUFFER_SIZE));
+	    out=new BufferedOutputStream(fout,BUFFER_SIZE);
 	    in=new RandomAccessFile(filename,"r");
 		if(ftest.length()>0){
 			long n=ftest.length()-IndexEntry.RECORD_SIZE;
@@ -163,23 +167,30 @@ public class Index{
 		// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
 		long[] result=new long[offsetList.length];
 		// byte[] data=new byte[offsetList.length*IndexEntry.RECORD_SIZE];
-		ByteArrayOutputStream outb=new ByteArrayOutputStream(offsetList.length*IndexEntry.RECORD_SIZE);
-		DataOutputStream outs=new DataOutputStream(outb);
-			for(int i=0;i<offsetList.length;i++){
-				long newLocation=lastLocation+1;
-				result[i]=newLocation;
-				IndexEntry entry=new IndexEntry(newLocation,block,offsetList[i],sizeList[i]);
-				entry.write(outs);
-				lastLocation+=1;
-			}
-			out.write(outb.toByteArray());
+		// ByteArrayOutputStream outb=new ByteArrayOutputStream(offsetList.length*IndexEntry.RECORD_SIZE);
+		ByteBuffer outb=ByteBuffer.allocate(offsetList.length*IndexEntry.RECORD_SIZE);
+		// DataOutputStream outs=new DataOutputStream(outb);
+		for(int i=0;i<offsetList.length;i++){
+			long newLocation=lastLocation+1;
+			result[i]=newLocation;
+			IndexEntry entry=new IndexEntry(newLocation,block,offsetList[i],sizeList[i]);
+			entry.write(outb);
+
+			lastLocation+=1;
+		}
+		// out.write(outb.toByteArray());
+		out.write(outb.array());
+		// fc.write(outb);
 		return result;
 	}
 
 	public long addEntry(short block,long offset,int size) throws IOException{
 		long newLocation=lastLocation+1;
 		IndexEntry entry=new IndexEntry(newLocation,block,offset,size);
-		entry.write(out);
+		ByteBuffer outb=ByteBuffer.allocate(IndexEntry.RECORD_SIZE);
+		entry.write(outb);
+		out.write(outb.array());
+		// fc.write(outb);
 		lastLocation+=1;
 		return newLocation;
 	}
