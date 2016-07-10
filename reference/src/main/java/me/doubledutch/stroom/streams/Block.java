@@ -9,12 +9,10 @@ import java.io.*;
 
 public class Block{
 	private final static int BUFFER_SIZE=512*1024;
-	// private FileDescriptor fd;
 	private String filename;
 	private FileChannel fc;
 	private FileOutputStream fout;
 	private OutputStream out;
-	// private RandomAccessFile in;
 	private AsynchronousFileChannel in;
 	private long offset;
 	private int write_mode;
@@ -24,8 +22,6 @@ public class Block{
 		fout=new FileOutputStream(filename,true);
 		out=new BufferedOutputStream(fout,BUFFER_SIZE);
 		fc=fout.getChannel();
-		// fd=fout.getFD();
-		// in=new RandomAccessFile(filename,"r");
 		in=AsynchronousFileChannel.open(new File(filename).toPath(),StandardOpenOption.READ);
 		offset=new File(filename).length();
 		this.write_mode=write_mode;
@@ -80,8 +76,9 @@ public class Block{
 					out.flush();
 				}else if(write_mode<Stream.FLUSH){
 					out.flush();
-					fc.force(true);
-					// fd.sync();
+					// fc.force(true);
+					// TODO: investigate wether metadata is necesary here
+					fc.force(false);
 				}
 			}
 		}

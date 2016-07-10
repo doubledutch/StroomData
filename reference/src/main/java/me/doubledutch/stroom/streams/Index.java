@@ -54,17 +54,8 @@ public class Index{
 				//close();
 
 				long offset=(index-startLocationRange)*IndexEntry.RECORD_SIZE;
-				// System.out.println("Truncating at "+offset);
 				fc.truncate(offset);
 				lastLocation=index-1;
-				/*File ftest=new File(filename);
-		
-				FileChannel fch = new FileOutputStream(ftest, true).getChannel();
-			    fch.truncate(offset);
-				fch.close();
-				lastLocation=startLocationRange-1;
-				verifyIndex();
-				openIndex();*/
 			}
 		}
 	}
@@ -78,7 +69,9 @@ public class Index{
 			}else if(write_mode<Stream.FLUSH){
 				synchronized(out){
 					out.flush();
-					fc.force(true);
+					// fc.force(true);
+					// TODO: investigate wether metadata is necesary here
+					fc.force(false);
 				}
 			}
 		}
@@ -145,24 +138,19 @@ public class Index{
 			in.seek(offset);
 			in.readFully(buffer);
 			return IndexEntry.read(location,buffer,0);
-			// return IndexEntry.read(location,in);
 		}
 	}
 
 	public List<IndexEntry> seekEntries(long startLocation,long endLocation) throws IOException,EOFException{
-		
 		if(startLocation>lastLocation)return null;
 		if(endLocation>lastLocation)endLocation=lastLocation;
-		// System.out.println("\nlastLocation: "+lastLocation+" startLocation:"+startLocation+" endLocation:"+endLocation);
 		long offset=(startLocation-startLocationRange)*IndexEntry.RECORD_SIZE;
 		byte[] data=new byte[((int)(endLocation-startLocation+1))*IndexEntry.RECORD_SIZE];
 		List<IndexEntry> list=new ArrayList<IndexEntry>((int)(endLocation-startLocation+1));
-		// System.out.println("Seeking to "+offset+" reading "+data.length+" in length "+fc.size());
 		synchronized(in){
 			in.seek(offset);
 			in.readFully(data);
 		}
-		// System.out.println("Read completed");
 		DataInputStream inStream=new DataInputStream(new ByteArrayInputStream(data));
 		for(long i=startLocation;i<=endLocation;i++){
 			list.add(IndexEntry.read(i,inStream));
@@ -172,41 +160,27 @@ public class Index{
 	}
 
 	public long[] addEntries(short block,long[] offsetList,int[] sizeList) throws IOException{
-		// Sync on out should not be needed since the add entry block in stream is already synced
-		// synchronized(out){
-			// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
-			long[] result=new long[offsetList.length];
-			// byte[] data=new byte[offsetList.length*IndexEntry.RECORD_SIZE];
-			ByteArrayOutputStream outb=new ByteArrayOutputStream(offsetList.length*IndexEntry.RECORD_SIZE);
-			DataOutputStream outs=new DataOutputStream(outb);
-			// synchronized(out){
-				for(int i=0;i<offsetList.length;i++){
-					long newLocation=lastLocation+1;
-					result[i]=newLocation;
-					IndexEntry entry=new IndexEntry(newLocation,block,offsetList[i],sizeList[i]);
-					// entry.write(out);
-					entry.write(outs);
-					lastLocation+=1;
-					// return newLocation;
-				}
-				out.write(outb.toByteArray());
-			// }
-			return result;
-		// }
+		// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
+		long[] result=new long[offsetList.length];
+		// byte[] data=new byte[offsetList.length*IndexEntry.RECORD_SIZE];
+		ByteArrayOutputStream outb=new ByteArrayOutputStream(offsetList.length*IndexEntry.RECORD_SIZE);
+		DataOutputStream outs=new DataOutputStream(outb);
+			for(int i=0;i<offsetList.length;i++){
+				long newLocation=lastLocation+1;
+				result[i]=newLocation;
+				IndexEntry entry=new IndexEntry(newLocation,block,offsetList[i],sizeList[i]);
+				entry.write(outs);
+				lastLocation+=1;
+			}
+			out.write(outb.toByteArray());
+		return result;
 	}
 
 	public long addEntry(short block,long offset,int size) throws IOException{
-		// Sync on out should not be needed since the add entry block in stream is already synced
-		// synchronized(out){
-			// TODO: Why was the lastlocation incrementation done so convoluted? re-read and document!
-			// synchronized(out){
-				long newLocation=lastLocation+1;
-				IndexEntry entry=new IndexEntry(newLocation,block,offset,size);
-				entry.write(out);
-				lastLocation+=1;
-				return newLocation;
-			// }
-			
-		// }
+		long newLocation=lastLocation+1;
+		IndexEntry entry=new IndexEntry(newLocation,block,offset,size);
+		entry.write(out);
+		lastLocation+=1;
+		return newLocation;
 	}
 }

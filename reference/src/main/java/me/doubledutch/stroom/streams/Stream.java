@@ -221,8 +221,6 @@ public class Stream implements Runnable{
 	}
 
 	public void addDocuments(List<Document> batch,int wmode) throws IOException{
-		// long pre=System.nanoTime();
-		// long[] location=new long[batch.size()];
 		final int batchCount=batch.size();
 		long[] location=null;
 		short blockNumber=currentBlockNumber;
@@ -238,8 +236,6 @@ public class Stream implements Runnable{
 		for(Document doc:batch){
 			batchSize+=doc.getDataSize();
 		}
-		// long split1=System.nanoTime();
-		// Collect actual data and offset
 		byte[] fullData=new byte[batchSize];
 		int currentBatchOffset=0;
 		int[] sizeList=new int[batchCount];
@@ -253,14 +249,12 @@ public class Stream implements Runnable{
 		}
 		long[] offsetList=new long[batchCount];
 		
-		// long split2=System.nanoTime();
 		if(wmode==LINEAR){
 			synchronized(topic){
 				long outputOffset=block.write(fullData);
 				index=indexMap.get(currentIndexNumber);
 				if(index.hasCapacityFor(batchCount)){
 					for(int i=0;i<batchCount;i++){
-						// Document doc=batch.get(i);
 						offsetList[i]=outputOffset+batchOffsets[i];
 					}
 					location=index.addEntries(blockNumber,offsetList,sizeList);
@@ -274,7 +268,6 @@ public class Stream implements Runnable{
 				}else{
 					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
-						// byte[] data=doc.getData();
 						index=indexMap.get(currentIndexNumber);
 						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
 						currentLocation=location[i];
@@ -291,7 +284,6 @@ public class Stream implements Runnable{
 				index=indexMap.get(currentIndexNumber);
 				if(index.hasCapacityFor(batchCount)){
 					for(int i=0;i<batchCount;i++){
-						// Document doc=batch.get(i);
 						offsetList[i]=outputOffset+batchOffsets[i];
 					}
 					location=index.addEntries(blockNumber,offsetList,sizeList);
@@ -306,7 +298,6 @@ public class Stream implements Runnable{
 					location=new long[batchCount];
 					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
-						// byte[] data=doc.getData();
 						index=indexMap.get(currentIndexNumber);
 						location[i]=index.addEntry(blockNumber,outputOffset+batchOffsets[i],doc.getDataSize());
 						currentLocation=location[i];
@@ -319,34 +310,6 @@ public class Stream implements Runnable{
 				}
 			}
 		}
-
-
-		/*
-		for(int i=0;i<batch.size();i++){
-			Document doc=batch.get(i);
-			byte[] data=doc.getData();
-			totalSize+=data.length;
-			if(wmode==LINEAR){
-				synchronized(topic){
-					offset[i]=block.write(data);
-					index=indexMap.get(currentIndexNumber);
-					location[i]=index.addEntry(blockNumber,offset[i],data.length);
-					currentLocation=location[i];
-				}
-			}else{
-				offset[i]=block.write(data);
-				synchronized(topic){
-					index=indexMap.get(currentIndexNumber);
-					location[i]=index.addEntry(blockNumber,offset[i],data.length);
-					currentLocation=location[i];
-				}
-			}
-			if(index.isFull()){
-				createNewIndex(currentIndexNumber);
-			}
-			doc.setLocation(location[i]);
-		}*/
-		// long split3=System.nanoTime();
 		if(wmode==FLUSH){
 			commitData();
 		}else if(wmode<NONE){
@@ -356,11 +319,6 @@ public class Stream implements Runnable{
 		if(offset[batchCount-1]+batch.get(batchCount-1).getDataSize()>MAX_BLOCK_SIZE){
 			createNewBlock(blockNumber);
 		}
-		// long post=System.nanoTime();
-
-		// if(Math.random()<0.01){
-		//	System.out.println("Batch: "+((post-pre)/1000000.0)+" write: "+((split3-split2)/1000000.0)+" commit: "+((post-split3)/1000000.0));
-		// }
 	}
 
 	public void addDocument(Document doc) throws IOException{
@@ -442,17 +400,11 @@ public class Stream implements Runnable{
 		IndexEntry first=indexList.get(0);
 		IndexEntry last=indexList.get(indexList.size()-1);
 		int size=(int)((last.getOffset()+last.getSize())-first.getOffset());
-		// long pre=System.nanoTime();
 		Block block=blockMap.get(first.getBlock());
 		byte[] buffer=block.read(first.getOffset(),size);
-		// long post=System.nanoTime();
-		// System.out.println(" + "+indexList.size()+" Raw read time "+(post-pre));
-		// pre=System.nanoTime();
 		for(IndexEntry entry:indexList){
 			list.add(new Document(topic,buffer,(int)(entry.getOffset()-first.getOffset()),entry.getSize(),entry.getLocation()));
 		}
-		// post=System.nanoTime();
-		// System.out.println(" + create documents "+(post-pre));
 	}
 
 	private void getDocuments(List<IndexEntry> indexList,List<Document> list) throws IOException{
