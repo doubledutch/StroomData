@@ -18,6 +18,7 @@ public class FilterService extends Service{
 	private double sampleRate=1.0;
 	private BatchMetric metric=null;
 	private List<String> buffer=null;
+	private int bufferSize=0;
 	private long lastFlush=0;
 
 	public FilterService(StreamHandler handler,JSONObject obj) throws Exception{
@@ -55,7 +56,9 @@ public class FilterService extends Service{
 		// TODO: add ability to batch output
 		String out=null;
 		if(type==HTTP){
-			out=Utility.postURL(url,str);		
+			metric.startTimer("http.request");
+			out=Utility.postURL(url,str);	
+			metric.stopTimer("http.request");	
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.deserialize");
 			jsEngine.put("raw",str);
@@ -135,12 +138,16 @@ public class FilterService extends Service{
 						// }
 						if(out!=null && out.length()>0){
 							if(out.startsWith("[")){
-								JSONArray arr=new JSONArray(out);
-								for(int i=0;i<arr.length();i++){
-									JSONObject obj=arr.getJSONObject(i);
-									buffer.add(obj.toString());
+								me.doubledutch.stroom.jsonjit.JSONParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
+								me.doubledutch.stroom.jsonjit.JSONArray array=parser.parseArray();
+								for(int n=0;n<array.length();n++){
+									me.doubledutch.stroom.jsonjit.JSONObject jobj=array.getJSONObject(n);
+									String jobjString=jobj.toString();
+									buffer.add(jobjString);
+									bufferSize+=jobjString.length();
 								}
 							}else{
+								bufferSize+=out.length();
 								buffer.add(out);
 							}
 						}
@@ -148,7 +155,7 @@ public class FilterService extends Service{
 					}
 					
 				}
-				if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout()){
+				if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout() || bufferSize>256*1024){
 					metric.startTimer("output.append");
 					if(buffer.size()>0){
 						List<Long> result=getStream("output").append(buffer);
@@ -160,6 +167,7 @@ public class FilterService extends Service{
 					saveState();
 					metric.stopTimer("state.append");
 					buffer.clear();
+					bufferSize=0;
 					lastFlush=System.currentTimeMillis();
 				}
 				if(buffer.size()==0){

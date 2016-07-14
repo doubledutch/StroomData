@@ -2,6 +2,7 @@ package me.doubledutch.stroom.client;
 
 import java.util.*;
 import org.json.*;
+//import me.doubledutch.stroom.jsonjit.*;
 import java.io.*;
 
 public class HttpStreamConnection implements StreamConnection{
@@ -17,7 +18,7 @@ public class HttpStreamConnection implements StreamConnection{
 		try{
 			String output=con.getURL(baseURL+index+"-"+endIndex);
 			if(output!=null){
-				JSONArray data=new JSONArray(output);
+				me.doubledutch.stroom.jsonjit.JSONArray data=new me.doubledutch.stroom.jsonjit.JSONArray(output);
 				ArrayList<String> result=new ArrayList<String>(data.length());
 				for(int i=0;i<data.length();i++){
 					String doc=data.getJSONObject(i).toString();

@@ -32,6 +32,7 @@ task clientJar(type: Jar){
     from(sourceSets.main.output) {
         include "me/doubledutch/stroom/client/*"
         include "me/doubledutch/stroom/client/function/*"
+        include "me/doubledutch/stroom/jsonjit/*"
     }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
