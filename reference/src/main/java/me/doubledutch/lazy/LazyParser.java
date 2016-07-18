@@ -2,9 +2,8 @@ package me.doubledutch.lazy;
 
 import java.util.*;
 
-public class LazyParser{
+public final class LazyParser{
 	private final String source;
-	List<LazyToken> tokens=new ArrayList<LazyToken>();
 	protected LazyToken root;
 
 	protected LazyParser(final String source){
@@ -93,19 +92,15 @@ public class LazyParser{
 									token=pop();
 								}
 								if(token.type!=LazyToken.OBJECT){
-									// Throw error
+									throw new LazyException("Unexpected end of object",n);
 								}
-							}else{
-
 							}
 							token.endIndex=n+1;
 							if(stackTop!=null && stackTop.type==LazyToken.FIELD){
 								pop();
 							}
 							break;
-						// Error check that its {
 					case '"':
-						// JSONToken token=peek();
 						if(stackTop.type==LazyToken.ARRAY){
 							state=STRING;
 							push(LazyToken.cValue(n+1));
@@ -169,6 +164,8 @@ public class LazyParser{
 							}
 							state=VALUE_SEPARATOR;
 							stackTop.endIndex=n;
+							n=consumeWhiteSpace(cbuf,n+1);
+							n--;
 						}else{
 							// This shouldn't occur should it?
 						}
@@ -183,8 +180,6 @@ public class LazyParser{
 							if(stackTop.type==LazyToken.FIELD){
 								// This was the end of the value for a field, pop that too
 								pop();
-							}else{
-								// System.out.println("Not a field");
 							}
 						}
 						break;
@@ -199,7 +194,7 @@ public class LazyParser{
 							}
 							token=pop();
 							if(token.type!=LazyToken.ARRAY){
-								// Throw error
+								throw new LazyException("Unexpected end of array",n);
 							}
 						}
 						token.endIndex=n+1;
@@ -227,7 +222,6 @@ public class LazyParser{
 						break;
 					default:
 						// This must be a new value
-						// JSONToken token=peek();
 						if(stackTop.type==LazyToken.VALUE){
 							// We are just collecting more data for the current value
 
@@ -254,7 +248,7 @@ public class LazyParser{
 							c=cbuf[n+1];
 						}*/
 					}else{
-						// Throw error
+						throw new LazyException("Unexpected character! Was expecting field separator ':'",n);
 					}
 					break;
 			}
