@@ -277,7 +277,7 @@ public class StreamAPIServlet extends HttpServlet{
 						response.getWriter().append("{\"location\":"+doc.getLocation()+"}");
 						// log.info("Document of "+postBody.length()+" bytes added into "+topic+" at location "+doc.getLocation());
 					}
-				}catch(JSONException pe){
+				}catch(LazyException pe){
 					response.setContentType("application/json");
 					response.getWriter().append("{\"result\":\"err\",\"msg\":\"JSON syntax error\"}");
 					log.info("Document rejected due to JSON syntax error");

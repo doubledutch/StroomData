@@ -177,6 +177,8 @@ public class FilterService extends Service{
 					addBatchMetric(metric);
 				}
 			}
+		}catch(LazyException le){
+			le.printStackTrace();
 		}catch(Exception e){
 			e.printStackTrace();
 		}

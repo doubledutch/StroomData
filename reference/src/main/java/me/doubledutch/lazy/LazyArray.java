@@ -8,11 +8,11 @@ public class LazyArray{
 	private LazyToken selectToken=null;
 	private int selectInt=-1;
 
-	public LazyArray(String raw) throws Exception{
+	public LazyArray(String raw) throws LazyException{
 		LazyParser parser=new LazyParser(raw);
 		parser.tokenize();	
 		if(parser.root.type!=LazyToken.ARRAY){
-			// Throw error
+			throw new LazyException("JSON Array must start with [",0);
 		}
 		root=parser.root;
 		source=raw;

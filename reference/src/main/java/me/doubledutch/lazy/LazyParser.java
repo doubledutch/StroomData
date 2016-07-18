@@ -11,7 +11,7 @@ public class LazyParser{
 		this.source=source;
 	}
 
-	protected LazyObject parseObject() throws Exception{
+	protected LazyObject parseObject() throws LazyException{
 		tokenize();	
 		if(root.type!=LazyToken.OBJECT){
 			// Throw error
@@ -19,7 +19,7 @@ public class LazyParser{
 		return new LazyObject(root,source);	
 	}
 
-	protected LazyArray parseArray() throws Exception{
+	protected LazyArray parseArray() throws LazyException{
 		tokenize();	
 		if(root.type!=LazyToken.ARRAY){
 			// Throw error
@@ -77,7 +77,7 @@ public class LazyParser{
 		return index;
 	}
 
-	protected void tokenize() throws Exception{
+	protected void tokenize() throws LazyException{
 		int length=source.length();
 		char[] cbuf=new char[length];
 		source.getChars(0,length,cbuf,0);

@@ -4,11 +4,11 @@ public class LazyObject{
 	private LazyToken root;
 	private String source;
 
-	public LazyObject(String raw) throws Exception{
+	public LazyObject(String raw) throws LazyException{
 		LazyParser parser=new LazyParser(raw);
 		parser.tokenize();	
 		if(parser.root.type!=LazyToken.OBJECT){
-			// Throw error
+			throw new LazyException("JSON Object must start with {",0);
 		}
 		root=parser.root;
 		source=raw;

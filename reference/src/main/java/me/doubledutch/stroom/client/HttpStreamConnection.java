@@ -27,7 +27,7 @@ public class HttpStreamConnection implements StreamConnection{
 				}
 				return result;
 			}
-		}catch(Exception e){
+		}catch(LazyException e){
 
 		}
 		return null;

@@ -10,7 +10,7 @@ import java.net.*;
 
 public class LazyObjectTest{
 	@Test
-    public void testStringFields() throws Exception{
+    public void testStringFields() throws LazyException{
         String str="{\"foo\":\"bar\",\"baz\":\"\"}";
         LazyObject obj=new LazyObject(str);
         String value=obj.getString("foo");
@@ -22,7 +22,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testIntegerFields() throws Exception{
+    public void testIntegerFields() throws LazyException{
         String str="{\"foo\":999,\"baz\":42}";
         LazyObject obj=new LazyObject(str);
         assertEquals(999,obj.getInt("foo"));
@@ -30,7 +30,7 @@ public class LazyObjectTest{
     }
 
      @Test
-    public void testObjectSpaces() throws Exception{
+    public void testObjectSpaces() throws LazyException{
         String str=" {    \"foo\" :\"bar\" ,   \"baz\":  42}   ";
         LazyObject obj=new LazyObject(str);
         assertEquals("bar",obj.getString("foo"));
@@ -38,7 +38,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testObjectTabs() throws Exception{
+    public void testObjectTabs() throws LazyException{
         String str="\t{\t\"foo\"\t:\"bar\"\t,\t\t\"baz\":\t42\t}\t";
         LazyObject obj=new LazyObject(str);
         assertEquals("bar",obj.getString("foo"));
@@ -46,7 +46,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testNestedObjects() throws Exception{
+    public void testNestedObjects() throws LazyException{
         String str="{\"foo\":\"bar\",\"baz\":{\"test\":9}}";
         LazyObject obj=new LazyObject(str);
         obj=obj.getJSONObject("baz");
@@ -55,7 +55,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testDeepNestedObjects() throws Exception{
+    public void testDeepNestedObjects() throws LazyException{
         String str="{\"foo\":\"bar\",\"baz\":{\"test\":9,\"test2\":{\"id\":100},\"second\":33}}";
         LazyObject obj=new LazyObject(str);
         obj=obj.getJSONObject("baz");
@@ -67,7 +67,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testArrayObjects() throws Exception{
+    public void testArrayObjects() throws LazyException{
         String str="[{\"foo\":\"bar\",\"baz\":{\"test\":9}}]";
         LazyArray array=new LazyArray(str);
         LazyObject obj=array.getJSONObject(0);
@@ -83,7 +83,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testArrayValues() throws Exception{
+    public void testArrayValues() throws LazyException{
        //  System.out.println('Running array test');
         String str="[\"foo\",\"bar\",42]";
         LazyArray array=new LazyArray(str);
@@ -94,7 +94,7 @@ public class LazyObjectTest{
 
 
     @Test
-    public void testJSONOrgSample1() throws Exception{
+    public void testJSONOrgSample1() throws LazyException{
         String str="{\n    \"glossary\": {\n        \"title\": \"example glossary\",\n        \"GlossDiv\": {\n            \"title\": \"S\",\n            \"GlossList\": {\n                \"GlossEntry\": {\n                    \"ID\": \"SGML\",\n                    \"SortAs\": \"SGML\",\n                    \"GlossTerm\": \"Standard Generalized Markup Language\",\n                    \"Acronym\": \"SGML\",\n                    \"Abbrev\": \"ISO 8879:1986\",\n                    \"GlossDef\": {\n                        \"para\": \"A meta-markup language, used to create markup languages such as DocBook.\",\n                        \"GlossSeeAlso\": [\"GML\", \"XML\"]\n                    },\n                    \"GlossSee\": \"markup\"\n                }\n            }\n        }\n    }}";
         LazyObject obj=new LazyObject(str);
         LazyObject glo=obj.getJSONObject("glossary");
@@ -103,7 +103,7 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testJSONOrgSample2() throws Exception{
+    public void testJSONOrgSample2() throws LazyException{
         String str="{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}";
         LazyObject obj=new LazyObject(str);
         LazyObject m=obj.getJSONObject("menu");
@@ -118,7 +118,7 @@ public class LazyObjectTest{
         assertEquals("Open",o.getString("value"));
     }
     @Test
-    public void testNickSample() throws Exception{
+    public void testNickSample() throws LazyException{
         String str="[{\"foo\":[{}],\"[]\":\"{}\"}]";
         LazyArray input=new LazyArray(str);
         // System.out.println(input.toString(0));
