@@ -11,23 +11,6 @@ public class LazyParser{
 		this.source=source;
 	}
 
-	protected LazyObject parseObject() throws LazyException{
-		tokenize();	
-		if(root.type!=LazyToken.OBJECT){
-			// Throw error
-		}
-		return new LazyObject(root,source);	
-	}
-
-	protected LazyArray parseArray() throws LazyException{
-		tokenize();	
-		if(root.type!=LazyToken.ARRAY){
-			// Throw error
-		}
-		return new LazyArray(root,source);
-	}
-
-
 	private final int NONE=0;
 	private final int FIELD=1;
 	private final int FIELD_INESCAPE=2;
@@ -38,29 +21,25 @@ public class LazyParser{
 
 	private int state=NONE;
 
+	// Internal stack implementation
 	private final LazyToken[] stack=new LazyToken[64];
 	private LazyToken stackTop=null;
 	private int stackPointer=1;
 
-
 	private void push(LazyToken token){
-		// JSONToken parent=peek();
 		stackTop.addChild(token);
 		stack[stackPointer++]=token;
 		stackTop=token;
 	}
 
 	private LazyToken pop(){
-		// System.out.println("pre pop "+stackPointer);
 		LazyToken value=stackTop;
 		stackPointer--;
-		// System.out.println("new top "+(stackPointer-1));
 		stackTop=stack[stackPointer-1];
 		return value;
 	}
 
 	private LazyToken peek(){
-		// return stack[stackPointer-1];
 		return stackTop;
 	}
 
@@ -88,7 +67,7 @@ public class LazyParser{
 		}else if(c=='['){
 			stack[stackPointer++]=LazyToken.cArray(preIndex);
 		}else{
-			// throw error
+			throw new LazyException("Can not parse raw JSON value, must be either object or array",0);
 		}
 		root=stack[1];
 		stackTop=root;
