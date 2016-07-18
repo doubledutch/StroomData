@@ -1,4 +1,4 @@
-package me.doubledutch.stroom.query.sql;
+package me.doubledutch.lazy;
 
 import java.io.File;
 import org.junit.*;
@@ -7,13 +7,12 @@ import static org.junit.Assert.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.net.*;
-import me.doubledutch.stroom.jsonjit.*;
 
-public class JSONTest{
+public class LazyObjectTest{
 	@Test
     public void testStringFields() throws Exception{
         String str="{\"foo\":\"bar\",\"baz\":\"\"}";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         String value=obj.getString("foo");
         assertNotNull(value);
         assertEquals(value,"bar");
@@ -25,7 +24,7 @@ public class JSONTest{
     @Test
     public void testIntegerFields() throws Exception{
         String str="{\"foo\":999,\"baz\":42}";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         assertEquals(999,obj.getInt("foo"));
         assertEquals(42,obj.getInt("baz"));
     }
@@ -33,7 +32,7 @@ public class JSONTest{
      @Test
     public void testObjectSpaces() throws Exception{
         String str=" {    \"foo\" :\"bar\" ,   \"baz\":  42}   ";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         assertEquals("bar",obj.getString("foo"));
         assertEquals(42,obj.getInt("baz"));
     }
@@ -41,7 +40,7 @@ public class JSONTest{
     @Test
     public void testObjectTabs() throws Exception{
         String str="\t{\t\"foo\"\t:\"bar\"\t,\t\t\"baz\":\t42\t}\t";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         assertEquals("bar",obj.getString("foo"));
         assertEquals(42,obj.getInt("baz"));
     }
@@ -49,7 +48,7 @@ public class JSONTest{
     @Test
     public void testNestedObjects() throws Exception{
         String str="{\"foo\":\"bar\",\"baz\":{\"test\":9}}";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         obj=obj.getJSONObject("baz");
         assertNotNull(obj);
         assertEquals(9,obj.getInt("test"));
@@ -58,7 +57,7 @@ public class JSONTest{
     @Test
     public void testDeepNestedObjects() throws Exception{
         String str="{\"foo\":\"bar\",\"baz\":{\"test\":9,\"test2\":{\"id\":100},\"second\":33}}";
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         obj=obj.getJSONObject("baz");
         assertNotNull(obj);
         assertEquals(9,obj.getInt("test"));
@@ -70,14 +69,14 @@ public class JSONTest{
     @Test
     public void testArrayObjects() throws Exception{
         String str="[{\"foo\":\"bar\",\"baz\":{\"test\":9}}]";
-        JSONArray array=new JSONArray(str);
-        JSONObject obj=array.getJSONObject(0);
+        LazyArray array=new LazyArray(str);
+        LazyObject obj=array.getJSONObject(0);
         obj=obj.getJSONObject("baz");
         assertNotNull(obj);
         assertEquals(9,obj.getInt("test"));
 
         str="[{\"i\":1024,\"b\":2048,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"},{\"i\":2,\"b\":3,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"},{\"i\":1024,\"b\":2048,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"}]";
-        array=new JSONArray(str);
+        array=new LazyArray(str);
         obj=array.getJSONObject(1);
         assertNotNull(obj);
         assertEquals(3,obj.getInt("b"));
@@ -87,7 +86,7 @@ public class JSONTest{
     public void testArrayValues() throws Exception{
        //  System.out.println('Running array test');
         String str="[\"foo\",\"bar\",42]";
-        JSONArray array=new JSONArray(str);
+        LazyArray array=new LazyArray(str);
         //System.out.println(array.toString(0));
         assertEquals("foo",array.getString(0));
         assertEquals(42,array.getInt(2));
@@ -97,8 +96,8 @@ public class JSONTest{
     @Test
     public void testJSONOrgSample1() throws Exception{
         String str="{\n    \"glossary\": {\n        \"title\": \"example glossary\",\n        \"GlossDiv\": {\n            \"title\": \"S\",\n            \"GlossList\": {\n                \"GlossEntry\": {\n                    \"ID\": \"SGML\",\n                    \"SortAs\": \"SGML\",\n                    \"GlossTerm\": \"Standard Generalized Markup Language\",\n                    \"Acronym\": \"SGML\",\n                    \"Abbrev\": \"ISO 8879:1986\",\n                    \"GlossDef\": {\n                        \"para\": \"A meta-markup language, used to create markup languages such as DocBook.\",\n                        \"GlossSeeAlso\": [\"GML\", \"XML\"]\n                    },\n                    \"GlossSee\": \"markup\"\n                }\n            }\n        }\n    }}";
-        JSONObject obj=new JSONObject(str);
-        JSONObject glo=obj.getJSONObject("glossary");
+        LazyObject obj=new LazyObject(str);
+        LazyObject glo=obj.getJSONObject("glossary");
         assertNotNull(glo);
         assertEquals("example glossary",glo.getString("title"));
     }
@@ -106,28 +105,28 @@ public class JSONTest{
     @Test
     public void testJSONOrgSample2() throws Exception{
         String str="{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}";
-        JSONObject obj=new JSONObject(str);
-        JSONObject m=obj.getJSONObject("menu");
+        LazyObject obj=new LazyObject(str);
+        LazyObject m=obj.getJSONObject("menu");
         assertNotNull(m);
         assertEquals("file",m.getString("id"));
         m=m.getJSONObject("popup");
         assertNotNull(m);
-        JSONArray a=m.getJSONArray("menuitem");
+        LazyArray a=m.getJSONArray("menuitem");
         assertNotNull(a);
-        JSONObject o=a.getJSONObject(1);
+        LazyObject o=a.getJSONObject(1);
         assertNotNull(o);
         assertEquals("Open",o.getString("value"));
     }
     @Test
     public void testNickSample() throws Exception{
         String str="[{\"foo\":[{}],\"[]\":\"{}\"}]";
-        JSONArray input=new JSONArray(str);
-        System.out.println(input.toString(0));
-        JSONObject obj=input.getJSONObject(0);
+        LazyArray input=new LazyArray(str);
+        // System.out.println(input.toString(0));
+        LazyObject obj=input.getJSONObject(0);
         assertNotNull(obj);
-        JSONArray arr=obj.getJSONArray("foo");
+        LazyArray arr=obj.getJSONArray("foo");
         assertNotNull(arr);
-        JSONObject obj2=arr.getJSONObject(0);
+        LazyObject obj2=arr.getJSONObject(0);
         assertNotNull(obj2);
         assertEquals(obj.getString("[]"),"{}");
     }
@@ -135,13 +134,13 @@ public class JSONTest{
     @Test
     public void testComplexObject() throws Exception{
         String str=createComplexObject();
-        JSONObject obj=new JSONObject(str);
+        LazyObject obj=new LazyObject(str);
         // System.out.println(obj.toString(0));
-        JSONObject record=obj.getJSONObject("Record");
+        LazyObject record=obj.getJSONObject("Record");
         assertNotNull(record);
         // System.out.println(record.toString());
         assertEquals("rating",obj.getString("Type"));
-        JSONObject user=record.getJSONObject("User");
+        LazyObject user=record.getJSONObject("User");
         assertNotNull(user);
 
         // System.out.println(user.toString());

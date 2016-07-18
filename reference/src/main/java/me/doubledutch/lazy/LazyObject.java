@@ -1,26 +1,26 @@
-package me.doubledutch.stroom.jsonjit;
+package me.doubledutch.lazy;
 
-public class JSONObject{
-	private JSONToken root;
+public class LazyObject{
+	private LazyToken root;
 	private String source;
 
-	public JSONObject(String raw) throws Exception{
-		JSONParser parser=new JSONParser(raw);
+	public LazyObject(String raw) throws Exception{
+		LazyParser parser=new LazyParser(raw);
 		parser.tokenize();	
-		if(parser.root.type!=JSONToken.OBJECT){
+		if(parser.root.type!=LazyToken.OBJECT){
 			// Throw error
 		}
 		root=parser.root;
 		source=raw;
 	}
 
-	protected JSONObject(JSONToken root,String source){
+	protected LazyObject(LazyToken root,String source){
 		this.root=root;
 		this.source=source;
 	}
 
 	public String getString(String key){
-		JSONToken token=getFieldToken(key);
+		LazyToken token=getFieldToken(key);
 		if(token!=null){
 			String value=getString(token);
 			return value;
@@ -33,7 +33,7 @@ public class JSONObject{
 	}
 
 	public int getInt(String key){
-		JSONToken token=getFieldToken(key);
+		LazyToken token=getFieldToken(key);
 		if(token!=null){
 			// TODO: this trim is a hack! fix the parser
 			String value=getString(token);
@@ -50,7 +50,7 @@ public class JSONObject{
 	}
 
 	public long getLong(String key){
-		JSONToken token=getFieldToken(key);
+		LazyToken token=getFieldToken(key);
 		if(token!=null){
 			String value=getString(token);
 			try{
@@ -64,23 +64,23 @@ public class JSONObject{
 		return 0l;
 	}
 
-	public JSONObject getJSONObject(String key){
-		JSONToken token=getFieldToken(key);
+	public LazyObject getJSONObject(String key){
+		LazyToken token=getFieldToken(key);
 		if(token!=null){
-			return new JSONObject(token,source);
+			return new LazyObject(token,source);
 		}
 		return null;
 	}
 
-	public JSONArray getJSONArray(String key){
-		JSONToken token=getFieldToken(key);
+	public LazyArray getJSONArray(String key){
+		LazyToken token=getFieldToken(key);
 		if(token!=null){
-			return new JSONArray(token,source);
+			return new LazyArray(token,source);
 		}
 		return null;
 	}
 
-	private boolean keyMatch(String key,JSONToken token){
+	private boolean keyMatch(String key,LazyToken token){
 		int length=key.length();
 		if(token.endIndex-token.startIndex!=length){
 			return false;
@@ -94,16 +94,16 @@ public class JSONObject{
 		return true;
 	}
 
-	private JSONToken getFieldToken(String key){
-		JSONToken child=root.child;
+	private LazyToken getFieldToken(String key){
+		LazyToken child=root.child;
 		while(child!=null){
 		// for(JSONToken child:root.children){
-			if(child.type==JSONToken.FIELD){
+			if(child.type==LazyToken.FIELD){
 				if(keyMatch(key,child)){
 				//String value=getString(child);
 				// if(value.equals(key)){
 					// JSONToken token=child.children.get(0);
-					JSONToken token=child.child;
+					LazyToken token=child.child;
 					return token;
 				}
 			}
@@ -112,7 +112,7 @@ public class JSONObject{
 		return null;
 	}
 
-	private String getString(JSONToken token){
+	private String getString(LazyToken token){
 		return source.substring(token.startIndex,token.endIndex);
 	}
 

@@ -1,30 +1,30 @@
-package me.doubledutch.stroom.jsonjit;
+package me.doubledutch.lazy;
 
 import java.util.*;
 
-public class JSONParser{
+public class LazyParser{
 	private final String source;
-	List<JSONToken> tokens=new ArrayList<JSONToken>();
-	protected JSONToken root;
+	List<LazyToken> tokens=new ArrayList<LazyToken>();
+	protected LazyToken root;
 
-	public JSONParser(final String source){
+	protected LazyParser(final String source){
 		this.source=source;
 	}
 
-	public JSONObject parseObject() throws Exception{
+	protected LazyObject parseObject() throws Exception{
 		tokenize();	
-		if(root.type!=JSONToken.OBJECT){
+		if(root.type!=LazyToken.OBJECT){
 			// Throw error
 		}
-		return new JSONObject(root,source);	
+		return new LazyObject(root,source);	
 	}
 
-	public JSONArray parseArray() throws Exception{
+	protected LazyArray parseArray() throws Exception{
 		tokenize();	
-		if(root.type!=JSONToken.ARRAY){
+		if(root.type!=LazyToken.ARRAY){
 			// Throw error
 		}
-		return new JSONArray(root,source);
+		return new LazyArray(root,source);
 	}
 
 
@@ -38,28 +38,28 @@ public class JSONParser{
 
 	private int state=NONE;
 
-	private final JSONToken[] stack=new JSONToken[64];
-	private JSONToken stackTop=null;
+	private final LazyToken[] stack=new LazyToken[64];
+	private LazyToken stackTop=null;
 	private int stackPointer=1;
 
 
-	private void push(JSONToken token){
+	private void push(LazyToken token){
 		// JSONToken parent=peek();
 		stackTop.addChild(token);
 		stack[stackPointer++]=token;
 		stackTop=token;
 	}
 
-	private JSONToken pop(){
+	private LazyToken pop(){
 		// System.out.println("pre pop "+stackPointer);
-		JSONToken value=stackTop;
+		LazyToken value=stackTop;
 		stackPointer--;
 		// System.out.println("new top "+(stackPointer-1));
 		stackTop=stack[stackPointer-1];
 		return value;
 	}
 
-	private JSONToken peek(){
+	private LazyToken peek(){
 		// return stack[stackPointer-1];
 		return stackTop;
 	}
@@ -84,52 +84,52 @@ public class JSONParser{
 		int preIndex=consumeWhiteSpace(cbuf,0);
 		char c=cbuf[preIndex];
 		if(c=='{'){
-			stack[stackPointer++]=JSONToken.cObject(preIndex);
+			stack[stackPointer++]=LazyToken.cObject(preIndex);
 		}else if(c=='['){
-			stack[stackPointer++]=JSONToken.cArray(preIndex);
+			stack[stackPointer++]=LazyToken.cArray(preIndex);
 		}else{
 			// throw error
 		}
 		root=stack[1];
 		stackTop=root;
 		preIndex++;
-		JSONToken token=null;
+		LazyToken token=null;
 		for(int n=preIndex;n<length;n++){
 			c=cbuf[n];
 			switch(state){
 				case NONE:
 					switch(c){
 						case '{':
-							push(JSONToken.cObject(n));
+							push(LazyToken.cObject(n));
 							break;
 						case '}':
 							token=pop();
 
-							if(token.type!=JSONToken.OBJECT){
+							if(token.type!=LazyToken.OBJECT){
 								if(token.endIndex==-1){
 									token.endIndex=n;
 								}
 								token=pop();
-								if(token.type==JSONToken.FIELD){
+								if(token.type==LazyToken.FIELD){
 									token=pop();
 								}
-								if(token.type!=JSONToken.OBJECT){
+								if(token.type!=LazyToken.OBJECT){
 									// Throw error
 								}
 							}else{
 
 							}
 							token.endIndex=n+1;
-							if(stackTop!=null && stackTop.type==JSONToken.FIELD){
+							if(stackTop!=null && stackTop.type==LazyToken.FIELD){
 								pop();
 							}
 							break;
 						// Error check that its {
 					case '"':
 						// JSONToken token=peek();
-						if(stackTop.type==JSONToken.ARRAY){
+						if(stackTop.type==LazyToken.ARRAY){
 							state=STRING;
-							push(JSONToken.cValue(n+1));
+							push(LazyToken.cValue(n+1));
 							// Experiment
 							n++;
 							c=cbuf[n];
@@ -147,9 +147,9 @@ public class JSONParser{
 							state=NONE;
 							stackTop.endIndex=n;
 							pop();
-						}else if(stackTop.type==JSONToken.FIELD){
+						}else if(stackTop.type==LazyToken.FIELD){
 							state=STRING;
-							push(JSONToken.cValue(n+1));
+							push(LazyToken.cValue(n+1));
 
 							// Experiment
 							n++;
@@ -171,9 +171,9 @@ public class JSONParser{
 							pop();
 							// Remove field again
 							pop();
-						}else if(stackTop.type==JSONToken.OBJECT){
+						}else if(stackTop.type==LazyToken.OBJECT){
 							state=FIELD;
-							push(JSONToken.cField(n+1));
+							push(LazyToken.cField(n+1));
 							// Experiment
 							n++;
 							c=cbuf[n];
@@ -196,12 +196,12 @@ public class JSONParser{
 						break;
 					case ',':
 						// This must be the end of a value and the start of another
-						if(stackTop.type==JSONToken.VALUE){
+						if(stackTop.type==LazyToken.VALUE){
 							token=pop();
 							if(token.endIndex==-1){
 								token.endIndex=n;
 							}
-							if(stackTop.type==JSONToken.FIELD){
+							if(stackTop.type==LazyToken.FIELD){
 								// This was the end of the value for a field, pop that too
 								pop();
 							}else{
@@ -210,21 +210,21 @@ public class JSONParser{
 						}
 						break;
 					case '[':
-						push(JSONToken.cArray(n));
+						push(LazyToken.cArray(n));
 						break;
 					case ']':
 						token=pop();
-						if(token.type!=JSONToken.ARRAY){
+						if(token.type!=LazyToken.ARRAY){
 							if(token.endIndex==-1){
 								token.endIndex=n;
 							}
 							token=pop();
-							if(token.type!=JSONToken.ARRAY){
+							if(token.type!=LazyToken.ARRAY){
 								// Throw error
 							}
 						}
 						token.endIndex=n+1;
-						if(stackTop!=null && stackTop.type==JSONToken.FIELD){
+						if(stackTop!=null && stackTop.type==LazyToken.FIELD){
 							pop();
 						}
 						break;
@@ -232,12 +232,12 @@ public class JSONParser{
 					case '\t':
 					case '\n':
 					case '\r':
-						if(stackTop!=null && stackTop.type==JSONToken.VALUE){
+						if(stackTop!=null && stackTop.type==LazyToken.VALUE){
 							token=pop();
 							if(token.endIndex==-1){
 								token.endIndex=n;
 							}
-							if(stackTop.type==JSONToken.FIELD){
+							if(stackTop.type==LazyToken.FIELD){
 								// This was the end of the value for a field, pop that too
 								pop();
 							}else{
@@ -249,12 +249,12 @@ public class JSONParser{
 					default:
 						// This must be a new value
 						// JSONToken token=peek();
-						if(stackTop.type==JSONToken.VALUE){
+						if(stackTop.type==LazyToken.VALUE){
 							// We are just collecting more data for the current value
 
 						}else{
 							// System.out.println("Starting value with "+c);
-							push(JSONToken.cValue(n));
+							push(LazyToken.cValue(n));
 						}
 						break;
 					}

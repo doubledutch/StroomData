@@ -1,24 +1,24 @@
-package me.doubledutch.stroom.jsonjit;
+package me.doubledutch.lazy;
 
-public class JSONArray{
-	private JSONToken root;
+public class LazyArray{
+	private LazyToken root;
 	private String source;
 
 	private int length=-1;
-	private JSONToken selectToken=null;
+	private LazyToken selectToken=null;
 	private int selectInt=-1;
 
-	public JSONArray(String raw) throws Exception{
-		JSONParser parser=new JSONParser(raw);
+	public LazyArray(String raw) throws Exception{
+		LazyParser parser=new LazyParser(raw);
 		parser.tokenize();	
-		if(parser.root.type!=JSONToken.ARRAY){
+		if(parser.root.type!=LazyToken.ARRAY){
 			// Throw error
 		}
 		root=parser.root;
 		source=raw;
 	}
 
-	protected JSONArray(JSONToken root,String source){
+	protected LazyArray(LazyToken root,String source){
 		this.root=root;
 		this.source=source;
 	}
@@ -31,7 +31,7 @@ public class JSONArray{
 			return length;
 		}
 		int num=0;
-		JSONToken token=root.child;
+		LazyToken token=root.child;
 		while(token!=null){
 			num++;
 			token=token.next;
@@ -40,19 +40,19 @@ public class JSONArray{
 		return num;
 	}
 
-	public JSONObject getJSONObject(int index){
-		JSONToken token=getValueToken(index);
+	public LazyObject getJSONObject(int index){
+		LazyToken token=getValueToken(index);
 		if(token!=null){
-			if(token.type!=JSONToken.OBJECT){
+			if(token.type!=LazyToken.OBJECT){
 				// Throw error
 			}
-			return new JSONObject(token,source);
+			return new LazyObject(token,source);
 		}
 		return null;
 	}
 
 	public String getString(int index){
-		JSONToken token=getValueToken(index);
+		LazyToken token=getValueToken(index);
 		if(token!=null){
 			String value=getString(token);
 			// System.out.println("'"+value+"'");
@@ -67,7 +67,7 @@ public class JSONArray{
 
 	public int getInt(int index){
 		// System.out,println("requesting token for "+index);
-		JSONToken token=getValueToken(index);
+		LazyToken token=getValueToken(index);
 		if(token!=null){
 			// TODO: this trim is a hack! fix the parser
 			String value=getString(token);
@@ -83,9 +83,9 @@ public class JSONArray{
 		return 0;
 	}
 
-	private JSONToken getValueToken(int index){
+	private LazyToken getValueToken(int index){
 		int num=0;
-		JSONToken child=root.child;
+		LazyToken child=root.child;
 		if(selectInt>-1 && index>=selectInt){
 			num=selectInt;
 			child=selectToken;
@@ -105,7 +105,7 @@ public class JSONArray{
 		return null;
 	}
 
-	private String getString(JSONToken token){
+	private String getString(LazyToken token){
 		return source.substring(token.startIndex,token.endIndex);
 	}
 

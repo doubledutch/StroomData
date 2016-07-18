@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import me.doubledutch.stroom.streams.*;
+import me.doubledutch.lazy.*;
 
 import org.json.*;
 
@@ -196,12 +197,12 @@ public class StreamAPIServlet extends HttpServlet{
 
 						// DD.JSONJIT version
 
-						me.doubledutch.stroom.jsonjit.JSONParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(postBody);
-						me.doubledutch.stroom.jsonjit.JSONArray array=parser.parseArray();
+						// me.doubledutch.stroom.jsonjit.LazyParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(postBody);
+						LazyArray array=new LazyArray(postBody);
 						List<Document> batch=new ArrayList<Document>(array.length());
 						
 						for(int n=0;n<array.length();n++){
-							me.doubledutch.stroom.jsonjit.JSONObject jobj=array.getJSONObject(n);
+							LazyObject jobj=array.getJSONObject(n);
 							Document doc=new Document(topic,jobj.toString());
 							batch.add(doc);
 						}

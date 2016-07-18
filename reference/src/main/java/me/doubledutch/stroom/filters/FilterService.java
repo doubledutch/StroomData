@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.*;
+import me.doubledutch.lazy.*;
 import me.doubledutch.stroom.client.StreamConnection;
 import java.util.*;
 import org.json.*;
@@ -138,10 +139,10 @@ public class FilterService extends Service{
 						// }
 						if(out!=null && out.length()>0){
 							if(out.startsWith("[")){
-								me.doubledutch.stroom.jsonjit.JSONParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
-								me.doubledutch.stroom.jsonjit.JSONArray array=parser.parseArray();
+								// LazyParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
+								LazyArray array=new LazyArray(out);
 								for(int n=0;n<array.length();n++){
-									me.doubledutch.stroom.jsonjit.JSONObject jobj=array.getJSONObject(n);
+									LazyObject jobj=array.getJSONObject(n);
 									String jobjString=jobj.toString();
 									buffer.add(jobjString);
 									bufferSize+=jobjString.length();
