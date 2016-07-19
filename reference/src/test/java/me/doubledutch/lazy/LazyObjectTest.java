@@ -67,33 +67,6 @@ public class LazyObjectTest{
     }
 
     @Test
-    public void testArrayObjects() throws LazyException{
-        String str="[{\"foo\":\"bar\",\"baz\":{\"test\":9}}]";
-        LazyArray array=new LazyArray(str);
-        LazyObject obj=array.getJSONObject(0);
-        obj=obj.getJSONObject("baz");
-        assertNotNull(obj);
-        assertEquals(9,obj.getInt("test"));
-
-        str="[{\"i\":1024,\"b\":2048,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"},{\"i\":2,\"b\":3,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"},{\"i\":1024,\"b\":2048,\"p\":\"XXXXXXXXXXXXXXXXXXXX\"}]";
-        array=new LazyArray(str);
-        obj=array.getJSONObject(1);
-        assertNotNull(obj);
-        assertEquals(3,obj.getInt("b"));
-    }
-
-    @Test
-    public void testArrayValues() throws LazyException{
-       //  System.out.println('Running array test');
-        String str="[\"foo\",\"bar\",42]";
-        LazyArray array=new LazyArray(str);
-        //System.out.println(array.toString(0));
-        assertEquals("foo",array.getString(0));
-        assertEquals(42,array.getInt(2));
-    }
-
-
-    @Test
     public void testJSONOrgSample1() throws LazyException{
         String str="{\n    \"glossary\": {\n        \"title\": \"example glossary\",\n        \"GlossDiv\": {\n            \"title\": \"S\",\n            \"GlossList\": {\n                \"GlossEntry\": {\n                    \"ID\": \"SGML\",\n                    \"SortAs\": \"SGML\",\n                    \"GlossTerm\": \"Standard Generalized Markup Language\",\n                    \"Acronym\": \"SGML\",\n                    \"Abbrev\": \"ISO 8879:1986\",\n                    \"GlossDef\": {\n                        \"para\": \"A meta-markup language, used to create markup languages such as DocBook.\",\n                        \"GlossSeeAlso\": [\"GML\", \"XML\"]\n                    },\n                    \"GlossSee\": \"markup\"\n                }\n            }\n        }\n    }}";
         LazyObject obj=new LazyObject(str);
@@ -116,19 +89,6 @@ public class LazyObjectTest{
         LazyObject o=a.getJSONObject(1);
         assertNotNull(o);
         assertEquals("Open",o.getString("value"));
-    }
-    @Test
-    public void testNickSample() throws LazyException{
-        String str="[{\"foo\":[{}],\"[]\":\"{}\"}]";
-        LazyArray input=new LazyArray(str);
-        // System.out.println(input.toString(0));
-        LazyObject obj=input.getJSONObject(0);
-        assertNotNull(obj);
-        LazyArray arr=obj.getJSONArray("foo");
-        assertNotNull(arr);
-        LazyObject obj2=arr.getJSONObject(0);
-        assertNotNull(obj2);
-        assertEquals(obj.getString("[]"),"{}");
     }
 
     @Test
