@@ -3,11 +3,16 @@ package me.doubledutch.lazy;
 import java.util.*;
 
 public final class LazyParser{
-	private final String source;
+	// private final String source;
 	protected LazyToken root;
+	protected char[] cbuf;
+	protected int length;
 
 	protected LazyParser(final String source){
-		this.source=source;
+		// this.source=source;
+		length=source.length();
+		cbuf=new char[length];
+		source.getChars(0,length,cbuf,0);
 	}
 
 	private final int NONE=0;
@@ -56,9 +61,9 @@ public final class LazyParser{
 	}
 
 	protected void tokenize() throws LazyException{
-		int length=source.length();
-		char[] cbuf=new char[length];
-		source.getChars(0,length,cbuf,0);
+		// int length=source.length();
+		// char[] cbuf=new char[length];
+		// source.getChars(0,length,cbuf,0);
 		int preIndex=consumeWhiteSpace(cbuf,0);
 		char c=cbuf[preIndex];
 		if(c=='{'){
@@ -107,15 +112,13 @@ public final class LazyParser{
 							// Experiment
 							n++;
 							c=cbuf[n];
-							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
 								c=cbuf[n];
-								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
 									c=cbuf[n];
-									// c=source.charAt(n);
+									stackTop.escaped=true;
 								}
 							}
 							state=NONE;
@@ -128,15 +131,13 @@ public final class LazyParser{
 							// Experiment
 							n++;
 							c=cbuf[n];
-							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
 								c=cbuf[n];
-								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
 									c=cbuf[n];
-									// c=source.charAt(n);
+									stackTop.escaped=true;
 								}
 							}
 							state=NONE;
@@ -151,15 +152,13 @@ public final class LazyParser{
 							// Experiment
 							n++;
 							c=cbuf[n];
-							// c=source.charAt(n);
 							while(c!='"'){
 								n++;
 								c=cbuf[n];
-								// c=source.charAt(n);
 								if(c=='\\'){
 									n+=2;
 									c=cbuf[n];
-									// c=source.charAt(n);
+									stackTop.escaped=true;
 								}
 							}
 							state=VALUE_SEPARATOR;

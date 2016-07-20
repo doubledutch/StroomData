@@ -2,7 +2,8 @@ package me.doubledutch.lazy;
 
 public class LazyObject{
 	private LazyToken root;
-	private String source;
+	// private String source;
+	private char[] cbuf;
 
 	public LazyObject(String raw) throws LazyException{
 		LazyParser parser=new LazyParser(raw);
@@ -11,12 +12,13 @@ public class LazyObject{
 			throw new LazyException("JSON Object must start with {",0);
 		}
 		root=parser.root;
-		source=raw;
+		cbuf=parser.cbuf;
+		// source=raw;
 	}
 
-	protected LazyObject(LazyToken root,String source){
+	protected LazyObject(LazyToken root,char[] source){
 		this.root=root;
-		this.source=source;
+		this.cbuf=source;
 	}
 
 	public String getString(String key){
@@ -24,29 +26,27 @@ public class LazyObject{
 		if(token!=null){
 			String value=getString(token);
 			return value;
-			// if(value.startsWith("\"") && value.endsWith("\"")){
-				// TODO: unescape value
-				//return value.substring(1,value.length()-1);
-			//}
 		}
 		return null;
 	}
 
-	public int getInt(String key){
+	public int getInt(String key) throws LazyException{
 		LazyToken token=getFieldToken(key);
 		if(token!=null){
-			// TODO: this trim is a hack! fix the parser
+			return token.getIntValue(cbuf);
+			/*
 			String value=getString(token);
-			// System.out.println("'"+value+"'");
 			try{
 				int ivalue=Integer.parseInt(value);
 				return ivalue;
 			}catch(Exception e){
 				// not a number
-			}
+			}*/
+		}else{
+			throw new LazyException("Unknown field");
 		}
 		// TODO: Throw exception instead!
-		return 0;
+		// return 0;
 	}
 
 	public long getLong(String key){
@@ -67,7 +67,7 @@ public class LazyObject{
 	public LazyObject getJSONObject(String key){
 		LazyToken token=getFieldToken(key);
 		if(token!=null){
-			return new LazyObject(token,source);
+			return new LazyObject(token,cbuf);
 		}
 		return null;
 	}
@@ -75,7 +75,7 @@ public class LazyObject{
 	public LazyArray getJSONArray(String key){
 		LazyToken token=getFieldToken(key);
 		if(token!=null){
-			return new LazyArray(token,source);
+			return new LazyArray(token,cbuf);
 		}
 		return null;
 	}
@@ -87,7 +87,7 @@ public class LazyObject{
 		}
 		for(int i=0;i<length;i++){
 			char c=key.charAt(i);
-			if(c!=source.charAt(token.startIndex+i)){
+			if(c!=cbuf[token.startIndex+i]){
 				return false;
 			}
 		}
@@ -97,12 +97,8 @@ public class LazyObject{
 	private LazyToken getFieldToken(String key){
 		LazyToken child=root.child;
 		while(child!=null){
-		// for(JSONToken child:root.children){
 			if(child.type==LazyToken.FIELD){
 				if(keyMatch(key,child)){
-				//String value=getString(child);
-				// if(value.equals(key)){
-					// JSONToken token=child.children.get(0);
 					LazyToken token=child.child;
 					return token;
 				}
@@ -113,18 +109,17 @@ public class LazyObject{
 	}
 
 	private String getString(LazyToken token){
-		return source.substring(token.startIndex,token.endIndex);
+		return token.getStringValue(cbuf);
 	}
 
-	// private String getQuotedString(JSONToken token){
-	//	return source.substring(token.startIndex,token.endIndex);
-	// }
+
 
 	public String toString(int pad){
 		return root.toString(pad);
 	}
 
 	public String toString(){
-		return source.substring(root.startIndex,root.endIndex);
+		return new String(cbuf,root.startIndex,root.endIndex-root.startIndex);
+		// return source.substring(root.startIndex,root.endIndex);
 	}
 }

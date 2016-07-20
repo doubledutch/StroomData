@@ -32,7 +32,7 @@ task clientJar(type: Jar){
     from(sourceSets.main.output) {
         include "me/doubledutch/stroom/client/*"
         include "me/doubledutch/stroom/client/function/*"
-        include "me/doubledutch/stroom/jsonjit/*"
+        include "me/doubledutch/lazy/*"
     }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
@@ -55,7 +55,7 @@ task clientJavadoc(type: Javadoc) {
     exclude("me/doubledutch/stroom/perf")
     exclude("me/doubledutch/stroom/filters")
     exclude("me/doubledutch/stroom/aggregates")
-    exclude("me/doubledutch/stroom/jsonjit")
+    exclude("me/doubledutch/lazy")
     exclude("me/doubledutch/stroom/*.java")
     // exclude("me/doubledutch/stroom")
     // include("me/doubledutch/stroom/client")
@@ -64,7 +64,7 @@ task clientJavadoc(type: Javadoc) {
 task jsonJar(type: Jar){
     baseName="jsonjit"
     from(sourceSets.main.output) {
-        include "me/doubledutch/stroom/jsonjit/*"
+        include "me/doubledutch/lazy/*"
     }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {

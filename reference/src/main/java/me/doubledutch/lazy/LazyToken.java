@@ -47,6 +47,58 @@ public final class LazyToken{
 		return new LazyToken(VALUE,index);
 	}
 
+	public int getIntValue(char[] source) throws LazyException{
+		int i=startIndex;
+		boolean sign=false;
+		if(source[i]=='-'){
+			sign=true;
+			i++;
+		}
+		int value=0;
+		for(;i<endIndex;i++){
+			char c=source[i];
+			if(c<'0'||c>'9')throw new LazyException("'"+getStringValue(source)+"' is not a valid integer",startIndex);
+			value+='0'-c;
+			if(i+1<endIndex){
+				value*=10;
+			}
+		}
+		return sign?value:-value;
+	}
+
+	public String getStringValue(char[] source){
+		if(!escaped){
+			return new String(source,startIndex,endIndex-startIndex);
+		}else{
+			StringBuilder buf=new StringBuilder(endIndex-startIndex);
+			for(int i=startIndex;i<endIndex;i++){
+				char c=source[i];
+				if(c=='\\'){
+					i++;
+					c=source[i];
+					if(c=='"' || c=='\\' || c=='/'){
+						buf.append(c);
+					}else if(c=='b'){
+						buf.append("\b");
+					}else if(c=='f'){
+						buf.append("\f");
+					}else if(c=='n'){
+						buf.append("\n");
+					}else if(c=='r'){
+						buf.append("\r");
+					}else if(c=='u'){
+						String code=new String(source,i,i+4);
+						// TODO: extract and add properly to string
+						i+=4;
+					}
+				}else{
+					buf.append(c);
+				}
+			}
+			return buf.toString();
+		}
+	}
+
 	public String toString(int pad){
 		String out="";
 		for(int i=0;i<pad;i++)out+=" ";

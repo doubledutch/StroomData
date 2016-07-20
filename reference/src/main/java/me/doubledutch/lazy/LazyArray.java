@@ -2,7 +2,8 @@ package me.doubledutch.lazy;
 
 public class LazyArray{
 	private LazyToken root;
-	private String source;
+	// private String source;
+	private char[] cbuf;
 
 	private int length=-1;
 	private LazyToken selectToken=null;
@@ -15,12 +16,19 @@ public class LazyArray{
 			throw new LazyException("JSON Array must start with [",0);
 		}
 		root=parser.root;
-		source=raw;
+		cbuf=parser.cbuf;
+		/*LazyParser parser=new LazyParser(raw);
+		parser.tokenize();	
+		if(parser.root.type!=LazyToken.ARRAY){
+			throw new LazyException("JSON Array must start with [",0);
+		}
+		root=parser.root;
+		source=raw;*/
 	}
 
-	protected LazyArray(LazyToken root,String source){
+	protected LazyArray(LazyToken root,char[] source){
 		this.root=root;
-		this.source=source;
+		this.cbuf=source;
 	}
 
 	public int length(){
@@ -46,7 +54,7 @@ public class LazyArray{
 			if(token.type!=LazyToken.OBJECT){
 				// Throw error
 			}
-			return new LazyObject(token,source);
+			return new LazyObject(token,cbuf);
 		}
 		return null;
 	}
@@ -106,7 +114,8 @@ public class LazyArray{
 	}
 
 	private String getString(LazyToken token){
-		return source.substring(token.startIndex,token.endIndex);
+		return token.getStringValue(cbuf);
+		// return source.substring(token.startIndex,token.endIndex);
 	}
 
 	public String toString(int pad){

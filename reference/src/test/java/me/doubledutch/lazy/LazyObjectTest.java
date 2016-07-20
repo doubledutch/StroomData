@@ -23,10 +23,12 @@ public class LazyObjectTest{
 
     @Test
     public void testIntegerFields() throws LazyException{
-        String str="{\"foo\":999,\"baz\":42}";
+        String str="{\"foo\":999,\"bar\":0,\"baz\":42,\"bonk\":-378}";
         LazyObject obj=new LazyObject(str);
         assertEquals(999,obj.getInt("foo"));
+        assertEquals(0,obj.getInt("bar"));
         assertEquals(42,obj.getInt("baz"));
+        assertEquals(-378,obj.getInt("bonk"));
     }
 
      @Test
@@ -98,6 +100,7 @@ public class LazyObjectTest{
         // System.out.println(obj.toString(0));
         LazyObject record=obj.getJSONObject("Record");
         assertNotNull(record);
+        assertEquals(record.getInt("ID"),90433327);
         // System.out.println(record.toString());
         assertEquals("rating",obj.getString("Type"));
         LazyObject user=record.getJSONObject("User");
@@ -108,13 +111,12 @@ public class LazyObjectTest{
         assertEquals("DoubleDutch",user.getString("Company"));
     }
 
-
     private String createComplexObject() throws Exception{
         org.json.JSONObject obj=new org.json.JSONObject();
         obj.put("Type","rating");
         obj.put("EventID","174482bc-8223-4207-8ccd-d87b84ac6a78");
         org.json.JSONObject record=new org.json.JSONObject();
-        record.put("ID",(int)(Math.random()*10000000));
+        record.put("ID",90433327);
         org.json.JSONObject user=new org.json.JSONObject();
         user.put("ID","8dee6448-a37c-403f-a904-2e0d43c4cd29");
         user.put("First","Ben");
