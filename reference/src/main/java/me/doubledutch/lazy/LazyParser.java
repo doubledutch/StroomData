@@ -5,8 +5,8 @@ import java.util.*;
 public final class LazyParser{
 	// private final String source;
 	protected LazyToken root;
-	protected char[] cbuf;
-	protected int length;
+	protected final char[] cbuf;
+	protected final int length;
 
 	protected LazyParser(final String source){
 		// this.source=source;
@@ -226,7 +226,53 @@ public final class LazyParser{
 
 						}else{
 							// System.out.println("Starting value with "+c);
-							push(LazyToken.cValue(n));
+							if(c=='n'){
+								// Must be null value
+								if(cbuf[n+1]=='u' && cbuf[n+2]=='l' && cbuf[n+3]=='l'){
+									push(LazyToken.cValueNull(n));
+									n+=4;
+									token=pop();
+									token.endIndex=n;
+									if(stackTop.type==LazyToken.FIELD){
+										// This was the end of the value for a field, pop that too
+										pop();
+									}
+								}else{
+									throw new LazyException("Syntax error",n);
+								}
+							}else if(c=='t'){
+								// Must be true value
+								if(cbuf[n+1]=='r' && cbuf[n+2]=='u' && cbuf[n+3]=='e'){
+									push(LazyToken.cValueTrue(n));
+									n+=4;
+									token=pop();
+									token.endIndex=n;
+									if(stackTop.type==LazyToken.FIELD){
+										// This was the end of the value for a field, pop that too
+										pop();
+									}
+								}else{
+									throw new LazyException("Syntax error",n);
+								}
+							}else if(c=='f'){
+								// Must be false value
+								if(cbuf[n+1]=='a' && cbuf[n+2]=='l' && cbuf[n+3]=='s' && cbuf[n+4]=='e'){
+									push(LazyToken.cValueFalse(n));
+									n+=5;
+									token=pop();
+									token.endIndex=n;
+									if(stackTop.type==LazyToken.FIELD){
+										// This was the end of the value for a field, pop that too
+										pop();
+									}
+								}else{
+									throw new LazyException("Syntax error",n);
+								}
+							}else if(c=='-' || !(c<'0' || c>'9')){
+								// Must be a number
+								push(LazyToken.cValue(n));
+							}
+							
 						}
 						break;
 					}

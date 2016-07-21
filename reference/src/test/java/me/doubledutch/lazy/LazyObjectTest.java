@@ -6,10 +6,45 @@ import static org.junit.Assert.*;
 // import org.json.JSONObject;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.net.*;
 
 public class LazyObjectTest{
-	@Test
+	
+    @Test
+    public void testHas() throws LazyException{
+        String str="{\"foo\":\"bar\",\"baz\":{\"key\":42}}";
+        LazyObject obj=new LazyObject(str);
+        assertTrue(obj.has("foo"));
+        assertFalse(obj.has("bar"));
+        assertTrue(obj.has("baz"));
+        assertFalse(obj.has("key"));
+        assertFalse(obj.has("random"));
+    }
+
+     @Test
+    public void testKeys() throws LazyException{
+        String str="{\"foo\":\"bar\",\"baz\":{\"key\":42}}";
+        LazyObject obj=new LazyObject(str);
+        Iterator<String> it=obj.keys();
+        assertTrue(it.hasNext());
+        assertEquals("foo",it.next());
+        assertTrue(it.hasNext());
+        assertEquals("baz",it.next());
+        assertFalse(it.hasNext());
+    }
+
+     @Test
+    public void testLength() throws LazyException{
+        String str="{\"foo\":\"bar\",\"baz\":{\"key\":42}}";
+        LazyObject obj=new LazyObject(str);
+        assertEquals(2,obj.length());
+        str="{}";
+        obj=new LazyObject(str);
+        assertEquals(0,obj.length());
+    }
+
+    @Test
     public void testStringFields() throws LazyException{
         String str="{\"foo\":\"bar\",\"baz\":\"\"}";
         LazyObject obj=new LazyObject(str);
@@ -29,6 +64,32 @@ public class LazyObjectTest{
         assertEquals(0,obj.getInt("bar"));
         assertEquals(42,obj.getInt("baz"));
         assertEquals(-378,obj.getInt("bonk"));
+    }
+
+    @Test
+    public void testDoubleFields() throws LazyException{
+        String str="{\"foo\":3.1415,\"bar\":0.0,\"baz\":1.2345e+1,\"bonk\":-3.78}";
+        LazyObject obj=new LazyObject(str);
+        assertEquals(3.1415d,obj.getDouble("foo"),0);
+        assertEquals(0.0,obj.getDouble("bar"),0);
+        assertEquals(12.345,obj.getDouble("baz"),0);
+        assertEquals(-3.78,obj.getDouble("bonk"),0);
+    }
+
+    @Test
+    public void testBooleanFields() throws LazyException{
+        String str="{\"foo\":false,\"bar\":true}";
+        LazyObject obj=new LazyObject(str);
+        assertEquals(false,obj.getBoolean("foo"));
+        assertEquals(true,obj.getBoolean("bar"));
+    }
+
+    @Test
+    public void testNullFields() throws LazyException{
+        String str="{\"foo\":null,\"bar\":42}";
+        LazyObject obj=new LazyObject(str);
+        assertEquals(true,obj.isNull("foo"));
+        assertEquals(false,obj.isNull("bar"));
     }
 
      @Test
@@ -114,6 +175,7 @@ public class LazyObjectTest{
     private String createComplexObject() throws Exception{
         org.json.JSONObject obj=new org.json.JSONObject();
         obj.put("Type","rating");
+        obj.put("IsDisabled",false);
         obj.put("EventID","174482bc-8223-4207-8ccd-d87b84ac6a78");
         org.json.JSONObject record=new org.json.JSONObject();
         record.put("ID",90433327);
@@ -124,6 +186,7 @@ public class LazyObjectTest{
         user.put("Email","foo@foo.bar.baz");
         user.put("Title","Chief Blame Officer");
         user.put("Company","DoubleDutch");
+        user.put("Department",org.json.JSONObject.NULL);
         record.put("User",user);
         org.json.JSONObject item=new org.json.JSONObject();
         item.put("ID",(int)(Math.random()*10000000));

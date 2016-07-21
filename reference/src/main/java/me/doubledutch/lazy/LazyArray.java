@@ -17,13 +17,6 @@ public class LazyArray{
 		}
 		root=parser.root;
 		cbuf=parser.cbuf;
-		/*LazyParser parser=new LazyParser(raw);
-		parser.tokenize();	
-		if(parser.root.type!=LazyToken.ARRAY){
-			throw new LazyException("JSON Array must start with [",0);
-		}
-		root=parser.root;
-		source=raw;*/
 	}
 
 	protected LazyArray(LazyToken root,char[] source){
@@ -38,60 +31,57 @@ public class LazyArray{
 		if(length>-1){
 			return length;
 		}
-		int num=0;
-		LazyToken token=root.child;
-		while(token!=null){
-			num++;
-			token=token.next;
-		}
-		length=num;
-		return num;
+		length=root.getChildCount();
+		return length;
 	}
 
-	public LazyObject getJSONObject(int index){
+	public LazyArray getJSONArray(int index) throws LazyException{
 		LazyToken token=getValueToken(index);
-		if(token!=null){
-			if(token.type!=LazyToken.OBJECT){
-				// Throw error
-			}
-			return new LazyObject(token,cbuf);
-		}
-		return null;
+		if(token.type!=LazyToken.ARRAY)throw new LazyException("Requested value is not an array",token);
+		return new LazyArray(token,cbuf);
 	}
 
-	public String getString(int index){
+	public LazyObject getJSONObject(int index) throws LazyException{
 		LazyToken token=getValueToken(index);
-		if(token!=null){
-			String value=getString(token);
-			// System.out.println("'"+value+"'");
-			return value;
-			// if(value.startsWith("\"") && value.endsWith("\"")){
-				// TODO: unescape value
-			//	return value.substring(1,value.length()-1);
-			//}
-		}
-		return null;
+		if(token.type!=LazyToken.OBJECT)throw new LazyException("Requested value is not an object",token);
+		return new LazyObject(token,cbuf);
 	}
 
-	public int getInt(int index){
-		// System.out,println("requesting token for "+index);
+	public boolean getBoolean(int index){
 		LazyToken token=getValueToken(index);
-		if(token!=null){
-			// TODO: this trim is a hack! fix the parser
-			String value=getString(token);
-			// System.out.println("'"+value+"'");
-			try{
-				int ivalue=Integer.parseInt(value);
-				return ivalue;
-			}catch(Exception e){
-				// not a number
-			}
-		}
-		// TODO: Throw exception instead!
-		return 0;
+		if(token.type==LazyToken.VALUE_TRUE)return true;
+		if(token.type==LazyToken.VALUE_FALSE)return false;
+		throw new LazyException("Requested value is not a boolean",token);
 	}
 
-	private LazyToken getValueToken(int index){
+	public String getString(int index) throws LazyException{
+		LazyToken token=getValueToken(index);
+		return token.getStringValue(cbuf);
+	}
+
+	public int getInt(int index) throws LazyException{
+		LazyToken token=getValueToken(index);
+		return token.getIntValue(cbuf);
+	}
+
+	public long getLong(int index) throws LazyException{
+		LazyToken token=getValueToken(index);
+		return token.getLongValue(cbuf);
+	}
+
+	public double getDouble(int index) throws LazyException{
+		LazyToken token=getValueToken(index);
+		return token.getDoubleValue(cbuf);
+	}
+
+	public boolean isNull(int index) throws LazyException{
+		LazyToken token=getValueToken(index);
+		if(token.type==LazyToken.VALUE_NULL)return true;
+		return false;
+	}
+
+	private LazyToken getValueToken(int index) throws LazyException{
+		if(index<0)throw new LazyException("Array undex can not be negative");
 		int num=0;
 		LazyToken child=root.child;
 		if(selectInt>-1 && index>=selectInt){
@@ -107,23 +97,14 @@ public class LazyArray{
 			num++;
 			child=child.next;
 		}
-		// if(index<root.children.size()){
-		//	return root.children.get(index);
-		// }
-		return null;
+		throw new LazyException("Array index out of bounds "+index);
 	}
 
 	private String getString(LazyToken token){
 		return token.getStringValue(cbuf);
-		// return source.substring(token.startIndex,token.endIndex);
 	}
 
 	public String toString(int pad){
 		return root.toString(pad);
 	}
-
-	// private String getQuotedString(JSONToken token){
-	// 	return source.substring(token.startIndex+1,token.endIndex-1);
-	// }
-
 }

@@ -3,28 +3,31 @@ package me.doubledutch.lazy;
 import java.util.*;
 
 public final class LazyToken{
-	public static final int OBJECT=0;
-	public static final int ARRAY=1;
-	public static final int FIELD=2;
-	public static final int VALUE=3;
+	protected static final int OBJECT=0;
+	protected static final int ARRAY=1;
+	protected static final int FIELD=2;
+	protected static final int VALUE=3;
+	protected static final int VALUE_TRUE=4;
+	protected static final int VALUE_FALSE=5;
+	protected static final int VALUE_NULL=6;
 
-	public final int startIndex;
-	public int endIndex=-1;
+	protected final int startIndex;
+	protected int endIndex=-1;
 
-	public boolean escaped=false;
+	protected boolean escaped=false;
 
-	public final int type;
+	protected final int type;
 
-	public LazyToken child;
-	public LazyToken lastChild;
-	public LazyToken next;
+	protected LazyToken child;
+	protected LazyToken lastChild;
+	protected LazyToken next;
 
-	public LazyToken(int type,int startIndex){
+	protected LazyToken(int type,int startIndex){
 		this.startIndex=startIndex;
 		this.type=type;
 	}
 
-	public void addChild(LazyToken token){
+	protected void addChild(LazyToken token){
 		if(lastChild==null){
 			child=token;
 			lastChild=token;
@@ -34,20 +37,42 @@ public final class LazyToken{
 		lastChild=token;
 	}
 
-	public static LazyToken cArray(int index){
-		return new LazyToken(ARRAY,index);
-	}
-	public static LazyToken cObject(int index){
-		return new LazyToken(OBJECT,index);
-	}
-	public static LazyToken cField(int index){
-		return new LazyToken(FIELD,index);
-	}
-	public static LazyToken cValue(int index){
-		return new LazyToken(VALUE,index);
+	protected int getChildCount(){
+		if(child==null){
+			return 0;
+		}
+		int num=0;
+		LazyToken token=child;
+		while(token!=null){
+			num++;
+			token=token.next;
+		}
+		return num;
 	}
 
-	public int getIntValue(char[] source) throws LazyException{
+	protected static LazyToken cArray(int index){
+		return new LazyToken(ARRAY,index);
+	}
+	protected static LazyToken cObject(int index){
+		return new LazyToken(OBJECT,index);
+	}
+	protected static LazyToken cField(int index){
+		return new LazyToken(FIELD,index);
+	}
+	protected static LazyToken cValue(int index){
+		return new LazyToken(VALUE,index);
+	}
+	protected static LazyToken cValueTrue(int index){
+		return new LazyToken(VALUE_TRUE,index);
+	}
+	protected static LazyToken cValueFalse(int index){
+		return new LazyToken(VALUE_FALSE,index);
+	}
+	protected static LazyToken cValueNull(int index){
+		return new LazyToken(VALUE_NULL,index);
+	}
+
+	protected int getIntValue(char[] source) throws LazyException{
 		int i=startIndex;
 		boolean sign=false;
 		if(source[i]=='-'){
@@ -66,7 +91,36 @@ public final class LazyToken{
 		return sign?value:-value;
 	}
 
-	public String getStringValue(char[] source){
+	protected long getLongValue(char[] source) throws LazyException{
+		int i=startIndex;
+		boolean sign=false;
+		if(source[i]=='-'){
+			sign=true;
+			i++;
+		}
+		long value=0;
+		for(;i<endIndex;i++){
+			char c=source[i];
+			if(c<'0'||c>'9')throw new LazyException("'"+getStringValue(source)+"' is not a valid integer",startIndex);
+			value+='0'-c;
+			if(i+1<endIndex){
+				value*=10;
+			}
+		}
+		return sign?value:-value;
+	}
+
+	protected double getDoubleValue(char[] source) throws LazyException{
+		String str=getStringValue(source);
+		try{
+			double d=Double.parseDouble(str);
+			return d;
+		}catch(NumberFormatException nfe){
+			throw new LazyException("'"+str+"' is not a valid double",startIndex);
+		}
+	}
+
+	protected String getStringValue(char[] source){
 		if(!escaped){
 			return new String(source,startIndex,endIndex-startIndex);
 		}else{
@@ -89,6 +143,7 @@ public final class LazyToken{
 					}else if(c=='u'){
 						String code=new String(source,i,i+4);
 						// TODO: extract and add properly to string
+						// sb.append((char)Integer.parseInt(this.next(4), 16));
 						i+=4;
 					}
 				}else{
@@ -99,7 +154,11 @@ public final class LazyToken{
 		}
 	}
 
-	public String toString(int pad){
+	protected Iterator<String> getFieldIterator(char[] cbuf){
+		return new FieldIterator(this,cbuf);
+	}
+
+	protected String toString(int pad){
 		String out="";
 		for(int i=0;i<pad;i++)out+=" ";
 		if(type==OBJECT){
@@ -125,5 +184,28 @@ public final class LazyToken{
 			}
 		}
 		return out;
+	}
+
+	private final class FieldIterator implements Iterator<String>{
+		private LazyToken next;
+		private char[] cbuf;
+
+		protected FieldIterator(LazyToken token,char[] cbuf){
+			next=token.child;
+			this.cbuf=cbuf;
+		}
+
+		public boolean hasNext(){
+			return next!=null;
+		}
+
+		public String next() throws NoSuchElementException{
+			if(hasNext()){
+				String value=next.getStringValue(cbuf);
+				next=next.next;
+				return value;
+			}
+			throw new NoSuchElementException();
+		}
 	}
 }

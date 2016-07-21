@@ -1,9 +1,12 @@
 package me.doubledutch.lazy;
 
+import java.util.Iterator;
+
 public class LazyObject{
 	private LazyToken root;
 	// private String source;
 	private char[] cbuf;
+	private int length=-1;
 
 	public LazyObject(String raw) throws LazyException{
 		LazyParser parser=new LazyParser(raw);
@@ -21,63 +24,49 @@ public class LazyObject{
 		this.cbuf=source;
 	}
 
-	public String getString(String key){
+	public String getString(String key) throws LazyException{
 		LazyToken token=getFieldToken(key);
-		if(token!=null){
-			String value=getString(token);
-			return value;
-		}
-		return null;
+		return token.getStringValue(cbuf);
 	}
 
 	public int getInt(String key) throws LazyException{
 		LazyToken token=getFieldToken(key);
-		if(token!=null){
-			return token.getIntValue(cbuf);
-			/*
-			String value=getString(token);
-			try{
-				int ivalue=Integer.parseInt(value);
-				return ivalue;
-			}catch(Exception e){
-				// not a number
-			}*/
-		}else{
-			throw new LazyException("Unknown field");
-		}
-		// TODO: Throw exception instead!
-		// return 0;
+		return token.getIntValue(cbuf);
 	}
 
-	public long getLong(String key){
+	public long getLong(String key) throws LazyException{
 		LazyToken token=getFieldToken(key);
-		if(token!=null){
-			String value=getString(token);
-			try{
-				long lvalue=Long.parseLong(value);
-				return lvalue;
-			}catch(Exception e){
-				// not a number
-			}
-		}
-		// TODO: Throw exception instead!
-		return 0l;
+		return token.getLongValue(cbuf);
 	}
 
-	public LazyObject getJSONObject(String key){
+	public double getDouble(String key) throws LazyException{
 		LazyToken token=getFieldToken(key);
-		if(token!=null){
-			return new LazyObject(token,cbuf);
-		}
-		return null;
+		return token.getDoubleValue(cbuf);
 	}
 
-	public LazyArray getJSONArray(String key){
+	public boolean isNull(String key){
 		LazyToken token=getFieldToken(key);
-		if(token!=null){
-			return new LazyArray(token,cbuf);
-		}
-		return null;
+		if(token.type==LazyToken.VALUE_NULL)return true;
+		return false;
+	}
+
+	public boolean getBoolean(String key){
+		LazyToken token=getFieldToken(key);
+		if(token.type==LazyToken.VALUE_TRUE)return true;
+		if(token.type==LazyToken.VALUE_FALSE)return false;
+		throw new LazyException("Requested value is not a boolean",token);
+	}
+
+	public LazyObject getJSONObject(String key) throws LazyException{
+		LazyToken token=getFieldToken(key);
+		if(token.type!=LazyToken.OBJECT)throw new LazyException("Requested value is not an object",token);
+		return new LazyObject(token,cbuf);
+	}
+
+	public LazyArray getJSONArray(String key) throws LazyException{
+		LazyToken token=getFieldToken(key);
+		if(token.type!=LazyToken.ARRAY)throw new LazyException("Requested value is not an array",token);
+		return new LazyArray(token,cbuf);
 	}
 
 	private boolean keyMatch(String key,LazyToken token){
@@ -94,25 +83,50 @@ public class LazyObject{
 		return true;
 	}
 
-	private LazyToken getFieldToken(String key){
+	public boolean has(String key){
 		LazyToken child=root.child;
 		while(child!=null){
 			if(child.type==LazyToken.FIELD){
 				if(keyMatch(key,child)){
-					LazyToken token=child.child;
-					return token;
+					return true;
 				}
 			}
 			child=child.next;
 		}
-		return null;
+		return false;
+	}
+
+	public int length(){
+		if(root.child==null){
+			return 0;
+		}
+		if(length>-1){
+			return length;
+		}
+		length=root.getChildCount();
+		return length;
+	}
+
+	public Iterator<String> keys(){
+		return root.getFieldIterator(cbuf);
+	}
+
+	private LazyToken getFieldToken(String key) throws LazyException{
+		LazyToken child=root.child;
+		while(child!=null){
+			if(child.type==LazyToken.FIELD){
+				if(keyMatch(key,child)){
+					return child.child;
+				}
+			}
+			child=child.next;
+		}
+		throw new LazyException("Unknown field '"+key+"'");
 	}
 
 	private String getString(LazyToken token){
 		return token.getStringValue(cbuf);
 	}
-
-
 
 	public String toString(int pad){
 		return root.toString(pad);
