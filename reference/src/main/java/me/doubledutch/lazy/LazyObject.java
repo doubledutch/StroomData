@@ -108,7 +108,7 @@ public class LazyObject{
 	}
 
 	public Iterator<String> keys(){
-		return root.getFieldIterator(cbuf);
+		return root.getStringIterator(cbuf);
 	}
 
 	private LazyToken getFieldToken(String key) throws LazyException{
@@ -127,10 +127,12 @@ public class LazyObject{
 	private String getString(LazyToken token){
 		return token.getStringValue(cbuf);
 	}
-
+	/*
+	// For debug purposes only
 	public String toString(int pad){
 		return root.toString(pad);
 	}
+	*/
 
 	public String toString(){
 		return new String(cbuf,root.startIndex,root.endIndex-root.startIndex);

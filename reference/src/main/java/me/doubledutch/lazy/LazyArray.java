@@ -103,8 +103,10 @@ public class LazyArray{
 	private String getString(LazyToken token){
 		return token.getStringValue(cbuf);
 	}
-
+	/*
+	// For debug purposes only
 	public String toString(int pad){
 		return root.toString(pad);
 	}
+	*/
 }
