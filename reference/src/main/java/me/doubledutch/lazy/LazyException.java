@@ -1,5 +1,8 @@
 package me.doubledutch.lazy;
 
+/**
+ * Exception used to indicate a parse or access error for LazyObject and LazyArray
+ */
 public final class LazyException extends RuntimeException{
 	private int position;
 	private String message;

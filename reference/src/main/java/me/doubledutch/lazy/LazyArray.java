@@ -7,7 +7,10 @@ public class LazyArray{
 	private LazyToken root;
 	private char[] cbuf;
 
+	// Cache value for length
 	private int length=-1;
+
+	// Stored traversal location for fast in order traversals
 	private LazyToken selectToken=null;
 	private int selectInt=-1;
 

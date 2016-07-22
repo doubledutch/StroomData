@@ -8,6 +8,8 @@ import java.util.Iterator;
 public class LazyObject{
 	private LazyToken root;
 	private char[] cbuf;
+
+	// Cache value for length
 	private int length=-1;
 
 	/**

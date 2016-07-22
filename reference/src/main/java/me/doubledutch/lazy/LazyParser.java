@@ -3,13 +3,12 @@ package me.doubledutch.lazy;
 import java.util.*;
 
 public final class LazyParser{
-	// private final String source;
 	protected LazyToken root;
 	protected final char[] cbuf;
 	protected final int length;
+	private int n=0;
 
 	protected LazyParser(final String source){
-		// this.source=source;
 		length=source.length();
 		cbuf=new char[length];
 		source.getChars(0,length,cbuf,0);
@@ -25,17 +24,21 @@ public final class LazyParser{
 
 	private int state=NONE;
 
-	// Internal stack implementation
-	private final LazyToken[] stack=new LazyToken[64];
+	// The parser uses a crude stack while parsing that maintains a reference
+	// to the top element on the stack and automatically establishes a parent
+	// child relation ship when elements are pushed onto the stack.
+	private final LazyToken[] stack=new LazyToken[128];
 	private LazyToken stackTop=null;
 	private int stackPointer=1;
 
+	// Push a token onto the stack and attach it to the previous top as a child
 	private void push(LazyToken token){
 		stackTop.addChild(token);
 		stack[stackPointer++]=token;
 		stackTop=token;
 	}
 
+	// Pop a token off the stack and reset the stackTop pointer
 	private LazyToken pop(){
 		LazyToken value=stackTop;
 		stackPointer--;
@@ -43,7 +46,8 @@ public final class LazyParser{
 		return value;
 	}
 
-	private LazyToken peek(){
+	// return the stackTop pointer
+	private final LazyToken peek(){
 		return stackTop;
 	}
 
@@ -51,6 +55,7 @@ public final class LazyParser{
 		return stackPointer-1;
 	}
 
+	// Utility method to consume sections of whitespace
 	private final int consumeWhiteSpace(final char[] cbuf, int index){
 		char c=cbuf[index];
 		while(c==' '|| c=='\n' || c=='\t' || c=='\r'){
@@ -61,10 +66,10 @@ public final class LazyParser{
 	}
 
 	protected void tokenize() throws LazyException{
-		// int length=source.length();
-		// char[] cbuf=new char[length];
-		// source.getChars(0,length,cbuf,0);
 		int preIndex=consumeWhiteSpace(cbuf,0);
+		// We are going to manually push the first token onto the stack so
+		// future push operations can avoid doing an if empty check when
+		// setting the parent child relationship
 		char c=cbuf[preIndex];
 		if(c=='{'){
 			stack[stackPointer++]=LazyToken.cObject(preIndex);
@@ -77,7 +82,7 @@ public final class LazyParser{
 		stackTop=root;
 		preIndex++;
 		LazyToken token=null;
-		for(int n=preIndex;n<length;n++){
+		for(n=preIndex;n<length;n++){
 			c=cbuf[n];
 			switch(state){
 				case NONE:
