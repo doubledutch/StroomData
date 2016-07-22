@@ -92,6 +92,8 @@ public final class LazyParser{
 		}
 	}
 
+	// Consume all characters in a number and throw an exception if the format
+	// of the number does not validate correctly
 	private final void consumeNumber(char c) throws LazyException{
 		if(c=='-'){
 			// If the number started with a minus sign it must be followed by at least one digit
@@ -143,6 +145,20 @@ public final class LazyParser{
 		}
 	}
 
+	// This should probably be renamed to parse. This method started out as a
+	// simple index overlay tokenizer, but then slowly evolved into a full
+	// parser.
+	//
+	// It works by iterating over all characters in the source and switching
+	// based on token type to consume full tokens. It maintains a simple
+	// stack to both validate the structure and to be able to provide the
+	// abstract syntax tree in the form of linked LazyTokens after parsing.
+	//
+	// The source is ugly - but it's fast.... very fast
+	// There is still plenty of room for optimization, such as when a value
+	// is put on the stack, consumed and then pulled of the stack immediately
+	// again. While it is consistent and readable, it needlesly maintains the
+	// stackTop pointer and increments and decrements the stackTopPointer int
 	protected void tokenize() throws LazyException{
 		consumeWhiteSpace();
 		// We are going to manually push the first token onto the stack so
@@ -321,7 +337,9 @@ public final class LazyParser{
 							// This was the end of the value for a field, pop that too
 							drop();
 						}
-					}					
+					}else{
+						throw new LazyException("Syntax error",n);
+					}				
 				}
 				break;
 			}
