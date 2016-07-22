@@ -22,7 +22,7 @@ public final class LazyParser{
 	private int stackPointer=1;
 
 	// Push a token onto the stack and attach it to the previous top as a child
-	private void push(LazyToken token){
+	private void push(final LazyToken token){
 		stackTop.addChild(token);
 		stack[stackPointer++]=token;
 		stackTop=token;
@@ -154,8 +154,9 @@ public final class LazyParser{
 					push(LazyToken.cField(n+1));
 					consumeString();
 					stackTop.endIndex=n;
-					tryToConsumeWhiteSpace();
-					c=cbuf[++n];
+					n++;
+					consumeWhiteSpace();
+					c=cbuf[n];
 					if(c==':'){
 						tryToConsumeWhiteSpace();
 					}else{
