@@ -56,33 +56,57 @@ public final class LazyParser{
 	}
 
 	// Utility method to consume sections of whitespace
-	private final int consumeWhiteSpace(final char[] cbuf, int index){
-		char c=cbuf[index];
+	private final void consumeWhiteSpace(){
+		char c=cbuf[n];
 		while(c==' '|| c=='\n' || c=='\t' || c=='\r'){
-			index++;
-			c=cbuf[index];
+			n++;
+			c=cbuf[n];
 		}
-		return index;
+	}
+
+	// Attempt to advance and consume any whitespace
+	// Roll back the index counter to prepare for another iteration
+	// through the main loop afterwards.
+	private final void tryToConsumeWhiteSpace(){
+		n++;
+		consumeWhiteSpace();
+		n--;
+	}
+
+	// Consume all characters in a string and correctly mark the stackTop
+	// element if an escape character is found
+	private final void consumeString(){
+		n++;
+		char c=cbuf[n];
+		while(c!='"'){
+			n++;
+			c=cbuf[n];
+			if(c=='\\'){
+				n+=2;
+				c=cbuf[n];
+				stackTop.escaped=true;
+			}
+		}
 	}
 
 	protected void tokenize() throws LazyException{
-		int preIndex=consumeWhiteSpace(cbuf,0);
+		consumeWhiteSpace();
 		// We are going to manually push the first token onto the stack so
 		// future push operations can avoid doing an if empty check when
 		// setting the parent child relationship
-		char c=cbuf[preIndex];
+		char c=cbuf[n];
 		if(c=='{'){
-			stack[stackPointer++]=LazyToken.cObject(preIndex);
+			stack[stackPointer++]=LazyToken.cObject(n);
 		}else if(c=='['){
-			stack[stackPointer++]=LazyToken.cArray(preIndex);
+			stack[stackPointer++]=LazyToken.cArray(n);
 		}else{
 			throw new LazyException("Can not parse raw JSON value, must be either object or array",0);
 		}
 		root=stack[1];
 		stackTop=root;
-		preIndex++;
+		n++;
 		LazyToken token=null;
-		for(n=preIndex;n<length;n++){
+		for(;n<length;n++){
 			c=cbuf[n];
 			switch(state){
 				case NONE:
@@ -91,8 +115,8 @@ public final class LazyParser{
 							push(LazyToken.cObject(n));
 							break;
 						case '}':
+							// The end of an object, pop off the last value and field if any
 							token=pop();
-
 							if(token.type!=LazyToken.OBJECT){
 								if(token.endIndex==-1){
 									token.endIndex=n;
@@ -101,77 +125,41 @@ public final class LazyParser{
 								if(token.type==LazyToken.FIELD){
 									token=pop();
 								}
+								// We should now be down to the actual object
 								if(token.type!=LazyToken.OBJECT){
 									throw new LazyException("Unexpected end of object",n);
 								}
 							}
 							token.endIndex=n+1;
+							// If this object was the value for a field, pop off that field too
 							if(stackTop!=null && stackTop.type==LazyToken.FIELD){
 								pop();
 							}
 							break;
 					case '"':
 						if(stackTop.type==LazyToken.ARRAY){
-							state=STRING;
 							push(LazyToken.cValue(n+1));
-							// Experiment
-							n++;
-							c=cbuf[n];
-							while(c!='"'){
-								n++;
-								c=cbuf[n];
-								if(c=='\\'){
-									n+=2;
-									c=cbuf[n];
-									stackTop.escaped=true;
-								}
-							}
-							state=NONE;
-							stackTop.endIndex=n;
-							pop();
-						}else if(stackTop.type==LazyToken.FIELD){
-							state=STRING;
-							push(LazyToken.cValue(n+1));
-
-							// Experiment
-							n++;
-							c=cbuf[n];
-							while(c!='"'){
-								n++;
-								c=cbuf[n];
-								if(c=='\\'){
-									n+=2;
-									c=cbuf[n];
-									stackTop.escaped=true;
-								}
-							}
-							state=NONE;
+							consumeString();
 							stackTop.endIndex=n;
 							// Remove value again
 							pop();
-							// Remove field again
+						}else if(stackTop.type==LazyToken.FIELD){
+							push(LazyToken.cValue(n+1));
+							consumeString();
+							stackTop.endIndex=n;
+							// Remove value again
+							pop();
+							// Remove field
 							pop();
 						}else if(stackTop.type==LazyToken.OBJECT){
-							state=FIELD;
 							push(LazyToken.cField(n+1));
-							// Experiment
-							n++;
-							c=cbuf[n];
-							while(c!='"'){
-								n++;
-								c=cbuf[n];
-								if(c=='\\'){
-									n+=2;
-									c=cbuf[n];
-									stackTop.escaped=true;
-								}
-							}
+							consumeString();
 							state=VALUE_SEPARATOR;
 							stackTop.endIndex=n;
-							n=consumeWhiteSpace(cbuf,n+1);
-							n--;
+							tryToConsumeWhiteSpace();
 						}else{
 							// This shouldn't occur should it?
+							throw new LazyException("Syntax error",n);
 						}
 						break;
 					case ',':
@@ -202,6 +190,7 @@ public final class LazyParser{
 							}
 						}
 						token.endIndex=n+1;
+						// If this array was the value for a field, pop off that field too
 						if(stackTop!=null && stackTop.type==LazyToken.FIELD){
 							pop();
 						}
@@ -222,15 +211,13 @@ public final class LazyParser{
 								// System.out.println("Not a field");
 							}
 						}
-						// Do nothing
 						break;
 					default:
-						// This must be a new value
 						if(stackTop.type==LazyToken.VALUE){
 							// We are just collecting more data for the current value
 
 						}else{
-							// System.out.println("Starting value with "+c);
+							// This must be a new value
 							if(c=='n'){
 								// Must be null value
 								if(cbuf[n+1]=='u' && cbuf[n+2]=='l' && cbuf[n+3]=='l'){
@@ -276,6 +263,7 @@ public final class LazyParser{
 							}else if(c=='-' || !(c<'0' || c>'9')){
 								// Must be a number
 								push(LazyToken.cValue(n));
+								// TODO: we should really validate the syntax of a number
 							}
 							
 						}
@@ -283,20 +271,14 @@ public final class LazyParser{
 					}
 					break;
 
-				case FIELD_INESCAPE:
+				/*case FIELD_INESCAPE:
 					// possibly validate legal escapes
 					state=FIELD;
-					break;
+					break;*/
 				case VALUE_SEPARATOR:
 					if(c==':'){
 						state=NONE;
-						n=consumeWhiteSpace(cbuf,n+1);
-						n--;
-						/*c=cbuf[n+1];
-						while(c==' ' || c=='\n' || c=='\t' || c=='\r'){
-							n++;
-							c=cbuf[n+1];
-						}*/
+						tryToConsumeWhiteSpace();
 					}else{
 						throw new LazyException("Unexpected character! Was expecting field separator ':'",n);
 					}
