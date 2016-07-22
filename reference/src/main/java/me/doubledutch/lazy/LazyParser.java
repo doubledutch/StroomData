@@ -220,9 +220,8 @@ public final class LazyParser{
 							// This must be a new value
 							if(c=='n'){
 								// Must be null value
-								if(cbuf[n+1]=='u' && cbuf[n+2]=='l' && cbuf[n+3]=='l'){
+								if(cbuf[++n]=='u' && cbuf[++n]=='l' && cbuf[++n]=='l'){
 									push(LazyToken.cValueNull(n));
-									n+=4;
 									token=pop();
 									token.endIndex=n;
 									if(stackTop.type==LazyToken.FIELD){
@@ -234,9 +233,8 @@ public final class LazyParser{
 								}
 							}else if(c=='t'){
 								// Must be true value
-								if(cbuf[n+1]=='r' && cbuf[n+2]=='u' && cbuf[n+3]=='e'){
+								if(cbuf[++n]=='r' && cbuf[++n]=='u' && cbuf[++n]=='e'){
 									push(LazyToken.cValueTrue(n));
-									n+=4;
 									token=pop();
 									token.endIndex=n;
 									if(stackTop.type==LazyToken.FIELD){
@@ -248,9 +246,8 @@ public final class LazyParser{
 								}
 							}else if(c=='f'){
 								// Must be false value
-								if(cbuf[n+1]=='a' && cbuf[n+2]=='l' && cbuf[n+3]=='s' && cbuf[n+4]=='e'){
+								if(cbuf[++n]=='a' && cbuf[++n]=='l' && cbuf[++n]=='s' && cbuf[++n]=='e'){
 									push(LazyToken.cValueFalse(n));
-									n+=5;
 									token=pop();
 									token.endIndex=n;
 									if(stackTop.type==LazyToken.FIELD){
@@ -270,11 +267,6 @@ public final class LazyParser{
 						break;
 					}
 					break;
-
-				/*case FIELD_INESCAPE:
-					// possibly validate legal escapes
-					state=FIELD;
-					break;*/
 				case VALUE_SEPARATOR:
 					if(c==':'){
 						state=NONE;
