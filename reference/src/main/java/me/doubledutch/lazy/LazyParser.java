@@ -92,6 +92,57 @@ public final class LazyParser{
 		}
 	}
 
+	private final void consumeNumber(char c) throws LazyException{
+		if(c=='-'){
+			// If the number started with a minus sign it must be followed by at least one digit
+			n++;
+			c=cbuf[n];
+			if(c<'0' || c>'9'){
+				throw new LazyException("Digit expected",n);
+			}
+		}
+		n++;
+		c=cbuf[n];
+		while(!(c<'0' || c>'9')){
+			n++;
+			c=cbuf[n];
+		}
+		if(c=='.'){
+			// The fractional part must contain one or more digits
+			n++;
+			c=cbuf[n];
+			if(c<'0' || c>'9'){
+				throw new LazyException("Digit expected",n);
+			}
+			n++;
+			c=cbuf[n];
+			while(!(c<'0' || c>'9')){
+				n++;
+				c=cbuf[n];
+			}
+		}
+		if(c=='e' || c=='E'){
+			n++;
+			c=cbuf[n];
+			if(c=='-' || c=='+'){
+				// We must have at least one digit following this
+				n++;
+				c=cbuf[n];
+				if(c<'0' || c>'9'){
+					throw new LazyException("Digit expected",n);
+				}
+			}else if(c<'0' || c>'9'){
+				throw new LazyException("Exponential part expected",n);
+			}
+			n++;
+			c=cbuf[n];
+			while(!(c<'0' || c>'9')){
+				n++;
+				c=cbuf[n];
+			}
+		}
+	}
+
 	protected void tokenize() throws LazyException{
 		consumeWhiteSpace();
 		// We are going to manually push the first token onto the stack so
@@ -212,8 +263,6 @@ public final class LazyParser{
 					if(stackTop.type==LazyToken.FIELD){
 						// This was the end of the value for a field, pop that too
 						drop();
-					}else{
-						// System.out.println("Not a field");
 					}
 				}
 				break;
@@ -264,9 +313,15 @@ public final class LazyParser{
 					}else if(c=='-' || !(c<'0' || c>'9')){
 						// Must be a number
 						push(LazyToken.cValue(n));
-						// TODO: we should really validate the syntax of a number
-					}
-					
+						consumeNumber(c);
+						token=pop();
+						token.endIndex=n;
+						n--;
+						if(stackTop.type==LazyToken.FIELD){
+							// This was the end of the value for a field, pop that too
+							drop();
+						}
+					}					
 				}
 				break;
 			}
