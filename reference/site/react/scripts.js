@@ -302,13 +302,25 @@ var ScriptEditor =React.createClass({
 		for(var i=0;i<this.props.streams.length;i++){
 			options.push(h('option',{value:this.props.streams[i].topic},this.props.streams[i].topic))
 		}
-		footer.push(h('select.form_select',{name:'in_stream_select',onChange:this.setIn},options))
+		var sample_source = this.props.script_editor.sample_source
+		if(sample_source == null && this.props.streams[0].topic != null){
+			sample_source = this.props.streams[0].topic
+		}
+		// console.log(store.getState())
+		footer.push(h('select.form_select',{name:'in_stream_select', value: sample_source, onChange:this.setIn},options))
+		// store.dispatch({type:'SET',path:['script_editor','sample_source'],value:e.target.value})
 		footer.push(h('label.form_label','Samples'))
 		options=[]
 		options.push(h('option',{value:'5'},'5'))
 		options.push(h('option',{value:'20'},'20'))
 		options.push(h('option',{value:'100'},'100'))
-		footer.push(h('select.form_select',{name:'sample_select',onChange:this.setSampleCount},options))
+
+		var sample_count = this.props.script_editor.sample_count
+		if(sample_count == null){
+			sample_source = '5'
+		}
+
+		footer.push(h('select.form_select',{name:'sample_select', value: sample_count,onChange:this.setSampleCount},options))
 		footer.push(h('label.form_label','Function'))
 		options=[]
 		options.push(h('option',{value:'map'},'Map'))
