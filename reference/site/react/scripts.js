@@ -306,7 +306,6 @@ var ScriptEditor =React.createClass({
 		if(sample_source == null && this.props.streams[0].topic != null){
 			sample_source = this.props.streams[0].topic
 		}
-		console.log(sample_source)
 		// console.log(store.getState())
 		footer.push(h('select.form_select',{name:'in_stream_select', value: sample_source, onChange:this.setIn},options))
 		// store.dispatch({type:'SET',path:['script_editor','sample_source'],value:e.target.value})
