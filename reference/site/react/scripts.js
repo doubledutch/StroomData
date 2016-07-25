@@ -314,7 +314,13 @@ var ScriptEditor =React.createClass({
 		options.push(h('option',{value:'5'},'5'))
 		options.push(h('option',{value:'20'},'20'))
 		options.push(h('option',{value:'100'},'100'))
-		footer.push(h('select.form_select',{name:'sample_select',onChange:this.setSampleCount},options))
+
+		var sample_count = this.props.script_editor.sample_count
+		if(sample_count == null){
+			sample_source = '5'
+		}
+
+		footer.push(h('select.form_select',{name:'sample_select', value: sample_count,onChange:this.setSampleCount},options))
 		footer.push(h('label.form_label','Function'))
 		options=[]
 		options.push(h('option',{value:'map'},'Map'))
