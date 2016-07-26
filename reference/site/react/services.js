@@ -268,7 +268,11 @@ var ServiceInspect = React.createClass({
 
 var ServicePage = React.createClass({
 	onCreateService:function(){
-		store.dispatch({type:'SERVICE_CREATE'})
+		if(this.props.scripts.length > 1){
+			store.dispatch({type:'SERVICE_CREATE'})
+		}else{
+			store.dispatch({type:'SERVICE_LACK'})
+		}
 	},
 	render: function(){
 		var elements=[]
@@ -277,6 +281,9 @@ var ServicePage = React.createClass({
 		// elements.push(h('p','So many streams...'))
 		if(this.props.service_editor.show){
 			elements.push(h(ServiceEditor,this.props))
+		}else if(this.props.service_editor.present == false){
+			elements.push(h('h2', 'No scripts present. Please add a script before continuing.'))
+			elements.push(h('div',[h('input.form_button',{'type':'button','value':'New service','onClick':this.onCreateService})]))
 		}else{
 			elements.push(h('div',[h('input.form_button',{'type':'button','value':'New service','onClick':this.onCreateService})]))
 			elements.push(h(TableView,{data:this.props.services,

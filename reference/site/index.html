@@ -76,7 +76,8 @@
             'sample_source':null,
             'sample_data':[],
             'sample_run':false,
-            'sample_count':5
+            'sample_count':5,
+            'present': true
         },
         'currentService':null,
         'service_editor':{
@@ -86,7 +87,8 @@
             'data':'SELECT * FROM foo',
             'id':null
         },
-        'current_query':null
+        'current_query':null,
+        'present': true
     }
     function setReducer(state,path,value){
     	if(path.length>1){
@@ -150,6 +152,7 @@
         if(action.type=='SCRIPT_CREATE'){
             state=Object.assign(state,{
                 'show':true,
+                'present': true,
                 'sample_run':false,
                 'sample_data':[],
                 'name':generateFileName(),
@@ -226,6 +229,10 @@
 
             }).catch(function(ex) {
                 console.log('parsing failed', ex)
+            })
+        }else if(action.type=='SERVICE_LACK'){
+                state=Object.assign(state,{
+                'present': false
             })
         }
         return state
