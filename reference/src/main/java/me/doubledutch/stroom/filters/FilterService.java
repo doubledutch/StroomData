@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import me.doubledutch.stroom.perf.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.*;
-import me.doubledutch.lazy.*;
+import me.doubledutch.lazyjson.*;
 import me.doubledutch.stroom.client.StreamConnection;
 import java.util.*;
 import org.json.*;

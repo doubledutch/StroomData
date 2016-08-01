@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import me.doubledutch.stroom.streams.*;
-import me.doubledutch.lazy.*;
+import me.doubledutch.lazyjson.*;
 
 import org.json.*;
 

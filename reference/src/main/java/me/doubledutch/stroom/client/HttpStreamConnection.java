@@ -3,7 +3,7 @@ package me.doubledutch.stroom.client;
 import java.util.*;
 import org.json.*;
 //import me.doubledutch.stroom.jsonjit.*;
-import me.doubledutch.lazy.*;
+import me.doubledutch.lazyjson.*;
 import java.io.*;
 
 public class HttpStreamConnection implements StreamConnection{
