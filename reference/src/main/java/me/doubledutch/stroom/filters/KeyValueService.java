@@ -115,7 +115,10 @@ public class KeyValueService extends Service implements KVStoreConnection{
 	private String processDocument(String str) throws Exception{
 		String out=null;
 		if(type==HTTP){
-			out=Utility.postURL(url,str);		
+			Map<String,String> headers=new HashMap<String,String>();
+			headers.put("X-Stroom-Service",getId());
+			headers.put("X-Stroom-Index",""+getIndex());
+			out=Utility.postURL(url,str,headers);		
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.derialize");
 			jsEngine.put("raw",str);
