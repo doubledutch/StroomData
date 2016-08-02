@@ -62,20 +62,6 @@ task clientJavadoc(type: Javadoc) {
     // include("me/doubledutch/stroom/client")
 }
 
-task jsonJar(type: Jar){
-    baseName="jsonjit"
-    from(sourceSets.main.output) {
-        include "me/doubledutch/lazy/*"
-    }
-  //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    manifest {
-        attributes 'Implementation-Title': 'Client Library', 'Implementation-Version': version
-    }
-    // into('site') {
-    //    from 'site'
-    // }
-}
-
 jar {
     def versionFile = file('./src/main/resources/version.properties')
  

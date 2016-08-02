@@ -28,7 +28,7 @@ public class SystemAPIServlet extends HttpServlet{
 	static{
 		try{
 			Properties props = new Properties();
-			props.load(SystemAPIServlet.class.getResourceAsStream("/version.properties"));
+			props.load(SystemAPIServlet.class.getResourceAsStream("/stroom_version.properties"));
 			BUILD_DATE=props.getProperty("BUILD_DATE");
 			BUILD_VERSION=props.getProperty("BUILD_VERSION");
 			BUILD_NUMBER=props.getProperty("BUILD_NUMBER");

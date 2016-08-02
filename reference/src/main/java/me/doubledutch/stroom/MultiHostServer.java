@@ -43,7 +43,7 @@ public class MultiHostServer implements Runnable{
 		try{
 			log.info("Starting Stroom MultiHost");
 			Properties props = new Properties();
-			props.load(SystemAPIServlet.class.getResourceAsStream("/version.properties"));
+			props.load(SystemAPIServlet.class.getResourceAsStream("/stroom_version.properties"));
 			BUILD_DATE=props.getProperty("BUILD_DATE");
 			BUILD_VERSION=props.getProperty("BUILD_VERSION");
 			BUILD_NUMBER=props.getProperty("BUILD_NUMBER");
