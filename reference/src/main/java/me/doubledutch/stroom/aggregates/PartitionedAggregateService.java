@@ -146,7 +146,7 @@ public class PartitionedAggregateService extends Service{
 		return null;
 	}
 
-	private String processDocument(String str,String aggregate) throws Exception{
+	private String processDocument(String str,String aggregate,String key) throws Exception{
 		// System.out.println("Process document");
 		// TODO: add ability to batch output
 		String out=null;
@@ -160,7 +160,11 @@ public class PartitionedAggregateService extends Service{
 				outputObj.put("aggregate",JSONObject.NULL);
 			}
 			metric.startTimer("http.post");
-			out=Utility.postURL(url,outputObj.toString());		
+			Map<String,String> headers=new HashMap<String,String>();
+			headers.put("X-Stroom-Service",getId());
+			headers.put("X-Stroom-Index",""+getIndex());
+			headers.put("X-Stroom-Partition",key);
+			out=Utility.postURL(url,outputObj.toString(),headers);		
 			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.deserialize");
@@ -240,7 +244,7 @@ public class PartitionedAggregateService extends Service{
 					for(String str:batch){
 						// TODO: add selective error handling here!
 						String key=getPartitionKey(str);
-						String newAggregate=processDocument(str,getAggregate(key));
+						String newAggregate=processDocument(str,getAggregate(key),key);
 						// metric.startTimer("output.append");
 						// long loc=getStream("output").append(newAggregate);
 						// long loc=0;

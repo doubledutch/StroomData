@@ -58,7 +58,10 @@ public class FilterService extends Service{
 		String out=null;
 		if(type==HTTP){
 			metric.startTimer("http.request");
-			out=Utility.postURL(url,str);	
+			Map<String,String> headers=new HashMap<String,String>();
+			headers.put("X-Stroom-Service",getId());
+			headers.put("X-Stroom-Index",""+getIndex());
+			out=Utility.postURL(url,str,headers);	
 			metric.stopTimer("http.request");	
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.deserialize");

@@ -3,6 +3,7 @@ package me.doubledutch.stroom;
 import java.io.*;
 import java.net.*;
 import org.json.*;
+import java.util.*;
 
 public class Utility{
 	/**
@@ -26,6 +27,9 @@ public class Utility{
 			key=key.substring(0,key.indexOf("."));
 			return pickValue(obj.getJSONObject(key),child);
 		}
+		if(!obj.has(key)){
+			return null;
+		}
 		return obj.get(key);
 	}
 
@@ -37,6 +41,36 @@ public class Utility{
 			con.addRequestProperty("Content-Type", "application/json");
 			byte[] outdata=body.getBytes("UTF-8");
 			con.setRequestProperty("Content-Length",""+outdata.length);
+			con.setDoOutput(true);
+			con.getOutputStream().write(outdata);
+
+			try(Reader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"))){
+				StringBuilder buf = new StringBuilder();
+			    char[] indata = new char[32768];
+			    int num = reader.read(indata);
+			    while (num > -1) {
+			      	buf.append(indata, 0, num);
+			      	num = reader.read(indata);
+			    }
+			    return buf.toString();
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static String postURL(String strurl,String body,Map<String,String> headers){
+		try{
+			URL url=new URL(strurl);
+			HttpURLConnection con = (HttpURLConnection)url.openConnection();
+			con.setRequestMethod("POST");
+			con.addRequestProperty("Content-Type", "application/json");
+			byte[] outdata=body.getBytes("UTF-8");
+			con.setRequestProperty("Content-Length",""+outdata.length);
+			for(String key:headers.keySet()){
+				con.setRequestProperty(key,headers.get(key));
+			}
 			con.setDoOutput(true);
 			con.getOutputStream().write(outdata);
 

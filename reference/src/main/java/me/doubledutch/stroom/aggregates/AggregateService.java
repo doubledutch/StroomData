@@ -76,7 +76,10 @@ public class AggregateService extends Service{
 				outputObj.put("aggregate",JSONObject.NULL);
 			}
 			metric.startTimer("http.post");
-			out=Utility.postURL(url,outputObj.toString());		
+			Map<String,String> headers=new HashMap<String,String>();
+			headers.put("X-Stroom-Service",getId());
+			headers.put("X-Stroom-Index",""+getIndex());
+			out=Utility.postURL(url,outputObj.toString(),headers);		
 			metric.stopTimer("http.post");
 		}else if(type==JAVASCRIPT){
 			metric.startTimer("javascript.deserialize");

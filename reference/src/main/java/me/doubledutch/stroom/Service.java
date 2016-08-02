@@ -124,6 +124,10 @@ public abstract class Service implements Runnable{
 		}
 	}
 
+	public long getIndex(){
+		return index;
+	}
+
 	public void setDisabled(boolean value) throws JSONException{
 		isDisabled=value;
 		config.put("disabled",value);
