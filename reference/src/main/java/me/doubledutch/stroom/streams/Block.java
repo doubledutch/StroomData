@@ -53,9 +53,7 @@ public class Block{
 			if(i==-1)return null;
 			return buffer.array();
 		}catch(InterruptedException ie){
-
 		}catch(ExecutionException ee){
-
 		}
 		return null;
 	}
@@ -88,15 +86,7 @@ public class Block{
 		synchronized(out){
 			try{
 				commit();
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-			try{
 				in.close();
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-			try{
 				out.close();
 			}catch(Exception e){
 				e.printStackTrace();

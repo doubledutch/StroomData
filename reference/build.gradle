@@ -1,5 +1,6 @@
-version = '0.1.7'
+version = '0.1.8'
 
+apply plugin: 'jacoco'
 apply plugin: 'java'
 
 sourceCompatibility = 1.8
@@ -16,13 +17,34 @@ repositories {
     mavenCentral()
 }
 
+jacoco {
+    toolVersion = "0.7.6.201602180812"
+    reportsDir = file("$buildDir/jacoco")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.destination "${buildDir}/reports/jacoco/html"
+    }
+}
+
+check{
+    dependsOn jacocoTestReport
+}
+
+
+test{
+    finalizedBy jacocoTestReport
+}
+
 dependencies {
     compile 'log4j:log4j:1.2.17'
     compile 'javax.servlet:javax.servlet-api:3.1.0'
     compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.2.v20140723'
     compile 'org.json:json:20140107'
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-    compile 'me.doubledutch:lazyjson:1.0.2'
+    compile 'me.doubledutch:lazyjson:1.2.1'
     testCompile 'junit:junit:4.+'
     testCompile 'com.mashape.unirest:unirest-java:1.4.7'
     // testCompile 'org.mockito:mockito-core:1.10.8'

@@ -34,10 +34,12 @@ public class Stream implements Runnable{
 
 	private long lastCommitTime=System.currentTimeMillis();
 
-	public Stream(String parentFolder,String topic,int batch,int lag) throws IOException{
+	public Stream(String parentFolder,String topic,int batch,int lag,long block_size,long index_size) throws IOException{
 		this.topic=topic;
 		this.MAX_COMMIT_BATCH=batch;
 		this.MAX_COMMIT_LAG=lag;
+		this.MAX_BLOCK_SIZE=block_size;
+		this.MAX_INDEX_SIZE=index_size;
 		folder=parentFolder+topic+File.separator;
 		File ftest=new File(folder);
 		if(!ftest.exists()){
@@ -266,6 +268,7 @@ public class Stream implements Runnable{
 						createNewIndex(currentIndexNumber);
 					}
 				}else{
+					location=new long[batchCount];
 					for(int i=0;i<batchCount;i++){
 						Document doc=batch.get(i);
 						index=indexMap.get(currentIndexNumber);
@@ -385,10 +388,7 @@ public class Stream implements Runnable{
 		waitForCommit(location);
 		Index index=getIndexForLocation(location);
 		IndexEntry entry=index.seekEntry(location);
-		if(entry!=null){
-			return getDocument(entry.getBlock(),entry.getOffset(),entry.getSize(),location);
-		}
-		return null;
+		return getDocument(entry.getBlock(),entry.getOffset(),entry.getSize(),location);
 	}
 
 	private void getSequentialDocuments(List<Document> list,List<IndexEntry> indexList) throws IOException{

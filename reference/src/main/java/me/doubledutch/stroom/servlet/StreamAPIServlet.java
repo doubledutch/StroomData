@@ -265,7 +265,7 @@ public class StreamAPIServlet extends HttpServlet{
 						// }
 
 					}else{
-						JSONObject jsonObj=new JSONObject(postBody);
+						LazyObject jsonObj=new LazyObject(postBody);
 						Document doc=new Document(topic,postBody);
 						// streamHandler.addDocument(doc);
 						if(hint>-1){

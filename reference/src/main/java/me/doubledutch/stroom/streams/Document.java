@@ -4,6 +4,7 @@ import org.json.*;
 import java.io.*;
 import java.util.zip.*;
 import java.nio.charset.*;
+import java.nio.charset.StandardCharsets;
 
 public class Document{
 	private String topic;
@@ -26,21 +27,13 @@ public class Document{
 	public Document(String topic,byte[] buffer, long location){
 		this.topic=topic;
 		this.location=location;
-		try{
-			this.data=new String(buffer,Charset.forName("UTF-8"));
-		}catch(Exception e){
-			e.printStackTrace();
-		}
+		this.data=new String(buffer,StandardCharsets.UTF_8);
 	}
 
 	public Document(String topic,byte[] buffer,int offset,int size, long location){
 		this.topic=topic;
 		this.location=location;
-		try{
-			this.data=new String(buffer,offset,size,Charset.forName("UTF-8"));
-		}catch(Exception e){
-			e.printStackTrace();
-		}
+		this.data=new String(buffer,offset,size,StandardCharsets.UTF_8);
 	}
 
 	public String getTopic(){
@@ -66,17 +59,10 @@ public class Document{
 	}
 
 	public byte[] getData(){
-		try{
-			if(raw!=null){
-				return raw;
-			}
-			raw=data.getBytes("UTF-8");
+		if(raw!=null){
 			return raw;
-		}catch(Exception e){
-			e.printStackTrace();
 		}
-		System.out.println("We appear to have an empty document!!!");
-		System.exit(0);
-		return null;
+		raw=data.getBytes(StandardCharsets.UTF_8);
+		return raw;
 	}
 }

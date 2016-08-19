@@ -43,6 +43,11 @@ public class BatchMetric{
 		return samples/((double)values.get("batch.time")/1000000000l);
 	}
 
+	public long get(String key){
+		if(!values.containsKey(key))return 0;
+		return values.get(key);
+	}
+
 	public JSONObject toJSON() throws JSONException{
 		JSONObject obj=new JSONObject();
 		for(String key:values.keySet()){
