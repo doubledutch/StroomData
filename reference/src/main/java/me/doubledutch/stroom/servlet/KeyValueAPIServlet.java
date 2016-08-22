@@ -47,6 +47,14 @@ public class KeyValueAPIServlet extends HttpServlet{
 				}*/
 				out.write(result.toString());
 				return;
+			}else if(splitPath.length==1){
+				// List keys
+				JSONArray result=new JSONArray();
+				for(String key:KeyValueManager.get().listKeys(splitPath[0])){
+					result.put(key);
+				}
+				out.write(result.toString());
+				return;
 			}else if(splitPath.length==2){
 				// Get partitioned aggregate by partition key
 				String id=splitPath[0];

@@ -32,20 +32,24 @@ public class FilterService extends Service{
 		}
 	}
 
-	private void loadState() throws Exception{
-		JSONObject obj=new JSONObject(getStream("state").getLast());
-		index=obj.getLong("i");
-		outputIndex=obj.getLong("o");
+	private synchronized void loadState() throws Exception{
+		if(getStream("state").getCount()>0){
+			JSONObject obj=new JSONObject(getStream("state").getLast());
+			index=obj.getLong("i");
+			outputIndex=obj.getLong("o");
+		}
 	}
 
-	private void saveState() throws Exception{
-		JSONObject obj=new JSONObject();
-		obj.put("i",index);
-		obj.put("o",outputIndex);
-		getStream("state").append(obj,StreamConnection.FLUSH);
+	private synchronized void saveState() throws Exception{
+		if(index>-1){
+			JSONObject obj=new JSONObject();
+			obj.put("i",index);
+			obj.put("o",outputIndex);
+			getStream("state").append(obj,StreamConnection.FLUSH);
+		}
 	}
 
-	public void reset() throws Exception{
+	public synchronized void reset() throws Exception{
 		getStream("state").truncate(0);
 		getStream("output").truncate(0);
 		index=-1;
@@ -53,8 +57,6 @@ public class FilterService extends Service{
 	}
 
 	private String processDocument(String str) throws Exception{
-		// System.out.println("Process document");
-		// TODO: add ability to batch output
 		String out=null;
 		if(type==HTTP){
 			metric.startTimer("http.request");
@@ -106,9 +108,7 @@ public class FilterService extends Service{
 
 	public void run(){
 		try{
-			if(getStream("state").getCount()>0){
-				loadState();
-			}
+			loadState();
 			lastFlush=System.currentTimeMillis();
 			buffer=new ArrayList<String>(getBatchSize()*2);
 			log.info(getId()+" restarting at "+(index+1));
@@ -137,9 +137,6 @@ public class FilterService extends Service{
 						// TODO: add selective error handling here!
 
 						String out=processDocument(str);
-						// if(getId().equals("alert_sender")){
-						// 	System.out.println("output: "+out);
-						// }
 						if(out!=null && out.length()>0){
 							if(out.startsWith("[")){
 								// LazyParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
