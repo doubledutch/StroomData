@@ -64,8 +64,6 @@ public abstract class Service implements Runnable{
 			streamMap.put(key,openStream(new URI(streams.getString(key))));
 		}
 
-		// input=openStream(new URI(obj.getString("input_stream")));
-		// output=openStream(new URI(obj.getString("output_stream")));
 		if(streams.has("output") && (!streams.has("state"))){
 			streamMap.put("state",openStream(new URI(streams.getString("output")+".state")));
 		}
@@ -76,20 +74,6 @@ public abstract class Service implements Runnable{
 			url=obj.getString("url");
 		}else if(strType.equals("javascript")){
 			type=JAVASCRIPT;
-			/*
-			script=obj.getString("script");
-			String scriptData=Utility.readFile(script);
-			ScriptEngineManager mgr = new ScriptEngineManager();
-	        jsEngine = mgr.getEngineByName("JavaScript");
-	        // jsEngine = mgr.getEngineByName("nashorn");
-	        jsInvocable = (Invocable) jsEngine;
-	        Bindings bindings=jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
-	        bindings.put("stdout",System.out);
-	        for(String key:streamMap.keySet()){
-	        	bindings.put(key,streamMap.get(key));
-	        }
-			jsEngine.eval(scriptData);*/
-			// reloadScript();
 		}
 	}
 
@@ -113,13 +97,6 @@ public abstract class Service implements Runnable{
 	        Bindings bindings=jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 	        bindings.put("stdout",System.out);
 	        bindings.put("stroom",new ScriptAPI(streamHandler));
-	        // for(String key:streamMap.keySet()){
-	        //	bindings.put(key,streamMap.get(key));
-	        // }
-	        /*
-	        Bindings bindings = jsEngine.getBindings(ScriptContext.ENGINE_SCOPE);
-    		bindings.put("stdout", MonolithServer.scriptOut);
-			*/
 			jsEngine.eval(scriptData);
 		}
 	}
@@ -190,15 +167,16 @@ public abstract class Service implements Runnable{
 
 	public abstract void reset() throws Exception;
 
-	public void start() throws Exception{
+	public  void start() throws Exception{
 		if(isDisabled)return;
+		if(isRunning())return;
 		reloadScript();
 		shouldBeRunning=true;
 		thread=new Thread(this,"Service."+id);
 		thread.start();
 	}
 
-	public void stop(){
+	public  void stop(){
 		shouldBeRunning=false;
 		while(isRunning){
 			try{

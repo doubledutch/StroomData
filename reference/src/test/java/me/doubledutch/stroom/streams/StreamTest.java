@@ -228,6 +228,8 @@ public class StreamTest{
       streams.truncateStream("truncate-test",0);
       result=streams.getDocuments("truncate-test",0,99);
       assertEquals(result.size(),0);
+      Stream stream=streams.getOrCreateStream("truncate-test");
+      assertEquals(stream.getCount(),0);
     }
 
     @Test
