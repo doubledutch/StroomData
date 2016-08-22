@@ -25,6 +25,13 @@ public abstract class Service implements Runnable{
 	private int BATCH_TIMEOUT=10*1000;
 	public long index=-1;
 
+	public static int ERR_IGNORE=0;
+	public static int ERR_RETRY=1;
+	public static int ERR_HALT=2;
+	private int errorStrategy=ERR_IGNORE;
+	private String lastError=null;
+
+
 	private Map<String,MockStreamConnection> mockMap=new HashMap<String,MockStreamConnection>();
 	private StreamHandler streamHandler=null;
 
@@ -75,6 +82,28 @@ public abstract class Service implements Runnable{
 		}else if(strType.equals("javascript")){
 			type=JAVASCRIPT;
 		}
+		if(obj.has("error_strategy")){
+			String errType=obj.getString("error_strategy");
+			if(errType.equals("ignore")){
+				errorStrategy=ERR_IGNORE;
+			}else if(errType.equals("retry")){
+				errorStrategy=ERR_RETRY;
+			}else if(errType.equals("halt")){
+				errorStrategy=ERR_HALT;
+			}
+		}
+	}
+
+	public void setLastError(String str){
+		lastError=str;
+	}
+
+	public String getLastError(){
+		return lastError;
+	}
+
+	public int getErrorStrategy(){
+		return errorStrategy;
 	}
 
 	public void addBatchMetric(BatchMetric metric){
@@ -160,6 +189,10 @@ public abstract class Service implements Runnable{
 	public void isRunning(boolean value){
 		isRunning=value;
 	}	
+
+	public void shouldBeRunning(boolean shouldBeRunning){
+		this.shouldBeRunning=shouldBeRunning;
+	}
 
 	public boolean shouldBeRunning(){
 		return shouldBeRunning;

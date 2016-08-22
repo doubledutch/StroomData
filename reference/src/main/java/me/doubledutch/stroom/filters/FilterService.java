@@ -56,7 +56,7 @@ public class FilterService extends Service{
 		outputIndex=-1;
 	}
 
-	private String processDocument(String str) throws Exception{
+	private String processDocument(String str) throws ServiceException{
 		String out=null;
 		if(type==HTTP){
 			metric.startTimer("http.request");
@@ -66,26 +66,31 @@ public class FilterService extends Service{
 			out=Utility.postURL(url,str,headers);	
 			metric.stopTimer("http.request");	
 		}else if(type==JAVASCRIPT){
-			metric.startTimer("javascript.deserialize");
-			jsEngine.put("raw",str);
-			jsEngine.eval("var obj=JSON.parse(raw);");
-			metric.stopTimer("javascript.deserialize");
+			try{
+				metric.startTimer("javascript.deserialize");
+				jsEngine.put("raw",str);
+				jsEngine.eval("var obj=JSON.parse(raw);");
+				metric.stopTimer("javascript.deserialize");
 
-			// jsEngine.eval("var obj="+str+";");
-			metric.startTimer("javascript.run");
-			jsEngine.eval("var result=map(obj);");
-			metric.stopTimer("javascript.run");
-			metric.startTimer("javascript.serialize");
-			jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
-			Object obj=jsEngine.get("result");
-			metric.stopTimer("javascript.serialize");
+				// jsEngine.eval("var obj="+str+";");
+				metric.startTimer("javascript.run");
+				jsEngine.eval("var result=map(obj);");
+				metric.stopTimer("javascript.run");
+				metric.startTimer("javascript.serialize");
+				jsEngine.eval("if(result!=null)result=JSON.stringify(result);");
+				Object obj=jsEngine.get("result");
+				metric.stopTimer("javascript.serialize");
 
-			if(obj!=null){
-				out=(String)obj;
-			}else{
-				out="";
+				if(obj!=null){
+					out=(String)obj;
+				}else{
+					out="";
+				}
+			}catch(ScriptException se){
+				se.printStackTrace();
+				setLastError(se.toString());
+				throw new ServiceException("Failed to execute script");
 			}
-			// TODO: handle javascript errors
 		}else if(type==QUERY){
 
 		}else if(type==SAMPLE){
@@ -97,13 +102,25 @@ public class FilterService extends Service{
 		}
 		if(out==null){
 			// Assume error
-		}else if(out.trim().length()==0){
-			// Assume output not intended
-		}else{
-			// Send output along
-			// getStream("output").append(out);
+			throw new ServiceException("Could not process document");
 		}
 		return out;
+	}
+
+	private void flushOutput() throws Exception{
+		metric.startTimer("output.append");
+		if(buffer.size()>0){
+			List<Long> result=getStream("output").append(buffer);
+			outputIndex=result.get(result.size()-1);
+		}
+		metric.stopTimer("output.append");
+		// TODO: add selective state saving point
+		metric.startTimer("state.append");
+		saveState();
+		metric.stopTimer("state.append");
+		buffer.clear();
+		bufferSize=0;
+		lastFlush=System.currentTimeMillis();
 	}
 
 	public void run(){
@@ -133,43 +150,47 @@ public class FilterService extends Service{
 					}catch(Exception se){}
 				}else{
 					// List<String> output=new ArrayList<String>();
-					for(String str:batch){
-						// TODO: add selective error handling here!
-
-						String out=processDocument(str);
-						if(out!=null && out.length()>0){
-							if(out.startsWith("[")){
-								// LazyParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
-								LazyArray array=new LazyArray(out);
-								for(int n=0;n<array.length();n++){
-									LazyObject jobj=array.getJSONObject(n);
-									String jobjString=jobj.toString();
-									buffer.add(jobjString);
-									bufferSize+=jobjString.length();
+					int retryIndex=0;
+					for(int i=retryIndex;i<batch.size();i++){
+						String str=batch.get(i);
+						try{
+							String out=processDocument(str);
+							if(out!=null && out.length()>0){
+								if(out.startsWith("[")){
+									// LazyParser parser=new me.doubledutch.stroom.jsonjit.JSONParser(out);
+									LazyArray array=new LazyArray(out);
+									for(int n=0;n<array.length();n++){
+										LazyObject jobj=array.getJSONObject(n);
+										String jobjString=jobj.toString();
+										buffer.add(jobjString);
+										bufferSize+=jobjString.length();
+									}
+								}else{
+									bufferSize+=out.length();
+									buffer.add(out);
 								}
-							}else{
-								bufferSize+=out.length();
-								buffer.add(out);
+							}
+							index++;
+						}catch(ServiceException se){
+							if(getErrorStrategy()==Service.ERR_IGNORE){
+								// Just keep processing
+							}else if(getErrorStrategy()==Service.ERR_RETRY){
+								try{
+									Thread.sleep(2000);
+								}catch(Exception ee){}
+								i--; // rewind position
+							}else if(getErrorStrategy()==Service.ERR_HALT){
+								flushOutput();
+								shouldBeRunning(false);
+								isRunning(false);
+								return;
 							}
 						}
-						index++;
 					}
 					
 				}
 				if(buffer.size()>getBatchSize() || (System.currentTimeMillis()-lastFlush)>getBatchTimeout() || bufferSize>256*1024){
-					metric.startTimer("output.append");
-					if(buffer.size()>0){
-						List<Long> result=getStream("output").append(buffer);
-						outputIndex=result.get(result.size()-1);
-					}
-					metric.stopTimer("output.append");
-					// TODO: add selective state saving point
-					metric.startTimer("state.append");
-					saveState();
-					metric.stopTimer("state.append");
-					buffer.clear();
-					bufferSize=0;
-					lastFlush=System.currentTimeMillis();
+					flushOutput();
 				}
 				if(buffer.size()==0){
 					metric.setSamples(groupBatch);
