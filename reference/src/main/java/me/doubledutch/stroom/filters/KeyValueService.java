@@ -87,7 +87,11 @@ public class KeyValueService extends Service implements KVStoreConnection{
 
 				while(keyIt.hasNext()){
 					String key=keyIt.next();
-					keyMap.put(key,objSt.getLong(key));
+					if(objSt.isNull(key)){
+						keyMap.remove(key);
+					}else{
+						keyMap.put(key,objSt.getLong(key));
+					}
 				}
 			}
 
@@ -196,33 +200,50 @@ public class KeyValueService extends Service implements KVStoreConnection{
 					metric.startTimer("output.append");
 					if(output.size()>0){
 						// Separate keys from values
+						List<String> removeList=new ArrayList<String>();
 						List<String> keyList=new ArrayList<String>(output.size());
 						List<String> valueList=new ArrayList<String>(output.size());
 						for(String str:output){
 							JSONObject obj=new JSONObject(str);
 							if(obj.has("key") && obj.has("value")){
-								Object key=obj.get("key");
-								if(key instanceof String){
-									keyList.add((String)key);
+								Object keyObj=obj.get("key");
+								String key=null;
+								if(keyObj instanceof String){
+									key=(String)keyObj;
 								}else{
-									keyList.add(key.toString());
+									key=keyObj.toString();
 								}
-								JSONObject value=obj.getJSONObject("value");
-								valueList.add(value.toString());
+								if(obj.isNull("value")){
+									// Remove key
+									removeList.add(key);
+								}else{
+									keyList.add(key);
+									JSONObject value=obj.getJSONObject("value");
+									valueList.add(value.toString());
+								}
 							}
 						}
 						// store values
-						List<Long> result=getStream("output").append(valueList);
-						// match keys with locations and store in state
 						JSONObject map=new JSONObject();
-						for(int i=0;i<result.size();i++){
-							String key=keyList.get(i);
-							long loc=result.get(i);
-							map.put(key,loc);
-							keyMap.put(key,loc);
+						if(valueList.size()>0){
+							List<Long> result=getStream("output").append(valueList);
+
+							// match keys with locations and store in state
+							
+							for(int i=0;i<result.size();i++){
+								String key=keyList.get(i);
+								long loc=result.get(i);
+								map.put(key,loc);
+								keyMap.put(key,loc);
+							}
+							outputIndex=result.get(result.size()-1);
+						}
+						for(String key:removeList){
+							map.put(key,JSONObject.NULL);
+							keyMap.remove(key);
 						}
 						stateMap=map;
-						outputIndex=result.get(result.size()-1);
+						
 					}
 					metric.stopTimer("output.append");
 					// TODO: add selective state saving point

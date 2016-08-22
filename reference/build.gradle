@@ -85,7 +85,7 @@ task clientJavadoc(type: Javadoc) {
 }
 
 jar {
-    def versionFile = file('./src/main/resources/version.properties')
+    def versionFile = file('./src/main/resources/stroom_version.properties')
  
     if(versionFile.canRead()){
         def Properties props=new Properties()
