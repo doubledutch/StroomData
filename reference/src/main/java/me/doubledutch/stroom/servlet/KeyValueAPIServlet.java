@@ -30,8 +30,8 @@ public class KeyValueAPIServlet extends HttpServlet{
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		try{
+			response.setContentType("application/json; charset=UTF-8");
 			Writer out=response.getWriter();
-			response.setContentType("application/json");
 			String uriPath=request.getRequestURI().substring(request.getServletPath().length());
 			if(uriPath.startsWith("/"))uriPath=uriPath.substring(1).trim();
 			String[] splitPath=uriPath.split("/");

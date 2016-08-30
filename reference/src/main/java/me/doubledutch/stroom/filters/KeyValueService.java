@@ -82,15 +82,17 @@ public class KeyValueService extends Service implements KVStoreConnection{
 			for(String str:batch){
 				JSONObject obj=new JSONObject(str);
 				index=obj.getLong("i");
-				JSONObject objSt=obj.getJSONObject("o");
-				Iterator<String> keyIt=objSt.keys();
+				if(obj.has("o")){
+					JSONObject objSt=obj.getJSONObject("o");
+					Iterator<String> keyIt=objSt.keys();
 
-				while(keyIt.hasNext()){
-					String key=keyIt.next();
-					if(objSt.isNull(key)){
-						keyMap.remove(key);
-					}else{
-						keyMap.put(key,objSt.getLong(key));
+					while(keyIt.hasNext()){
+						String key=keyIt.next();
+						if(objSt.isNull(key)){
+							keyMap.remove(key);
+						}else{
+							keyMap.put(key,objSt.getLong(key));
+						}
 					}
 				}
 			}
@@ -104,8 +106,10 @@ public class KeyValueService extends Service implements KVStoreConnection{
 	private void saveState() throws Exception{
 		JSONObject obj=new JSONObject();
 		obj.put("i",index);
-		// obj.put("o",outputIndex);
-		obj.put("o",stateMap);
+		if(stateMap!=null){
+			// obj.put("o",outputIndex);
+			obj.put("o",stateMap);
+		}
 		getStream("state").append(obj,StreamConnection.FLUSH);
 	}
 
