@@ -1,9 +1,11 @@
 package me.doubledutch.stroom.query;
 
+import me.doubledutch.stroom.client.*;
 import me.doubledutch.stroom.streams.*;
 import me.doubledutch.stroom.query.sql.*;
 import me.doubledutch.stroom.*;
 import me.doubledutch.stroom.client.StreamConnection;
+import me.doubledutch.lazyjson.*;
 
 import java.io.*;
 import java.net.*;
@@ -11,49 +13,81 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class QueryRunner implements Runnable{
-	ExecutorService threadPool=null;
-	ExecutorService dataThreadPool=null;
-	StreamHandler streams=null;
+	private final int BATCH_SIZE=1000;
+	private SQLQuery query;
+	private TempTable result=null;
+	private long time;
 
-	public QueryRunner(StreamHandler streams){
-		this.streams=streams;
-		threadPool=Executors.newCachedThreadPool();
-		dataThreadPool=Executors.newFixedThreadPool(8);
+	public QueryRunner(SQLQuery query){
+		this.query=query;
+	}
+
+	public long getTime(){
+		return time;
+	}
+
+	public TempTable getResult(){
+		if(result==null){
+			run();
+		}
+		return result;
 	}
 
 	public void run(){
+		try{
+			long pre=System.nanoTime();
+			result=scan(query.tableList.get(0));
+			long post=System.nanoTime();
+			time=post-pre;
+			time=time/1000000;
 
-	}
-
-	public void runTask(Runnable task) throws Exception{
-		// TODO: bad naming, fix
-		dataThreadPool.execute(task);
-	}
-
-	public void runQuery(Query q) throws Exception{
-		if(q.getType()==Query.SQL){
-			SQLRunner task=new SQLRunner(q,this);
-			threadPool.execute(task);
-		}else{
-			// ?
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 
-	private String getStreamName(URI stream){
-		String path=stream.getPath();
-		if(!path.startsWith("/stream/"))return null;
-		return path.substring(path.lastIndexOf("/")+1); // TODO: possibly make smarter and less breakable
+	private TempTable createTempTable() throws Exception{
+		// Could some day switch between local files and streams
+		return new TempTableFile();
 	}
 
-
-	public StreamConnection openStream(URI stream) throws IOException{
-		String scheme=stream.getScheme();
-		String streamName=getStreamName(stream);
-		if(scheme.equals("local")){
-			String host=stream.getHost();
-			if(host.equals("direct")){
-				return new LocalStreamConnection(streams.getOrCreateStream(streamName));
+	public TempTable scan(TableReference table) throws Exception{
+		if(table.query!=null){
+			QueryRunner sub=new QueryRunner(table.query);
+			sub.run();
+			if(table.condition!=null){
+				// Run through it
+			}else{
+				return sub.getResult();
 			}
+		}else if(table.url!=null){
+			System.out.println("scanning url");
+			TempTable temp=createTempTable();
+			Stroom s=new Stroom();
+			StreamConnection stream=s.openStream(table.url);
+			long num=stream.getCount();
+			long count=0;
+			while(count<num){
+				List<String> batch=stream.get(count,count+BATCH_SIZE);
+				for(String str:batch){
+					LazyObject obj=new LazyObject(str);
+					if(table.condition!=null){
+						if(table.condition.evaluateBoolean(obj)){
+							temp.append(obj);
+						}
+					}else{
+						temp.append(obj);
+					}
+					count++;
+				}
+				if(batch.size()==0){
+					// Possible connection error, retry - also possible table wipe
+					try{
+						Thread.sleep(250);
+					}catch(Exception e){}
+				}
+			}
+			return temp;
 		}
 		return null;
 	}

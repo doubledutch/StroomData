@@ -185,6 +185,8 @@ public class SQLParser{
 			SQLQuery query=new SQLQuery();
 			requireSelectList(query);
 			requireTableExpression(query);
+			parseWhereClause(query);
+			query.normalize();
 			return query;
 		}
 		throw new ParseException("Query must start with SELECT",1,1);

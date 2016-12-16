@@ -6,8 +6,8 @@ import java.util.*;
 import me.doubledutch.stroom.client.StreamConnection;
 import java.util.concurrent.atomic.*;
 
-public class SQLRunner implements Runnable{
-	private Query query;
+public class SQLRunner{
+/*	private Query query;
 	private QueryRunner runner;
 	private List<String> tmpStreams=new ArrayList<String>();
 	private SQLRunner app;
@@ -113,5 +113,5 @@ public class SQLRunner implements Runnable{
 			query.setState(Query.ERROR);
 		}
 
-	}
+	}*/
 }

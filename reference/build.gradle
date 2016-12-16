@@ -44,7 +44,7 @@ dependencies {
     compile 'org.eclipse.jetty.aggregate:jetty-all:9.2.2.v20140723'
     compile 'org.json:json:20140107'
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-    compile 'me.doubledutch:lazyjson:1.2.1'
+    compile 'me.doubledutch:lazyjson:1.2.6'
     testCompile 'junit:junit:4.+'
     testCompile 'com.mashape.unirest:unirest-java:1.4.7'
     // testCompile 'org.mockito:mockito-core:1.10.8'
@@ -75,6 +75,7 @@ task queryJar(type: Jar){
         include "me/doubledutch/stroom/query/*"
         include "me/doubledutch/stroom/query/sql/*"
     }
+     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
         attributes 'Implementation-Title': 'Client Library', 'Implementation-Version': version, 'Main-Class': 'me.doubledutch.stroom.query.QueryTool'

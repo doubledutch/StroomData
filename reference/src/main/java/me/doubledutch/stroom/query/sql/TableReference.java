@@ -1,10 +1,13 @@
 package me.doubledutch.stroom.query.sql;
 
+import me.doubledutch.stroom.query.*;
+
 public class TableReference{
 	public String as=null;
 	public String identifier=null;
 	public String url=null;
 	public SQLQuery query=null;
+	public Expression condition=null;
 
 	public String toString(){
 		StringBuilder buf=new StringBuilder();

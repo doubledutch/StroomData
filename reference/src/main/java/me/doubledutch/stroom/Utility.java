@@ -1,5 +1,7 @@
 package me.doubledutch.stroom;
 
+
+import me.doubledutch.lazyjson.*;
 import java.io.*;
 import java.net.*;
 import org.json.*;
@@ -19,6 +21,27 @@ public class Utility{
 			num=reader.read(data);
 		}
 		return buf.toString();
+	}
+
+	public static Object pickValue(LazyObject obj,String key) throws LazyException{
+		if(key.indexOf(".")>-1){
+			String child=key.substring(key.indexOf(".")+1);
+			key=key.substring(0,key.indexOf("."));
+			return pickValue(obj.getJSONObject(key),child);
+		}
+		if(!obj.has(key)){
+			return null;
+		}
+		LazyType t=obj.getType(key);
+		switch(t){
+			case ARRAY:return obj.getJSONArray(key);
+			case OBJECT:return obj.getJSONObject(key);
+			case FLOAT:return obj.getDouble(key);
+			case INTEGER:return obj.getLong(key);
+			case BOOLEAN:return obj.getBoolean(key);
+			case STRING:return obj.getString(key);
+		}
+		return null;
 	}
 
 	public static Object pickValue(JSONObject obj,String key) throws JSONException{

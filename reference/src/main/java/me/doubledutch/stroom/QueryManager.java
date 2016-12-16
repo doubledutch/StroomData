@@ -8,14 +8,14 @@ import java.util.concurrent.*;
 
 public class QueryManager{
 	private static QueryManager app=null;
-	private QueryRunner runner;
+	// private QueryRunner runner;
 	private StreamHandler streams;
 	private Map<String,Query> queryMap=new ConcurrentHashMap<String,Query>();
 
 	public QueryManager(StreamHandler streams){
 		app=this;
 		this.streams=streams;
-		runner=new QueryRunner(streams);
+		// runner=new QueryRunner(streams);
 	}
 
 	public static QueryManager get(){
@@ -24,10 +24,10 @@ public class QueryManager{
 
 	public Query run(String script,String type) throws Exception{
 		if(type.equals("sql")){
-			Query q=new Query(script,Query.SQL);
+			/*Query q=new Query(script,Query.SQL);
 			queryMap.put(q.getId(),q);
 			runner.runQuery(q);
-			return q;
+			return q;*/
 		}
 		return null;
 	}

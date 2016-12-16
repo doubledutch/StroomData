@@ -1,5 +1,6 @@
 package me.doubledutch.stroom.query;
 
+import me.doubledutch.lazyjson.*;
 import me.doubledutch.stroom.*;
 import org.json.*;
 
@@ -32,7 +33,11 @@ public class Expression{
 
 	private String refString;
 
-	public Expression evaluate(JSONObject obj) throws JSONException{
+	public boolean evaluateBoolean(LazyObject obj) throws LazyException{
+		return false;
+	}
+
+	public Expression evaluate(LazyObject obj) throws LazyException{
 		if(type==STRING || type==FLOAT || type==BOOLEAN || type==INTEGER || type==NULL){
 			return this;
 		}
@@ -83,7 +88,7 @@ public class Expression{
 		return false;
 	}
 
-	public Expression pickValue(JSONObject obj,String ref) throws JSONException{
+	public Expression pickValue(LazyObject obj,String ref) throws LazyException{
 		Object val=Utility.pickValue(obj,ref);
 		if(val==null){
 			return Expression.value();

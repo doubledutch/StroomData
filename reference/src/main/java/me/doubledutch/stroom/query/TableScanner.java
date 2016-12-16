@@ -5,8 +5,8 @@ import me.doubledutch.stroom.client.StreamConnection;
 import org.json.*;
 import java.util.*;
 
-public class TableScanner implements Runnable{
-	private final static int BATCH_SIZE=1000;
+public class TableScanner{
+/*	private final static int BATCH_SIZE=1000;
 	private StreamConnection input,output;
 	private long start,end;
 	private QueryListener completedListener;
@@ -83,5 +83,5 @@ public class TableScanner implements Runnable{
 			e.printStackTrace();
 		}
 		completedListener.update(metric);
-	}
+	}*/
 }

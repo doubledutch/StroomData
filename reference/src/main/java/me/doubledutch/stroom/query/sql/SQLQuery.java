@@ -15,6 +15,13 @@ public class SQLQuery{
 	public List<TableReference> tableList=null;
 	public Expression where=null;
 
+	public void normalize(){
+		if(where!=null){
+			// TODO: split the clause and make this real
+			tableList.get(0).condition=where;
+		}
+	}
+
 	public String toString(){
 		StringBuilder buf=new StringBuilder();
 		if(type==SELECT){
@@ -32,6 +39,10 @@ public class SQLQuery{
 			for(int i=0;i<tableList.size();i++){
 				if(i>0)buf.append(",");
 				buf.append(tableList.get(i).toString());
+			}
+			if(where!=null){
+				buf.append(" WHERE ");
+				buf.append(where.toString());
 			}
 			return buf.toString();
 		}
