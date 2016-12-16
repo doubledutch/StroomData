@@ -66,6 +66,24 @@ task clientJar(type: Jar){
     // }
 }
 
+task queryJar(type: Jar){
+    baseName="squery"
+    from(sourceSets.main.output) {
+        include "me/doubledutch/stroom/client/*"
+        include "me/doubledutch/stroom/client/function/*"
+        include "me/doubledutch/lazy/*"
+        include "me/doubledutch/stroom/query/*"
+        include "me/doubledutch/stroom/query/sql/*"
+    }
+  //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Implementation-Title': 'Client Library', 'Implementation-Version': version, 'Main-Class': 'me.doubledutch.stroom.query.QueryTool'
+    }
+    // into('site') {
+    //    from 'site'
+    // }
+}
+
 
 task clientJavadoc(type: Javadoc) {
     options.memberLevel = JavadocMemberLevel.PUBLIC
