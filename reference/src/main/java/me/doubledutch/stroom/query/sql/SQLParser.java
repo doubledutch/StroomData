@@ -334,7 +334,16 @@ public class SQLParser{
 		}
 		if(consumeReservedWord("AS")){
 			Token t=requireIdentifier("A new identifier for a column must follow the keyword AS");
-			col.as=t.data;
+			List<String> ref=new ArrayList<String>();
+			ref.add(t.data);
+			while(consumeSymbol(".")){
+				t=getToken();
+				if(t.type!=Token.IDENTIFIER){
+					throw new ParseException("Unexpected data found after .",t);
+				}
+				ref.add(t.data);
+			}
+			col.as=ref;
 		}
 		return col;
 	}

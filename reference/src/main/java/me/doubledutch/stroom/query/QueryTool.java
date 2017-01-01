@@ -15,10 +15,11 @@ public class QueryTool{
 			runner.run();
 			System.out.println("*********** RESULT SET");
 			TempTable table=runner.getResult();
+			table.reset();
 			int count=0;
 			while(table.hasNext()){
 				LazyObject next=table.next();
-				// System.out.println(next.toString());
+				System.out.println(next.toString());
 				count++;
 			}
 			System.out.println("   "+count+" rows returned in "+(runner.getTime()/1000.0)+" s");

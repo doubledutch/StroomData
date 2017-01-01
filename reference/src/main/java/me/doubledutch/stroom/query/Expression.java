@@ -7,7 +7,9 @@ import org.json.*;
 public class Expression{
 	public final static int OR=1;
 	public final static int AND=2;
+	
 	public final static int NOT=3;
+
 	public final static int EQ=4;
 	public final static int NEQ=5;
 	public final static int GT=6;
@@ -33,7 +35,44 @@ public class Expression{
 
 	private String refString;
 
+	public String toString(){
+		if(type==OR){
+			return "("+left.toString()+" OR "+right.toString()+")";
+		}else if(type==AND){
+			return "("+left.toString()+" AND "+right.toString()+")";
+		}else if(type==NOT){
+			return "(NOT "+left.toString()+")";
+		}else if(type==EQ){
+			return "("+left.toString()+" = "+right.toString()+")";
+		}else if(type==NEQ){
+			return "("+left.toString()+" != "+right.toString()+")";
+		}else if(type==GT){
+			return "("+left.toString()+" > "+right.toString()+")";
+		}else if(type==LT){
+			return "("+left.toString()+" < "+right.toString()+")";
+		}else if(type==GTE){
+			return "("+left.toString()+" >= "+right.toString()+")";
+		}else if(type==LTE){
+			return "("+left.toString()+" <= "+right.toString()+")";
+		}else if(type==REFERENCE){
+			return refString;
+		}else if(type==STRING){
+			return valString;
+		}else if(type==FLOAT){
+			return ""+valDouble;
+		}else if(type==BOOLEAN){
+			return ""+valBoolean;
+		}else if(type==INTEGER){
+			return ""+valInteger;
+		}else if(type==NULL){
+			return "NULL";
+		}
+		return null;
+	}
+
 	public boolean evaluateBoolean(LazyObject obj) throws LazyException{
+		Expression e=evaluate(obj);
+		if(e.isBoolean())return e.getBoolean();
 		return false;
 	}
 
@@ -53,16 +92,12 @@ public class Expression{
 
 		if(type==EQ){
 			return value(v1.equalTo(v2));
+		}else if(type==LT){
+			return value(v1.lessThan(v2));
+		}else if(type==GT){
+			return value(v1.greaterThan(v2));
 		}else if(type==AND){
 			if(v1.isBoolean() && v1.getBoolean() && v2.isBoolean() && v2.getBoolean()){
-				return value(true);
-			}else{
-				return value(false);
-			}
-		}else if(type==AND){
-			if(v1.isBoolean() && v1.getBoolean()){
-				return value(true);
-			}else if(v2.isBoolean() && v2.getBoolean()){
 				return value(true);
 			}else{
 				return value(false);
@@ -84,6 +119,40 @@ public class Expression{
 			return valBoolean==val.valBoolean;
 		}else if(type==INTEGER){
 			return valInteger==val.valInteger;
+		}
+		return false;
+	}
+
+	public boolean lessThan(Expression val){
+		if(type!=val.type){
+			// TODO: we should try to coalesce!
+			return false;
+		}
+		if(type==STRING){
+			// TODO: we should maybe do a sort order?
+		}else if(type==FLOAT){
+			return valDouble<val.valDouble;
+		}else if(type==BOOLEAN){
+			// TODO: what's our semantics here?
+		}else if(type==INTEGER){
+			return valInteger<val.valInteger;
+		}
+		return false;
+	}
+
+	public boolean greaterThan(Expression val){
+		if(type!=val.type){
+			// TODO: we should try to coalesce!
+			return false;
+		}
+		if(type==STRING){
+			// TODO: we should maybe do a sort order?
+		}else if(type==FLOAT){
+			return valDouble>val.valDouble;
+		}else if(type==BOOLEAN){
+			// TODO: what's our semantics here?
+		}else if(type==INTEGER){
+			return valInteger>val.valInteger;
 		}
 		return false;
 	}

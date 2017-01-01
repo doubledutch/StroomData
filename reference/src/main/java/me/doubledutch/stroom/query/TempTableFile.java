@@ -19,6 +19,14 @@ public class TempTableFile extends TempTable{
 		file.deleteOnExit();
 	}
 
+	public void reset() throws Exception{
+		if(in!=null){
+			in.close();
+		}
+		in=null;
+		next=null;
+	}
+
 	public void append(LazyObject obj) throws Exception{
 		if(out==null){
 			out=new PrintWriter(new FileWriter(file,true));

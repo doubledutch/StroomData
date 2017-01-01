@@ -7,6 +7,8 @@ import me.doubledutch.stroom.*;
 import me.doubledutch.stroom.client.StreamConnection;
 import me.doubledutch.lazyjson.*;
 
+import org.json.*;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -37,6 +39,9 @@ public class QueryRunner implements Runnable{
 		try{
 			long pre=System.nanoTime();
 			result=scan(query.tableList.get(0));
+			if(!query.selectAll){
+				result=pick(result,query.selectList);
+			}
 			long post=System.nanoTime();
 			time=post-pre;
 			time=time/1000000;
@@ -49,6 +54,20 @@ public class QueryRunner implements Runnable{
 	private TempTable createTempTable() throws Exception{
 		// Could some day switch between local files and streams
 		return new TempTableFile();
+	}
+
+	public TempTable pick(TempTable table,List<DerivedColumn> columns) throws Exception{
+		TempTable picked=createTempTable();
+		table.reset();
+		while(table.hasNext()){
+			LazyObject obj=table.next();
+			JSONObject out=new JSONObject();
+			for(DerivedColumn col:columns){
+				col.pickAndPlace(obj,out);
+			}
+			picked.append(new LazyObject(out.toString()));
+		}
+		return picked;
 	}
 
 	public TempTable scan(TableReference table) throws Exception{

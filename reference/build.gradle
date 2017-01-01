@@ -69,6 +69,7 @@ task clientJar(type: Jar){
 task queryJar(type: Jar){
     baseName="squery"
     from(sourceSets.main.output) {
+        include "me/doubledutch/stroom/*"
         include "me/doubledutch/stroom/client/*"
         include "me/doubledutch/stroom/client/function/*"
         include "me/doubledutch/lazy/*"
