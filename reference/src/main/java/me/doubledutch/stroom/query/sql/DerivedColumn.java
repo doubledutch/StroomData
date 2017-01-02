@@ -40,7 +40,7 @@ public class DerivedColumn{
 				current=current.getJSONObject(selector);
 			}
 			String selector=as.get(as.size()-1);
-			System.out.println("Should be placing at "+selector);
+			// System.out.println("Should be placing at "+selector);
 			current.put(selector,value);
 		}
 	}
