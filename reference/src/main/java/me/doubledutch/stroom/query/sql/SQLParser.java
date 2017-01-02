@@ -392,6 +392,9 @@ public class SQLParser{
 		return null;
 	}
 
+	// <NUMERIC-VALUE-EXPRESSION>		::= <TERM> |
+	//									<NUMERIC-VALUE-EXPRESSION> '+' <TERM> |
+	//									<NUMERIC-VALUE-EXPRESSION> '-' <TERM>
 	private Expression parseNumericValueExpression(){
 		Token t=getToken();
 		if(t!=null){
@@ -405,6 +408,35 @@ public class SQLParser{
 		returnToken(t);
 		return null;
 	}
+
+	// <TERM>							::= <FACTOR> |
+	//									<TERM> '*' <FACTOR> |
+	//									<TERM> '/' <FACTOR> |
+	//									<TERM> '%' <FACTOR>
+	private Expression parseTerm(){
+		return null;
+	}
+
+	// <FACTOR>						::= ( <SIGN> )? <NUMERIC-PRIMARY>
+	private Expression parseFactor(){
+		return null;
+	}
+
+	// <NUMERIC-PRIMARY>				::= <VALUE-EXPRESSION-PRIMARY> | <VALUE-FUNCTION>
+	private Expression parseNumericPrimary(){
+		return null;
+	}
+
+	// <VALUE-EXPRESSION-PRIMARY>		::= <PARENTHESIZED-VALUE-EXPRESSION> | <NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>
+	private Expression parseValueExpressionPrimary(){
+		return null;
+	}
+
+	<PARENTHESIZED-VALUE-EXPRESSION>::= '(' <VALUE-EXPRESSION> ')'
+	<NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>::= 
+										<NUMERIC-LITERAL> |
+										<COLUMN-REFERENCE>
+	<VALUE-FUNCTION>				::= <IDENTIFIER> '(' <VALUE-EXPRESSION> ')'
 
 	// <COLUMN-REFERENCE> ::= <IDENTIFIER> ( '.' <IDENTIFIER> )*
 	private DerivedColumn parseColumnReference() throws ParseException{
