@@ -23,6 +23,28 @@ public class Utility{
 		return buf.toString();
 	}
 
+	public static Object pickValue(LazyObject obj,List<String> keyPath) throws LazyException{
+		for(int i=0;i<keyPath.size()-1;i++){
+			String key=keyPath.get(i);
+			if(!obj.has(key))return null;
+			obj=obj.getJSONObject(key);
+		}
+		String key=keyPath.get(keyPath.size()-1);
+		if(!obj.has(key)){
+			return null;
+		}
+		LazyType t=obj.getType(key);
+		switch(t){
+			case ARRAY:return obj.getJSONArray(key);
+			case OBJECT:return obj.getJSONObject(key);
+			case FLOAT:return obj.getDouble(key);
+			case INTEGER:return obj.getLong(key);
+			case BOOLEAN:return obj.getBoolean(key);
+			case STRING:return obj.getString(key);
+		}
+		return null;
+	}
+
 	public static Object pickValue(LazyObject obj,String key) throws LazyException{
 		if(key.indexOf(".")>-1){
 			String child=key.substring(key.indexOf(".")+1);

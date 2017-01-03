@@ -2,34 +2,34 @@ package me.doubledutch.stroom.query.sql;
 
 import java.util.*;
 import org.json.*;
+import me.doubledutch.stroom.query.*;
 import me.doubledutch.lazyjson.*;
 
 public class DerivedColumn{
-	public static final int REFERENCE=0;
+	// public static final int REFERENCE=0;
 
-	public int type;
+	// public int type;
 	public List<String> as=null; 
-	public List<String> refList=null;
+	// public List<String> refList=null;
+	public Expression expression=null;
 
 	public void pickAndPlace(LazyObject source,JSONObject destination) throws Exception{
-		if(type==REFERENCE){
-			Object value=pickValue(source);
-			setValue(destination,value);
-		}
+		Object value=pickValue(source);
+		setValue(destination,value);
 	}
 
 	public void setValue(JSONObject destination,Object value) throws Exception{
 		JSONObject current=destination;
 		if(as==null){
 			// No as clause was specified, place where it was found
-			for(int i=0;i<refList.size()-1;i++){
-				String selector=refList.get(i);
+			for(int i=0;i<expression.ref.size()-1;i++){
+				String selector=expression.ref.get(i);
 				if(!current.has(selector)){
 					current.put(selector,new JSONObject());
 				}
 				current=current.getJSONObject(selector);
 			}
-			String selector=refList.get(refList.size()-1);
+			String selector=expression.ref.get(expression.ref.size()-1);
 			current.put(selector,value);
 		}else{
 			for(int i=0;i<as.size()-1;i++){
@@ -47,11 +47,11 @@ public class DerivedColumn{
 
 	public Object pickValue(LazyObject source){
 		LazyObject current=source;
-		for(int i=0;i<refList.size()-1;i++){
-			String selector=refList.get(i);
+		for(int i=0;i<expression.ref.size()-1;i++){
+			String selector=expression.ref.get(i);
 			current=current.getJSONObject(selector);
 		}
-		String selector=refList.get(refList.size()-1);
+		String selector=expression.ref.get(expression.ref.size()-1);
 		LazyType t=current.getType(selector);
 		switch(t){
 			case ARRAY:return current.getJSONArray(selector);
@@ -106,12 +106,7 @@ public class DerivedColumn{
 */
 	public String toString(){
 		StringBuilder buf=new StringBuilder();
-		if(type==REFERENCE){
-			for(int i=0;i<refList.size();i++){
-				if(i>0)buf.append(".");
-				buf.append(refList.get(i));
-			}
-		}
+		buf.append(expression.toString());
 		if(as!=null){
 			buf.append(" AS ");
 			for(int i=0;i<as.size();i++){
@@ -122,10 +117,10 @@ public class DerivedColumn{
 		return buf.toString();
 	}
 
-	public static DerivedColumn createReference(List<String> ref){
+	public static DerivedColumn createReference(Expression exp){
 		DerivedColumn col=new DerivedColumn();
-		col.refList=ref;
-		col.type=REFERENCE;
+		col.expression=exp;
+		// col.type=REFERENCE;
 		return col;
 	}
 }

@@ -3,6 +3,7 @@ package me.doubledutch.stroom.query;
 import me.doubledutch.lazyjson.*;
 import me.doubledutch.stroom.*;
 import org.json.*;
+import java.util.List;
 
 public class Expression{
 	public final static int OR=1;
@@ -24,16 +25,21 @@ public class Expression{
 	public final static int INTEGER=14;
 	public final static int NULL=15;	
 
+	public final static int FUNCTION=16;
+
 	private int type;
 	private Expression left;
 	private Expression right;
+
+	private List<Expression> arguments=null;
 
 	private String valString;
 	private double valDouble;
 	private boolean valBoolean;
 	private long valInteger;
 
-	private String refString;
+	// Changed derived column to fix this shit
+	public List<String> ref;
 
 	public String toString(){
 		if(type==OR){
@@ -55,7 +61,12 @@ public class Expression{
 		}else if(type==LTE){
 			return "("+left.toString()+" <= "+right.toString()+")";
 		}else if(type==REFERENCE){
-			return refString;
+			StringBuilder buf=new StringBuilder();
+			for(int i=0;i<ref.size();i++){
+				if(i>0)buf.append(".");
+				buf.append(ref.get(i));
+			}
+			return buf.toString();
 		}else if(type==STRING){
 			return valString;
 		}else if(type==FLOAT){
@@ -66,6 +77,16 @@ public class Expression{
 			return ""+valInteger;
 		}else if(type==NULL){
 			return "NULL";
+		}else if(type==FUNCTION){
+			StringBuilder buf=new StringBuilder();
+			buf.append(valString);
+			buf.append("(");
+			for(int i=0;i<arguments.size();i++){
+				if(i>0)buf.append(",");
+				buf.append(arguments.get(i).toString());
+			}
+			buf.append(")");
+			return buf.toString();
 		}
 		return null;
 	}
@@ -81,7 +102,7 @@ public class Expression{
 			return this;
 		}
 		if(type==REFERENCE){
-			return pickValue(obj,refString);
+			return pickValue(obj,ref);
 		}
 
 		Expression v1=left.evaluate(obj);
@@ -157,7 +178,7 @@ public class Expression{
 		return false;
 	}
 
-	public Expression pickValue(LazyObject obj,String ref) throws LazyException{
+	public Expression pickValue(LazyObject obj,List<String> ref) throws LazyException{
 		Object val=Utility.pickValue(obj,ref);
 		if(val==null){
 			return Expression.value();
@@ -260,9 +281,16 @@ public class Expression{
 		return e;
 	}
 
-	public static Expression reference(String str){
+	public static Expression reference(List<String> list){
 		Expression e=new Expression(REFERENCE);
-		e.refString=str;
+		e.ref=list;
+		return e;
+	}
+
+	public static Expression function(String name, List<Expression> args){
+		Expression e=new Expression(FUNCTION);
+		e.arguments=args;
+		e.valString=name;
 		return e;
 	}
 

@@ -44,7 +44,7 @@ import me.doubledutch.stroom.query.*;
 	<NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>::= 
 										<NUMERIC-LITERAL> |
 										<COLUMN-REFERENCE>
-	<VALUE-FUNCTION>				::= <IDENTIFIER> '(' <VALUE-EXPRESSION> ')'
+	<VALUE-FUNCTION>				::= <IDENTIFIER> '(' <VALUE-EXPRESSION> ( ',' <VALUE-EXPRESSION> )* ')'
 
 	<COLUMN-REFERENCE>				::= <IDENTIFIER> ( '.' <IDENTIFIER> )*
 */
@@ -344,10 +344,11 @@ public class SQLParser{
 
 	// <DERIVED-COLUMN>	::= <COLUMN-REFERENCE> ( 'AS' <IDENTIFIER> )?
 	private DerivedColumn requireDerivedColumn() throws ParseException{
-		DerivedColumn col=parseColumnReference();
-		if(col==null){
+		Expression exp=parseColumnReference();
+		if(exp==null){
 			throw new ParseException("Column reference expected");
 		}
+		DerivedColumn col=DerivedColumn.createReference(exp);
 		if(consumeReservedWord("AS")){
 			Token t=requireIdentifier("A new identifier for a column must follow the keyword AS");
 			List<String> ref=new ArrayList<String>();
@@ -372,9 +373,9 @@ public class SQLParser{
 		val=parseStringValueExpression();
 		if(val!=null)return val;
 
-		DerivedColumn col=parseColumnReference();
+		Expression col=parseColumnReference();
 		if(col!=null){
-			return Expression.reference(col.toString());
+			return col;
 		}
 		// if(col!=null)return col;
 		throw new ParseException("Value expression expected",getToken());
@@ -432,16 +433,68 @@ public class SQLParser{
 		return null;
 	}
 
-	<PARENTHESIZED-VALUE-EXPRESSION>::= '(' <VALUE-EXPRESSION> ')'
-	<NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>::= 
-										<NUMERIC-LITERAL> |
-										<COLUMN-REFERENCE>
-	<VALUE-FUNCTION>				::= <IDENTIFIER> '(' <VALUE-EXPRESSION> ')'
+	// <PARENTHESIZED-VALUE-EXPRESSION>::= '(' <VALUE-EXPRESSION> ')'
+	private Expression parseParenthesizedValueExpression(){
+		return null;
+	}
+
+	// <NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>::= 
+	//									<NUMERIC-LITERAL> |
+	//									<COLUMN-REFERENCE>
+	private Expression parseNonParenthesuzedValueExpressionPrimary(){
+		Expression literal=parseNumericLiteral();
+		if(literal!=null)return literal;
+
+		return null;
+	}
+
+	// <VALUE-FUNCTION>				::= <IDENTIFIER> '(' <VALUE-EXPRESSION> ( ',' <VALUE-EXPRESSION> )* ')'
+	private Expression parseValueFunction() throws ParseException{
+		Token t=getToken();
+		if(t!=null){
+			if(t.type==Token.IDENTIFIER){
+				Token t2=getToken();
+				if(t2!=null && t2.type==Token.SYMBOL && t2.data.equals("(")){
+					// At this point we are comitted, this has to be a function call
+					List<Expression> arguments=new ArrayList<Expression>();
+
+					Expression arg=requireValueExpression();
+					arguments.add(arg);
+					t2=getToken();
+					while(t2!=null && t2.type==Token.SYMBOL && t2.data.equals(",")){
+						arg=requireValueExpression();
+						arguments.add(arg);
+						t2=getToken();
+					}
+					if(t2!=null && t2.type==Token.SYMBOL && t2.data.equals(")")){
+						return Expression.function(t.data,arguments);
+					}
+					throw new ParseException("End of function expected",t2);
+				}
+				returnToken(t2);
+			}
+			returnToken(t);
+		}
+		return null;
+	}
+
+	private Expression parseNumericLiteral(){
+		Token t=getToken();
+		if(t!=null){
+			if(t.type==Token.INTEGER){
+				return Expression.value(Integer.parseInt(t.data));
+			}
+			if(t.type==Token.FLOAT){
+				return Expression.value(Double.parseDouble(t.data));
+			}
+			returnToken(t);
+		}		
+		return null;
+	}
 
 	// <COLUMN-REFERENCE> ::= <IDENTIFIER> ( '.' <IDENTIFIER> )*
-	private DerivedColumn parseColumnReference() throws ParseException{
+	private Expression parseColumnReference() throws ParseException{
 		Token t=getToken();
-		// System.out.println("We should be finding 'type' "+t.data);
 		if(t.type==Token.IDENTIFIER){
 			List<String> ref=new ArrayList<String>();
 			ref.add(t.data);
@@ -452,7 +505,7 @@ public class SQLParser{
 				}
 				ref.add(t.data);
 			}
-			return DerivedColumn.createReference(ref);
+			return Expression.reference(ref);
 		}else{
 			returnToken(t);
 		}
