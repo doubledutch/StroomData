@@ -26,6 +26,14 @@ public class Expression{
 	public final static int NULL=15;	
 
 	public final static int FUNCTION=16;
+	public final static int ADD=17;
+	public final static int SUB=18;
+	public final static int DIV=19;
+	public final static int MUL=20;
+	public final static int MOD=21;
+
+	public final static int SIGN_POS=22;
+	public final static int SIGN_NEG=23;
 
 	private int type;
 	private Expression left;
@@ -214,6 +222,21 @@ public class Expression{
 		this.type=type;
 		this.left=null;
 		this.right=null;
+	}
+
+	public static Expression operator(Expression left,String symbol,Expression right){
+		if(symbol.equals("+"))return new Expression(ADD,left,right);
+		if(symbol.equals("-"))return new Expression(SUB,left,right);
+		if(symbol.equals("/"))return new Expression(DIV,left,right);
+		if(symbol.equals("*"))return new Expression(MUL,left,right);
+		if(symbol.equals("%"))return new Expression(MOD,left,right);
+		return null;
+	}
+
+	public static Expression operator(String symbol,Expression right){
+		if(symbol.equals("+"))return new Expression(SIGN_POS,null,right);
+		if(symbol.equals("-"))return new Expression(SIGN_NEG,null,right);
+		return null;
 	}
 
 	public static Expression or(Expression left,Expression right){

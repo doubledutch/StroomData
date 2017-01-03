@@ -394,10 +394,10 @@ public class SQLParser{
 	}
 
 	// <NUMERIC-VALUE-EXPRESSION>		::= <TERM> |
-	//									<NUMERIC-VALUE-EXPRESSION> '+' <TERM> |
-	//									<NUMERIC-VALUE-EXPRESSION> '-' <TERM>
-	private Expression parseNumericValueExpression(){
-		Token t=getToken();
+	//									<TERM> '+' <NUMERIC-VALUE-EXPRESSION> |
+	//									<TERM> '-' <NUMERIC-VALUE-EXPRESSION>
+	private Expression parseNumericValueExpression() throws ParseException{
+		/*Token t=getToken();
 		if(t!=null){
 			if(t.type==Token.INTEGER){
 				return Expression.value(Integer.parseInt(t.data));
@@ -406,45 +406,105 @@ public class SQLParser{
 				return Expression.value(Double.parseDouble(t.data));
 			}
 		}
-		returnToken(t);
+		returnToken(t);*/
+		Expression term=parseTerm();
+		if(term!=null){
+			Token t=getToken();
+			if(t!=null && t.type==Token.SYMBOL && (t.data.equals("+")||t.data.equals("-"))){
+				Expression expr=parseNumericValueExpression();
+				if(expr!=null){
+					return Expression.operator(term,t.data,expr);
+				}else{
+					throw new ParseException("Expecting numeric expression",t);
+				}
+			}
+			returnToken(t);
+		}
 		return null;
 	}
 
 	// <TERM>							::= <FACTOR> |
-	//									<TERM> '*' <FACTOR> |
-	//									<TERM> '/' <FACTOR> |
-	//									<TERM> '%' <FACTOR>
-	private Expression parseTerm(){
+	//									<FACTOR> '*' <TERM> |
+	//									<FACTOR> '/' <TERM> |
+	//									<FACTOR> '%' <TERM>
+	private Expression parseTerm() throws ParseException{
+		Expression factor=parseFactor();
+		if(factor!=null){
+			Token t=getToken();
+			if(t!=null && t.type==Token.SYMBOL && (t.data.equals("*")||t.data.equals("/")||t.data.equals("%"))){
+				Expression expr=parseTerm();
+				if(expr!=null){
+					return Expression.operator(factor,t.data,expr);
+				}else{
+					throw new ParseException("Expecting numeric expression",t);
+				}
+			}
+			returnToken(t);
+		}
 		return null;
 	}
 
 	// <FACTOR>						::= ( <SIGN> )? <NUMERIC-PRIMARY>
-	private Expression parseFactor(){
+	private Expression parseFactor() throws ParseException{
+		Token t=getToken();
+		if(t!=null && t.type==Token.SYMBOL && (t.data.equals("+")||t.data.equals("-"))){
+			// Keep the token
+		}else{
+			returnToken(t);
+		}
+		Expression expr=parseNumericPrimary();
+		if(expr!=null){
+			if(t==null)return expr;
+			return Expression.operator(t.data,expr);
+		}
 		return null;
 	}
 
-	// <NUMERIC-PRIMARY>				::= <VALUE-EXPRESSION-PRIMARY> | <VALUE-FUNCTION>
-	private Expression parseNumericPrimary(){
+	// <NUMERIC-PRIMARY>				::= <VALUE-FUNCTION> | <VALUE-EXPRESSION-PRIMARY>
+	private Expression parseNumericPrimary() throws ParseException{
+		Expression expr=parseValueFunction();
+		if(expr!=null)return expr;
+		expr=parseValueExpressionPrimary();
+		if(expr!=null)return expr;
 		return null;
 	}
 
 	// <VALUE-EXPRESSION-PRIMARY>		::= <PARENTHESIZED-VALUE-EXPRESSION> | <NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>
-	private Expression parseValueExpressionPrimary(){
+	private Expression parseValueExpressionPrimary() throws ParseException{
+		Expression expr=parseParenthesizedValueExpression();
+		if(expr!=null)return expr;
+		expr=parseNonParenthesuzedValueExpressionPrimary();
+		if(expr!=null)return expr;
 		return null;
 	}
 
 	// <PARENTHESIZED-VALUE-EXPRESSION>::= '(' <VALUE-EXPRESSION> ')'
-	private Expression parseParenthesizedValueExpression(){
+	private Expression parseParenthesizedValueExpression() throws ParseException{
+		Token t=getToken();
+		if(t!=null && t.type==Token.SYMBOL && (t.data.equals("("))){
+			// Keep the token
+			Expression expr=requireValueExpression();
+			t=getToken();
+			if(t!=null && t.type==Token.SYMBOL && (t.data.equals(")"))){
+				return expr;
+			}
+			throw new ParseException("Expecting )",t);
+		}else{
+			returnToken(t);
+		}
 		return null;
 	}
 
 	// <NON-PARENTHESIZED-VALUE-EXPRESSION-PRIMARY>::= 
 	//									<NUMERIC-LITERAL> |
 	//									<COLUMN-REFERENCE>
-	private Expression parseNonParenthesuzedValueExpressionPrimary(){
+	private Expression parseNonParenthesuzedValueExpressionPrimary() throws ParseException{
 		Expression literal=parseNumericLiteral();
 		if(literal!=null)return literal;
-
+		Expression col=parseColumnReference();
+		if(col!=null){
+			return col;
+		}
 		return null;
 	}
 
