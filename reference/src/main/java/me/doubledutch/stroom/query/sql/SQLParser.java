@@ -419,6 +419,7 @@ public class SQLParser{
 				}
 			}
 			returnToken(t);
+			return term;
 		}
 		return null;
 	}
@@ -440,6 +441,7 @@ public class SQLParser{
 				}
 			}
 			returnToken(t);
+			return factor;
 		}
 		return null;
 	}
@@ -451,6 +453,7 @@ public class SQLParser{
 			// Keep the token
 		}else{
 			returnToken(t);
+			t=null;
 		}
 		Expression expr=parseNumericPrimary();
 		if(expr!=null){
