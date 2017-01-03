@@ -95,6 +95,16 @@ public class Expression{
 			}
 			buf.append(")");
 			return buf.toString();
+		}else if(type==ADD){
+			return "("+left.toString()+" + "+right.toString()+")";
+		}else if(type==SUB){
+			return "("+left.toString()+" - "+right.toString()+")";
+		}else if(type==MUL){
+			return "("+left.toString()+" * "+right.toString()+")";
+		}else if(type==DIV){
+			return "("+left.toString()+" / "+right.toString()+")";
+		}else if(type==MOD){
+			return "("+left.toString()+" % "+right.toString()+")";
 		}
 		return null;
 	}
@@ -139,6 +149,38 @@ public class Expression{
 				return value(v1.valInteger+v2.valInteger);
 			}else{
 				return value(v1.getDoubleValue()+v2.getDoubleValue());
+			}
+		}else if(type==SUB){
+			if(v1.type==FLOAT && v2.type==FLOAT){
+				return value(v1.valDouble-v2.valDouble);
+			}else if(v1.type==INTEGER && v2.type==INTEGER){
+				return value(v1.valInteger-v2.valInteger);
+			}else{
+				return value(v1.getDoubleValue()-v2.getDoubleValue());
+			}
+		}else if(type==MUL){
+			if(v1.type==FLOAT && v2.type==FLOAT){
+				return value(v1.valDouble*v2.valDouble);
+			}else if(v1.type==INTEGER && v2.type==INTEGER){
+				return value(v1.valInteger*v2.valInteger);
+			}else{
+				return value(v1.getDoubleValue()*v2.getDoubleValue());
+			}
+		}else if(type==DIV){
+			if(v1.type==FLOAT && v2.type==FLOAT){
+				return value(v1.valDouble/v2.valDouble);
+			}else if(v1.type==INTEGER && v2.type==INTEGER){
+				return value(v1.valInteger/v2.valInteger);
+			}else{
+				return value(v1.getDoubleValue()/v2.getDoubleValue());
+			}
+		}else if(type==MOD){
+			if(v1.type==FLOAT && v2.type==FLOAT){
+				return value(v1.valDouble % v2.valDouble);
+			}else if(v1.type==INTEGER && v2.type==INTEGER){
+				return value(v1.valInteger % v2.valInteger);
+			}else{
+				return value(v1.getDoubleValue() % v2.getDoubleValue());
 			}
 		}
 		return null;

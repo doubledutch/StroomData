@@ -31,7 +31,7 @@ public class SQLQuery{
 			}else{
 				buf.append(selectList.get(0).toString());
 				for(int i=1;i<selectList.size();i++){
-					buf.append(",");
+					buf.append(", ");
 					buf.append(selectList.get(i).toString());
 				}
 			}
