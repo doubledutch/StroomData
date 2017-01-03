@@ -215,9 +215,10 @@ public class SQLParser{
 		}else{
 			query.selectAll=false;
 			List<DerivedColumn> list=new ArrayList<DerivedColumn>();
-			list.add(requireDerivedColumn());
+			int num=0;
+			list.add(requireDerivedColumn(num++));
 			while(consumeSymbol(",")){
-				list.add(requireDerivedColumn());
+				list.add(requireDerivedColumn(num++));
 			}
 			query.selectList=list;
 		}
@@ -343,12 +344,13 @@ public class SQLParser{
 
 
 	// <DERIVED-COLUMN>	::= <COLUMN-REFERENCE> ( 'AS' <IDENTIFIER> )?
-	private DerivedColumn requireDerivedColumn() throws ParseException{
-		Expression exp=parseColumnReference();
+	private DerivedColumn requireDerivedColumn(int number) throws ParseException{
+		/*Expression exp=parseColumnReference();
 		if(exp==null){
 			throw new ParseException("Column reference expected");
-		}
-		DerivedColumn col=DerivedColumn.createReference(exp);
+		}*/
+		Expression exp=requireValueExpression();
+		DerivedColumn col=DerivedColumn.createReference(number,exp);
 		if(consumeReservedWord("AS")){
 			Token t=requireIdentifier("A new identifier for a column must follow the keyword AS");
 			List<String> ref=new ArrayList<String>();

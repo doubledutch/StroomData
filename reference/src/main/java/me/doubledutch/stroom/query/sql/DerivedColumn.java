@@ -7,14 +7,21 @@ import me.doubledutch.lazyjson.*;
 
 public class DerivedColumn{
 	// public static final int REFERENCE=0;
-
+	private int number=0;
 	// public int type;
 	public List<String> as=null; 
 	// public List<String> refList=null;
 	public Expression expression=null;
 
 	public void pickAndPlace(LazyObject source,JSONObject destination) throws Exception{
-		Object value=pickValue(source);
+		// Object value=pickValue(source);
+		Expression result=expression.evaluate(source);
+		if(result==null){
+			System.out.println("Found null result for expression");
+			System.out.println(expression.toString());
+		}
+		// System.out.println(result.toString());
+		Object value=result.getValue();
 		setValue(destination,value);
 	}
 
@@ -22,15 +29,20 @@ public class DerivedColumn{
 		JSONObject current=destination;
 		if(as==null){
 			// No as clause was specified, place where it was found
-			for(int i=0;i<expression.ref.size()-1;i++){
-				String selector=expression.ref.get(i);
-				if(!current.has(selector)){
-					current.put(selector,new JSONObject());
+			if(expression.getType()==Expression.REFERENCE){
+				for(int i=0;i<expression.ref.size()-1;i++){
+					String selector=expression.ref.get(i);
+					if(!current.has(selector)){
+						current.put(selector,new JSONObject());
+					}
+					current=current.getJSONObject(selector);
 				}
-				current=current.getJSONObject(selector);
+				String selector=expression.ref.get(expression.ref.size()-1);
+				current.put(selector,value);
+			}else{
+				// Not from reference and no name given, auto name it
+				destination.put("column-"+number,value);
 			}
-			String selector=expression.ref.get(expression.ref.size()-1);
-			current.put(selector,value);
 		}else{
 			for(int i=0;i<as.size()-1;i++){
 				String selector=as.get(i);
@@ -64,46 +76,6 @@ public class DerivedColumn{
 		return null;
 	}
 
-	/*public JSONArray pickArray(JSONObject source) throws JSONException{
-		if(type==REFERENCE){
-			JSONObject current=source;
-			for(int i=0;i<refList.size()-1;i++){
-				String selector=refList.get(i);
-				current=current.getJSONObject(selector);
-			}
-			String selector=refList.get(refList.size()-1);
-			return current.getJSONArray(selector);
-		}
-		return null;
-	}*/
-
-	/*
-	public void pick(JSONObject source,JSONObject destination) throws JSONException{
-		if(type==REFERENCE){
-			JSONObject current=source;
-			for(int i=0;i<refList.size()-1;i++){
-				String selector=refList.get(i);
-				current=current.getJSONObject(selector);
-			}
-			String selector=refList.get(refList.size()-1);
-			Object value=current.get(selector);
-			if(as!=null){
-				destination.put(as,value);
-			}else{
-				current=destination;
-				for(int i=0;i<refList.size()-1;i++){
-					selector=refList.get(i);
-					if(!current.has(selector)){
-						current.put(selector,new JSONObject());
-					}
-					current=current.getJSONObject(selector);
-				}
-				selector=refList.get(refList.size()-1);
-				current.put(selector,value);
-			}
-		}
-	}
-*/
 	public String toString(){
 		StringBuilder buf=new StringBuilder();
 		buf.append(expression.toString());
@@ -117,8 +89,9 @@ public class DerivedColumn{
 		return buf.toString();
 	}
 
-	public static DerivedColumn createReference(Expression exp){
+	public static DerivedColumn createReference(int number,Expression exp){
 		DerivedColumn col=new DerivedColumn();
+		col.number=number;
 		col.expression=exp;
 		// col.type=REFERENCE;
 		return col;

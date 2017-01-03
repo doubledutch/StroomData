@@ -110,6 +110,7 @@ public class Expression{
 			return this;
 		}
 		if(type==REFERENCE){
+			// System.out.println("Trying to evaluate a reference");
 			return pickValue(obj,ref);
 		}
 
@@ -130,6 +131,14 @@ public class Expression{
 				return value(true);
 			}else{
 				return value(false);
+			}
+		}else if(type==ADD){
+			if(v1.type==FLOAT && v2.type==FLOAT){
+				return value(v1.valDouble+v2.valDouble);
+			}else if(v1.type==INTEGER && v2.type==INTEGER){
+				return value(v1.valInteger+v2.valInteger);
+			}else{
+				return value(v1.getDoubleValue()+v2.getDoubleValue());
 			}
 		}
 		return null;
@@ -192,8 +201,12 @@ public class Expression{
 			return Expression.value();
 		}else if(val instanceof String){
 			return Expression.value((String)val);
-		}else if(val instanceof Long){
+		}else if(val instanceof Long || val instanceof Integer){
 			return Expression.value((Long)val);
+		}else if(val instanceof Double || val instanceof Float){
+			return Expression.value((Double)val);
+		}else if(val instanceof Boolean){
+			return Expression.value((Boolean)val);
 		}
 		return null;
 	}
@@ -204,6 +217,30 @@ public class Expression{
 
 	public boolean isBoolean(){
 		return type==BOOLEAN;
+	}
+
+	public double getDoubleValue(){
+		if(type==FLOAT)return valDouble;
+		if(type==INTEGER)return (double)valInteger;
+		if(type==STRING){
+			try{
+				return Double.parseDouble(valString);
+			}catch(Exception e){}
+		}
+		// TODO: is this really what we want to do?
+		return 0;
+	}
+
+	public Object getValue(){
+		if(type==FLOAT)return (Double)valDouble;
+		if(type==INTEGER)return (Long)valInteger;
+		if(type==STRING)return valString;
+		if(type==BOOLEAN)return (Boolean)valBoolean;
+		return null;
+	}
+
+	public int getType(){
+		return type;
 	}
 
 	public Expression(int type,Expression left,Expression right){
