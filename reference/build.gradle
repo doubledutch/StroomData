@@ -75,6 +75,7 @@ task queryJar(type: Jar){
         include "me/doubledutch/lazy/*"
         include "me/doubledutch/stroom/query/*"
         include "me/doubledutch/stroom/query/sql/*"
+        include "me/doubledutch/stroom/query/sql/functions/*"
     }
      from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
   //  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }

@@ -2,8 +2,10 @@ package me.doubledutch.stroom.query;
 
 import me.doubledutch.lazyjson.*;
 import me.doubledutch.stroom.*;
+import me.doubledutch.stroom.query.sql.functions.*;
 import org.json.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Expression{
 	public final static int OR=1;
@@ -43,10 +45,10 @@ public class Expression{
 
 	private List<Expression> arguments=null;
 
-	private String valString;
-	private double valDouble;
-	private boolean valBoolean;
-	private long valInteger;
+	public String valString;
+	public double valDouble;
+	public boolean valBoolean;
+	public long valInteger;
 
 	// Changed derived column to fix this shit
 	public List<String> ref;
@@ -113,19 +115,27 @@ public class Expression{
 		return null;
 	}
 
-	public boolean evaluateBoolean(LazyObject obj) throws LazyException{
+	public boolean evaluateBoolean(LazyObject obj) throws LazyException,Exception{
 		Expression e=evaluate(obj);
 		if(e.isBoolean())return e.getBoolean();
 		return false;
 	}
 
-	public Expression evaluate(LazyObject obj) throws LazyException{
+	public Expression evaluate(LazyObject obj) throws LazyException,Exception{
 		if(type==STRING || type==FLOAT || type==BOOLEAN || type==INTEGER || type==NULL){
 			return this;
 		}
 		if(type==REFERENCE){
 			// System.out.println("Trying to evaluate a reference");
 			return pickValue(obj,ref);
+		}
+		if(type==FUNCTION){
+			List<Expression> results=new ArrayList<Expression>();
+			for(Expression e:arguments){
+				results.add(e.evaluate(obj));
+			}
+			SQLFunction f=SQLFunction.get(valString);
+			return f.run(results);
 		}
 
 		Expression v1=left.evaluate(obj);
@@ -208,6 +218,25 @@ public class Expression{
 						return value(Double.parseDouble(v1.valString));
 					}catch(Exception e){}
 				}
+			}
+		}else if(type==SIGN_POS){
+			return v1;
+		}else if(type==SIGN_NEG){
+			if(v1.getType()==Expression.INTEGER){
+				return Expression.value(-v1.valInteger);
+			}
+			if(v1.getType()==Expression.FLOAT){
+				return Expression.value(-v1.valDouble);
+			}
+			if(v1.getType()==Expression.STRING){
+				try{
+					int i=Integer.parseInt(v1.valString);
+					return Expression.value(-i);
+				}catch(Exception e){}
+				try{
+					double d=Double.parseDouble(v1.valString);
+					return Expression.value(-d);
+				}catch(Exception e){}
 			}
 		}
 		return null;
@@ -339,9 +368,9 @@ public class Expression{
 		return null;
 	}
 
-	public static Expression operator(String symbol,Expression right){
-		if(symbol.equals("+"))return new Expression(SIGN_POS,null,right);
-		if(symbol.equals("-"))return new Expression(SIGN_NEG,null,right);
+	public static Expression operator(String symbol,Expression expr){
+		if(symbol.equals("+"))return new Expression(SIGN_POS,expr,null);
+		if(symbol.equals("-"))return new Expression(SIGN_NEG,expr,null);
 		return null;
 	}
 
