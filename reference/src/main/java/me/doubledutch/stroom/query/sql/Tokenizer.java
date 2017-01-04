@@ -22,7 +22,7 @@ public class Tokenizer{
 											'<','>','(',')','{','}','[',']'};
 	private final static String[] reservedWords={
 		"SELECT","INSERT","UPDATE","DELETE","FROM","WHERE","GROUP","BY","ORDER","SET","INTO","VALUES",
-		"LIKE","IS","NOT","AND","OR","NULL","HAVING","AS","IN"
+		"LIKE","IS","NOT","AND","OR","NULL","HAVING","AS","IN","CAST"
 	};
 	private Reader reader;
 	private int state;

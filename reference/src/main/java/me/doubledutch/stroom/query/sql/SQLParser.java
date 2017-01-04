@@ -129,6 +129,20 @@ public class SQLParser{
 	}
 
 	/**
+	 * Returns the next available token if it is an identifier. If there are no more
+	 * tokens, or the next token is not an identifier an exception will be thrown with
+	 * the given message.
+	*/
+	private Token requireIdentifierI(String str,String err) throws ParseException{
+		Token t=getToken();
+		if(t==null)throw new ParseException(err);
+		if(t.type==Token.IDENTIFIER && t.data.toLowerCase().equals(str.toLowerCase())){
+			return t;
+		}
+		throw new ParseException(err,t);
+	}
+
+	/**
 	 * If the next available token is a symbol that matches the given string, it
 	 * is consumed and true is returned. If not, the token is returned to the
 	 * buffer and false is returned. If no more tokens are available, false is
@@ -504,11 +518,31 @@ public class SQLParser{
 	//									<NUMERIC-LITERAL> |
 	//									<COLUMN-REFERENCE>
 	private Expression parseNonParenthesuzedValueExpressionPrimary() throws ParseException{
+		Expression cast=parseCastSpecification();
+		if(cast!=null)return cast;
 		Expression literal=parseNumericLiteral();
 		if(literal!=null)return literal;
 		Expression col=parseColumnReference();
 		if(col!=null){
 			return col;
+		}
+		return null;
+	}
+
+	// <CAST-SPECIFICATION> ::= 'CAST' '(' <VALUE-EXPRESSION> 'AS' <DATA-TYPE> ')'
+	private Expression parseCastSpecification() throws ParseException{
+		if(consumeReservedWord("CAST")){
+			requireSymbol("(","CAST must be followed by (");
+			Expression expr=requireValueExpression();
+			if(!consumeReservedWord("AS"))throw new ParseException("CAST must have type specified after AS");
+			Token t=requireIdentifier("Type specifier expected");
+			requireSymbol(")","CAST must end with )");
+			String type=t.data.toLowerCase();
+			if(type.equals("int")||type.equals("float")||type.equals("string")){
+				return Expression.cast(expr,type);
+			}else{
+				throw new ParseException("Unknown cast type '"+type+"'");
+			}
 		}
 		return null;
 	}

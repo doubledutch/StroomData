@@ -35,6 +35,8 @@ public class Expression{
 	public final static int SIGN_POS=22;
 	public final static int SIGN_NEG=23;
 
+	public final static int CAST=24;
+
 	private int type;
 	private Expression left;
 	private Expression right;
@@ -105,6 +107,8 @@ public class Expression{
 			return "("+left.toString()+" / "+right.toString()+")";
 		}else if(type==MOD){
 			return "("+left.toString()+" % "+right.toString()+")";
+		}else if(type==CAST){
+			return "CAST ( "+left.toString()+" AS "+valString+" )";
 		}
 		return null;
 	}
@@ -181,6 +185,29 @@ public class Expression{
 				return value(v1.valInteger % v2.valInteger);
 			}else{
 				return value(v1.getDoubleValue() % v2.getDoubleValue());
+			}
+		}else if(type==CAST){
+			if(valString.equals("string")){
+				if(v1.type==INTEGER)return value(""+v1.valInteger);
+				if(v1.type==FLOAT)return value(""+v1.valDouble);
+				if(v1.type==STRING)return v1;
+				if(v1.type==BOOLEAN)return value(""+v1.valBoolean);
+			}else if(valString.equals("int")){
+				if(v1.type==INTEGER)return v1;
+				if(v1.type==FLOAT)return value((int)v1.valDouble);
+				if(v1.type==STRING){
+					try{
+						return value(Integer.parseInt(v1.valString));
+					}catch(Exception e){}
+				}
+			}else if(valString.equals("float")){
+				if(v1.type==INTEGER)return value((double)v1.valInteger);
+				if(v1.type==FLOAT)return v1;
+				if(v1.type==STRING){
+					try{
+						return value(Double.parseDouble(v1.valString));
+					}catch(Exception e){}
+				}
 			}
 		}
 		return null;
@@ -393,6 +420,13 @@ public class Expression{
 		Expression e=new Expression(FUNCTION);
 		e.arguments=args;
 		e.valString=name;
+		return e;
+	}
+
+	public static Expression cast(Expression expr,String type){
+		Expression e=new Expression(CAST);
+		e.valString=type;
+		e.left=expr;
 		return e;
 	}
 
