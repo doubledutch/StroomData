@@ -4,7 +4,7 @@ import java.util.*;
 import me.doubledutch.stroom.query.*;
 
 /*
-	<QUERY>							::= 'SELECT' <SELECT-LIST> <TABLE-EXPRESSION>
+	<QUERY>							::= 'SELECT' <SELECT-LIST> <TABLE-EXPRESSION> ( <PARTITION-CLAUSE> )?
 	<SELECT-LIST>					::= '*' | ( <DERIVED-COLUMN> ( ',' <DERIVED-COLUMN> ) * )
 	<DERIVED-COLUMN>				::= <VALUE-EXPRESSION> ( 'AS' <IDENTIFIER> )?
 	<TABLE-EXPRESSION>				::= <FROM-CLAUSE> ( <WHERE-CLAUSE> )? ( <GROUP-BY-CLAUSE> )? ( <HAVING-CLAUSE> )?
@@ -211,17 +211,27 @@ public class SQLParser{
 
 	/*************************************************************************/
 
-	// <QUERY> ::= 'SELECT' <SELECT-LIST> <TABLE-EXPRESSION>
+	// <QUERY> ::= 'SELECT' <SELECT-LIST> <TABLE-EXPRESSION> ( <PARTITION-CLAUSE> )?
 	public SQLQuery parseQuery() throws ParseException{
 		if(consumeReservedWord("SELECT")){
 			SQLQuery query=new SQLQuery();
 			requireSelectList(query);
 			requireTableExpression(query);
 			parseWhereClause(query);
+			parsePartitionClause(query);
 			query.normalize();
 			return query;
 		}
 		throw new ParseException("Query must start with SELECT",1,1);
+	}
+
+	public void parsePartitionClause(SQLQuery query) throws ParseException{
+		if(consumeReservedWord("PARTITION")){
+			if(consumeReservedWord("BY")){
+				Expression expr=requireValueExpression();
+				query.partition=expr;
+			}else throw new ParseException("Partition clause requires 'by'");
+		}
 	}
 
 	// <SELECT-LIST> ::= '*' | ( <DERIVED-COLUMN> ( ',' <DERIVED-COLUMN> ) * )

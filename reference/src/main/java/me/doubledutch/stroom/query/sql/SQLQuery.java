@@ -14,6 +14,8 @@ public class SQLQuery{
 	public List<DerivedColumn> selectList=null;
 	public List<TableReference> tableList=null;
 	public Expression where=null;
+	public Expression order=null;
+	public Expression partition=null;
 
 	public void normalize(){
 		if(where!=null){
