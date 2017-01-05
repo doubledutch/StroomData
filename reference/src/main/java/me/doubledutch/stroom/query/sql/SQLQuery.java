@@ -1,5 +1,6 @@
 package me.doubledutch.stroom.query.sql;
 
+import me.doubledutch.lazyjson.*;
 import me.doubledutch.stroom.query.*;
 import java.util.*;
 
@@ -22,6 +23,12 @@ public class SQLQuery{
 			// TODO: split the clause and make this real
 			tableList.get(0).condition=where;
 		}
+	}
+
+	public String getPartitionKey(LazyObject obj) throws Exception{
+		if(partition==null)return "";
+		Expression value=partition.evaluate(obj);
+		return value.getStringValue();
 	}
 
 	public String toString(){

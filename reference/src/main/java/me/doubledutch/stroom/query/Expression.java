@@ -111,6 +111,10 @@ public class Expression{
 			return "("+left.toString()+" % "+right.toString()+")";
 		}else if(type==CAST){
 			return "CAST ( "+left.toString()+" AS "+valString+" )";
+		}else if(type==SIGN_NEG){
+			return "( - "+left.toString()+" )";
+		}else if(type==SIGN_POS){
+			return "( + "+left.toString()+" )";
 		}
 		return null;
 	}
@@ -327,6 +331,14 @@ public class Expression{
 		}
 		// TODO: is this really what we want to do?
 		return 0;
+	}
+
+	public String getStringValue(){
+		if(type==STRING)return valString;
+		if(type==FLOAT)return ""+valDouble;
+		if(type==INTEGER)return ""+valInteger;
+		if(type==BOOLEAN)return ""+valBoolean;
+		return null;
 	}
 
 	public Object getValue(){

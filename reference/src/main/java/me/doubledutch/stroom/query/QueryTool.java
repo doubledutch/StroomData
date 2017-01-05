@@ -2,8 +2,15 @@ package me.doubledutch.stroom.query;
 
 import me.doubledutch.stroom.query.sql.*;
 import me.doubledutch.lazyjson.*;
+import org.apache.commons.cli.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class QueryTool{
+	private static boolean verbose=false;
+	private static String queryText=null;
+	private static Options options=null;
+
 	public QueryTool(String sql){
 		try{
 			SQLParser parser=new SQLParser(sql);
@@ -28,7 +35,58 @@ public class QueryTool{
 		}
 	}
 
+	private static void error(String msg){
+		System.out.println("ERR: "+msg);
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp( "querytool", options);
+	}
+
+	private static void log(String msg){
+		if(verbose)System.out.println(msg);
+	}
+
+	private static String readFile(String filename) throws Exception{
+		return new String(Files.readAllBytes(Paths.get(filename)),java.nio.charset.StandardCharsets.UTF_8);
+	}
+
 	public static void main(String[] args){
-		new QueryTool(args[0]);
+		try{
+			// Setup command line options
+			options = new Options();
+			options.addOption("v","verbose", false, "print out verbose runtime information");
+			options.addOption("q","query", true, "read query from a file");
+			options.addOption("o","output", true, "write output to a file instead of stdout");
+			CommandLineParser parser = new DefaultParser();
+			CommandLine cmd = parser.parse( options, args);
+
+			// Validate and extract arguments
+			if(cmd.hasOption("v"))verbose=true;
+			args=cmd.getArgs();
+			if(cmd.hasOption("q") && args.length>0){
+				error("You can not specify a query both in a file and as an argument");
+			}else if(cmd.hasOption("q")){
+				queryText=readFile(cmd.getOptionValue("q"));
+			}else if(args.length==1){
+				queryText=args[0];
+			}else if(args.length>1){
+				error("You can not specify more than one query");
+			}else{
+				error("You must specify a query");
+			}
+
+			// Parse the query
+			log("Parsing query");
+			try{
+				SQLParser sqlparser=new SQLParser(queryText);
+				SQLQuery query=sqlparser.parseQuery();
+				log(query.toString());
+				log("Result");
+			}catch(me.doubledutch.stroom.query.sql.ParseException pe){
+
+			}
+			// new QueryTool(args[0]);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 }
