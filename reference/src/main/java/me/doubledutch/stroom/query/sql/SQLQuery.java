@@ -25,6 +25,10 @@ public class SQLQuery{
 		}
 	}
 
+	public boolean isPartitioned(){
+		return partition!=null;
+	}
+
 	public String getPartitionKey(LazyObject obj) throws Exception{
 		if(partition==null)return "";
 		Expression value=partition.evaluate(obj);

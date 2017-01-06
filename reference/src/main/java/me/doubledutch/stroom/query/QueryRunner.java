@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 public class QueryRunner implements Runnable{
 	private final int BATCH_SIZE=1000;
 	private SQLQuery query;
-	private TempTable result=null;
+	private Map<String,TempTable> result=null;
 	private long time;
 
 	public QueryRunner(SQLQuery query){
@@ -28,19 +28,55 @@ public class QueryRunner implements Runnable{
 		return time;
 	}
 
-	public TempTable getResult(){
+	private TempTable getPartition(String key) throws Exception{
+		if(!result.containsKey(key)){
+			result.put(key,createTempTable());
+		}
+		return result.get(key);	
+	}
+
+	public Set<String> getPartitions(){
 		if(result==null){
 			run();
 		}
-		return result;
+		return result.keySet();
+	}
+
+	public TempTable getResult(){
+		return getResult("");
+	}
+
+	public TempTable getResult(String key){
+		if(result==null){
+			run();
+		}
+		return result.get(key);
 	}
 
 	public void run(){
 		try{
 			long pre=System.nanoTime();
-			result=scan(query.tableList.get(0));
+			// Scan tables
+			TempTable raw=scan(query.tableList.get(0));
+
+			// Pick columns
 			if(!query.selectAll){
-				result=pick(result,query.selectList);
+				TempTable picked=pick(raw,query.selectList);
+				raw.delete();
+				raw=picked;
+			}
+			// Partition data
+			if(query.isPartitioned()){
+				raw.reset();
+				while(raw.hasNext()){
+					LazyObject next=raw.next();
+					String key=query.getPartitionKey(next);
+					TempTable partition=getPartition(key);
+					partition.append(next);
+				}
+			}else{
+				result=new HashMap<String,TempTable>();
+				result.put("",raw);
 			}
 			long post=System.nanoTime();
 			time=post-pre;
@@ -80,7 +116,7 @@ public class QueryRunner implements Runnable{
 				return sub.getResult();
 			}
 		}else if(table.url!=null){
-			System.out.println("scanning url");
+			// System.out.println("scanning url");
 			TempTable temp=createTempTable();
 			Stroom s=new Stroom();
 			StreamConnection stream=s.openStream(table.url);

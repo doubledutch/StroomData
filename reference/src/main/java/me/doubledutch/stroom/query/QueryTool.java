@@ -42,7 +42,7 @@ public class QueryTool{
 	}
 
 	private static void log(String msg){
-		if(verbose)System.out.println(msg);
+		if(verbose)System.out.println("# "+msg);
 	}
 
 	private static String readFile(String filename) throws Exception{
@@ -77,10 +77,27 @@ public class QueryTool{
 			// Parse the query
 			log("Parsing query");
 			try{
+				long pre=System.nanoTime();
 				SQLParser sqlparser=new SQLParser(queryText);
 				SQLQuery query=sqlparser.parseQuery();
+				long post=System.nanoTime();
+				log(((post-pre)/100000)/10.0+" ms");
 				log(query.toString());
-				log("Result");
+				log("Executing query");
+				pre=System.nanoTime();
+				QueryRunner runner=new QueryRunner(query);
+				runner.run();
+				post=System.nanoTime();
+				log(((post-pre)/100000)/10.0+" ms");
+				TempTable table=runner.getResult();
+				table.reset();
+				int count=0;
+				while(table.hasNext()){
+					LazyObject next=table.next();
+					
+					System.out.println(next.toString());
+					count++;
+				}
 			}catch(me.doubledutch.stroom.query.sql.ParseException pe){
 
 			}
