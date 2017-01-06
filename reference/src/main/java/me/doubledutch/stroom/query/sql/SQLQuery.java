@@ -32,6 +32,8 @@ public class SQLQuery{
 	public String getPartitionKey(LazyObject obj) throws Exception{
 		if(partition==null)return "";
 		Expression value=partition.evaluate(obj);
+		// TODO: this shouldn't happen - we should use null expression types instead
+		if(value==null)return null;
 		return value.getStringValue();
 	}
 
@@ -56,6 +58,9 @@ public class SQLQuery{
 			if(where!=null){
 				buf.append(" WHERE ");
 				buf.append(where.toString());
+			}
+			if(partition!=null){
+				buf.append(" PARTITION BY "+partition.toString());
 			}
 			return buf.toString();
 		}

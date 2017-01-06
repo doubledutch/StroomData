@@ -29,6 +29,9 @@ public class QueryRunner implements Runnable{
 	}
 
 	private TempTable getPartition(String key) throws Exception{
+		if(result==null){
+			result=new HashMap<String,TempTable>();
+		}
 		if(!result.containsKey(key)){
 			result.put(key,createTempTable());
 		}
@@ -61,23 +64,38 @@ public class QueryRunner implements Runnable{
 
 			// Pick columns
 			if(!query.selectAll){
-				TempTable picked=pick(raw,query.selectList);
+				// TempTable picked=pick(raw,query.selectList);
+				pick(raw,query.selectList,query);
 				raw.delete();
-				raw=picked;
+				// raw=picked;
+			}else{
+				result=new HashMap<String,TempTable>();
+				if(query.isPartitioned()){
+					raw.reset();
+					while(raw.hasNext()){
+						LazyObject next=raw.next();
+						String key=query.getPartitionKey(next);
+						TempTable partition=getPartition(key);
+						partition.append(next);
+					}
+				}else{
+					result.put("",raw);
+				}
 			}
 			// Partition data
-			if(query.isPartitioned()){
+			/*if(query.isPartitioned()){
 				raw.reset();
 				while(raw.hasNext()){
 					LazyObject next=raw.next();
 					String key=query.getPartitionKey(next);
+					System.out.println("key:"+key);
 					TempTable partition=getPartition(key);
 					partition.append(next);
 				}
 			}else{
 				result=new HashMap<String,TempTable>();
 				result.put("",raw);
-			}
+			}*/
 			long post=System.nanoTime();
 			time=post-pre;
 			time=time/1000000;
@@ -92,8 +110,8 @@ public class QueryRunner implements Runnable{
 		return new TempTableFile();
 	}
 
-	public TempTable pick(TempTable table,List<DerivedColumn> columns) throws Exception{
-		TempTable picked=createTempTable();
+	public void pick(TempTable table,List<DerivedColumn> columns,SQLQuery query) throws Exception{
+		// TempTable picked=createTempTable();
 		table.reset();
 		while(table.hasNext()){
 			LazyObject obj=table.next();
@@ -101,9 +119,15 @@ public class QueryRunner implements Runnable{
 			for(DerivedColumn col:columns){
 				col.pickAndPlace(obj,out);
 			}
-			picked.append(new LazyObject(out.toString()));
+			LazyObject outObj=new LazyObject(out.toString());
+			String key=query.getPartitionKey(obj);
+			// TODO: this is such a hack - make smarter
+			if(key==null)key=query.getPartitionKey(outObj);
+			TempTable partition=getPartition(key);
+			partition.append(outObj);
+			// picked.append(new LazyObject(out.toString()));
 		}
-		return picked;
+		// return picked;
 	}
 
 	public TempTable scan(TableReference table) throws Exception{

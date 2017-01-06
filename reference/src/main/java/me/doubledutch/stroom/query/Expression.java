@@ -185,7 +185,9 @@ public class Expression{
 				return value(v1.getDoubleValue()*v2.getDoubleValue());
 			}
 		}else if(type==DIV){
-			if(v1.type==FLOAT && v2.type==FLOAT){
+			if(v1.type==NULL || v2.type==NULL){
+				return value();
+			}else if(v1.type==FLOAT && v2.type==FLOAT){
 				return value(v1.valDouble/v2.valDouble);
 			}else if(v1.type==INTEGER && v2.type==INTEGER){
 				return value(v1.valInteger/v2.valInteger);

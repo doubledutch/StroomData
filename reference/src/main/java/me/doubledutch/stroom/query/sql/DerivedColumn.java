@@ -41,7 +41,7 @@ public class DerivedColumn{
 				current.put(selector,value);
 			}else{
 				// Not from reference and no name given, auto name it
-				destination.put("column-"+number,value);
+				destination.put("column_"+number,value);
 			}
 		}else{
 			for(int i=0;i<as.size()-1;i++){

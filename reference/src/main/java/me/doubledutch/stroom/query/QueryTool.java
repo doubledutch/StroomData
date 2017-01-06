@@ -89,14 +89,32 @@ public class QueryTool{
 				runner.run();
 				post=System.nanoTime();
 				log(((post-pre)/100000)/10.0+" ms");
-				TempTable table=runner.getResult();
-				table.reset();
-				int count=0;
-				while(table.hasNext()){
-					LazyObject next=table.next();
-					
-					System.out.println(next.toString());
-					count++;
+				if(query.isPartitioned()){
+					for(String key:runner.getPartitions()){
+						log("Results for partition '"+key+"'");
+						TempTable table=runner.getResult(key);
+						table.reset();
+						int count=0;
+						while(table.hasNext()){
+							LazyObject next=table.next();
+
+							System.out.println(next.toString());
+							count++;
+						}
+						log(count+" rows returned");
+					}
+				}else{
+					log("Results");
+					TempTable table=runner.getResult();
+					table.reset();
+					int count=0;
+					while(table.hasNext()){
+						LazyObject next=table.next();
+
+						System.out.println(next.toString());
+						count++;
+					}
+					log(count+" rows returned");
 				}
 			}catch(me.doubledutch.stroom.query.sql.ParseException pe){
 
